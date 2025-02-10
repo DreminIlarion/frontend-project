@@ -1,0 +1,60 @@
+name: frontend-project
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+
+    env:
+        ALL: >
+
+           DOMAIN1 = ${{ secrets.DOMAIN1 }}
+           DOMAIN2 = ${{ secrets.DOMAIN2 }}
+           
+           REACT_APP1_GET_TOKEN = ${{ secrets.REACT_APP1_GET_TOKEN }}
+           REACT_APP1_LOGOUT = ${{ secrets.REACT_APP1_LOGOUT }}
+           REACT_APP1_PREDICT = ${{ secrets.REACT_APP1_PREDICT }}
+           REACT_APP1_PREDICT_FREE = ${{ secrets.REACT_APP1_PREDICT_FREE }}                         
+           REACT_APP1_ANSWER = ${{ secrets.REACT_APP1_ANSWER }}
+
+           REACT_APP2_REGISTRATION = ${{ secrets.REACT_APP2_REGISTRATION }}
+           REACT_APP2_LOGIN_EMAIL = ${{ secrets.REACT_APP2_LOGIN_EMAIL }}
+           REACT_APP2_LOGIN_PHONE = ${{ secrets.REACT_APP2_LOGIN_PHONE }}
+
+           REACT_APP2_VK_LINK = ${{ secrets.REACT_APP2_VK_LINK }}
+           REACT_APP2_VK_GET_TOKEN = ${{ secrets.REACT_APP2_VK_GET_TOKEN }}
+           REACT_APP2_VK_REGISTRATION = ${{ secrets.REACT_APP2_VK_REGISTRATION }}
+           REACT_APP2_VK_LOGIN = ${{ secrets.REACT_APP2_VK_LOGIN }}
+
+           REACT_APP2_MAILRU_LINK = ${{ secrets.REACT_APP2_MAILRU_LINK }}
+           REACT_APP2_MAILRU_GET_TOKEN = ${{ secrets.REACT_APP2_MAILRU_GET_TOKEN }}
+           REACT_APP2_MAILRU_REGISTRATION = ${{ secrets.REACT_APP2_MAILRU_REGISTRATION }}
+           REACT_APP2_MAILRU_LOGIN = ${{ secrets.REACT_APP2_MAILRU_LOGIN }}
+
+           REACT_APP2_YANDEX_LINK = ${{ secrets.REACT_APP2_YANDEX_LINK }}
+           REACT_APP2_YANDEX_GET_TOKEN = ${{ secrets.REACT_APP2_YANDEX_GET_TOKEN }}
+           REACT_APP2_YANDEX_REGISTRATION = ${{ secrets.REACT_APP2_YANDEX_REGISTRATION }}
+           REACT_APP2_YANDEX_LOGIN = ${{ secrets.REACT_APP2_YANDEX_LOGIN }}
+
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Create .env file
+          run: |
+            echo "$ALL" >> .env
+        
+        - name: Set environment variables
+          run: |
+             echo "FRONTEND_IMAGE=$(echo ${{env.FRONTEND_IMAGE}} )" >> $GITHUB_ENV
+            
+        - name: Build images
+          run: |
+            docker build -t frontend-project .
