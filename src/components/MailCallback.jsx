@@ -6,8 +6,6 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-toast.configure();
-
 const MailCallback = () => {
   const navigate = useNavigate();
   const { updateUser } = useUser();
