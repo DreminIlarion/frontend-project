@@ -14,6 +14,8 @@ import VKCallback from "./components/VKCallback";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 
 import Home from './components/Home';
+
+import Test from './components/Cht';
 const App = () => {
   return (
     <UserProvider>
@@ -33,6 +35,8 @@ const App = () => {
           <Route path="/yandex/callback" element={<YandexCallback />} />
           
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
+          <Route path='/test' element={<Test />} ></Route>
         </Routes>
       </Router>
     </UserProvider>

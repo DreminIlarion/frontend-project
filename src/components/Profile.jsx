@@ -23,7 +23,6 @@ const Profile = () => {
     }
   };
 
-  // Закрытие сайдбара при клике вне его
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
@@ -40,10 +39,8 @@ const Profile = () => {
 
   return (
     <div className="flex flex-col font-sans min-h-screen">
-      {/* Header */}
       <header className="w-full bg-blue-800 text-white shadow-md fixed top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          {/* Кнопка открытия сайдбара */}
           <button
             className="lg:hidden text-white text-2xl"
             onClick={(e) => {
@@ -62,7 +59,6 @@ const Profile = () => {
       </header>
 
       <div className="flex flex-grow mt-16">
-        {/* Sidebar */}
         <div
           ref={sidebarRef}
           className={`fixed top-0 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-lg transition-transform duration-300 ease-in-out
@@ -73,6 +69,9 @@ const Profile = () => {
             {user ? <span className="text-xl font-semibold">{user.email}</span> : <Link to="/login" className="text-white hover:underline">Войти</Link>}
           </div>
           <ul className="mt-4">
+            <li className="mb-2">
+              <Link to="/" className="w-full text-left px-6 py-3 block hover:text-white">Главная страница</Link>
+            </li>
             {user && (
               <>
                 <li className="mb-2">
@@ -96,7 +95,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 p-4 lg:ml-64 bg-white min-h-screen overflow-y-auto items-center ">
           {activeSection === 'form' && (
             <div className="mb-8">
@@ -123,7 +121,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Chat Button */}
       {user && (
         <div className="fixed bottom-4 right-4">
           {!isChatVisible ? (
