@@ -5,7 +5,7 @@ import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
-
+import Cookies from "js-cookie";
 const Profile = () => {
   const { user, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
@@ -13,15 +13,30 @@ const Profile = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
-  const handleLogout = async () => {
-    try {
-      await fetch("https://personal-account-fastapi.onrender.com/logout/", { method: "GET", credentials: "include" });
-      logout();
-      window.location.reload();
-    } catch (error) {
-      console.error("Ошибка при выходе:", error);
-    }
-  };
+
+
+const handleLogout = async () => {
+  try {
+    await fetch("https://personal-account-fastapi.onrender.com/logout/", {
+      method: "GET",
+      credentials: "include", // Убеждаемся, что сервер отправляет Set-Cookie на удаление
+    });
+
+    // Принудительное удаление куки
+    Cookies.remove("access", { path: "/", domain: "personal-account-fastapi.onrender.com" });
+    Cookies.remove("refresh", { path: "/", domain: "personal-account-fastapi.onrender.com" });
+
+    // Удаление без домена (на случай, если куки без него)
+    Cookies.remove("access");
+    Cookies.remove("refresh");
+
+    logout();
+    window.location.reload();
+  } catch (error) {
+    console.error("Ошибка при выходе:", error);
+  }
+};
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
