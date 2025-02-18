@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
+    year: '', 
     gender: '',
     gpa: '',
-    priority: '',
     points: '',
     direction: ''
   });
 
   const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false); // Состояние для индикации загрузки
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,15 +40,15 @@ const ClassifierForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Включаем индикатор загрузки
-
+    setLoading(true);
+  
     const dataToSend = {
       ...formData,
       gpa: parseFloat(formData.gpa),
-      priority: parseInt(formData.priority),
-      points: parseInt(formData.points)
+      year: parseInt(formData.year, 10),
+      points: parseInt(formData.points, 10)
     };
-
+  
     try {
       const response = await fetch('https://personal-account-fastapi.onrender.com/predict/free', {
         method: 'POST',
@@ -55,19 +57,28 @@ const ClassifierForm = () => {
         },
         body: JSON.stringify(dataToSend)
       });
-
+  
       const result = await response.json();
-      setPrediction(result.prediction);
+      
+  
+      if (result && typeof result === 'number') {
+        setPrediction(result);
+      } else {
+        setPrediction(null);
+        toast.error("Ошибка: сервер не вернул предсказание.");
+      }
     } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Произошла ошибка при отправке данных.');
+      console.error('Ошибка запроса:', error);
+      toast.error('Произошла ошибка при отправке данных.');
     } finally {
-      setLoading(false); // Выключаем индикатор загрузки
+      setLoading(false);
     }
   };
+  
+  
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 text-center ">
       <form onSubmit={handleSubmit} className="p-6 bg-white border border-gray-300 rounded-md shadow-md max-w-lg mx-auto">
         <fieldset className="flex-grow space-y-4 mb-6">
           <label className="block text-sm font-semibold">Пол:
@@ -111,18 +122,19 @@ const ClassifierForm = () => {
             <span className="text-sm">{formData.points} баллов</span>
           </label>
 
-          <label className="block text-sm font-semibold">Приоритет:
+          <label className="block text-sm font-semibold">Год:
             <input
-              type="number"
+              type="range"
               step="1"
-              min="1"
-              max="5"
-              value={formData.priority}
-              name="priority"
+              min='2019'
+              max='2024'
+              value={formData.year}
+              name="year"
               onChange={handleChange}
-              className="w-full p-2 mt-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-2"
               required
             />
+            <span className="text-sm">{formData.year} год</span>
           </label>
 
           <label className="block text-sm font-semibold">Направление:
@@ -132,6 +144,7 @@ const ClassifierForm = () => {
               className="w-full p-2 mt-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             >
+              <option value="">Выберите направление</option>
               <option value="">Выберите направление</option>
               <option value="08.03.01 Строительство">08.03.01 Строительство</option>
               <option value="21.03.01 Нефтегазовое дело">21.03.01 Нефтегазовое дело</option>
@@ -165,7 +178,8 @@ const ClassifierForm = () => {
               <option value="02.03.01 Математика и компьютерные науки">02.03.01 Математика и компьютерные науки</option>
               <option value="12.03.04 Биотехнические системы и технологии">12.03.04 Биотехнические системы и технологии</option>
               <option value="42.03.01 Реклама и связи с общественностью">42.03.01 Реклама и связи с общественностью</option>
-              <option value="18.03.00 Химические технологии">18.03.00 Химические технологии</option>
+              <option value="18.03.00 Химические технологии">18.03.00 Химические технологии</option>  
+              {/* Дополнительные варианты */}
             </select>
           </label>
         </fieldset>
@@ -173,9 +187,9 @@ const ClassifierForm = () => {
         <button
           type="submit"
           className="w-[175px] mx-auto p-2 bg-blue-500 text-white rounded-3xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center"
-          disabled={loading} // Блокируем кнопку, пока идет загрузка
+          disabled={loading}
         >
-          {loading ? 'Загрузка...' : 'Predict'}
+          {loading ? 'Загрузка...' : 'Предсказать'}
         </button>
       </form>
 
@@ -209,6 +223,9 @@ const ClassifierForm = () => {
           </p>
         </div>
       )}
+
+      {/* Контейнер для Toast */}
+      <ToastContainer />
     </div>
   );
 };

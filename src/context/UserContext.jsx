@@ -32,7 +32,7 @@ export const userLogin = async (username, password) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ username, password }),
-      credentials: 'include',
+      
   });
 
   if (!response.ok) {

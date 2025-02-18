@@ -12,13 +12,15 @@ import YandexCallback from "./components/YandexCallback";
 import VKCallback from "./components/VKCallback";
 
 import PrivacyPolicy from "./components/PrivacyPolicy";
+
+import Home from './components/Home';
 const App = () => {
   return (
     <UserProvider>
       <Router>
         <Routes>
           {/* Перенаправление с корневого пути на страницу профиля */}
-          <Route path="/" element={<Navigate to="/profile" replace />} />
+          <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/registration" element={<Register />} />
 

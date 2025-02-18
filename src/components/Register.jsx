@@ -84,6 +84,7 @@ const Register = () => {
                             Электронная почта
                         </label>
                         <input
+                        required
                             id="email"
                             type="email"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -98,6 +99,7 @@ const Register = () => {
                             Номер телефона
                         </label>
                         <input
+                        required
                             id="phone_number"
                             type="tel"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -112,6 +114,7 @@ const Register = () => {
                             Пароль
                         </label>
                         <input
+                        required
                             id="password"
                             type="password"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -124,6 +127,7 @@ const Register = () => {
                     {/* Чекбокс для согласия */}
                     <div className="mb-6 flex items-center">
                         <input
+                        required
                             id="agree"
                             type="checkbox"
                             className="mr-2"

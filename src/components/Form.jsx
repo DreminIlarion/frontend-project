@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 const Form = () => {
   const [formData, setFormData] = useState({
     top_n: '',
-    gender: '',
+    //gender: '',
     age: '',
+    year: '',
+    gender: '',
     sport: '',
     foreign: '',
     gpa: '',
@@ -43,50 +45,78 @@ const Form = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    // Преобразуем top_n в строку, если это необходимо
+    const formattedData = {
+      ...formData,
+      top_n: String(formData.top_n),  // Преобразуем top_n в строку
+      age: Number(formData.age) || 0,
+      year: Number(formData.year) || 0,
+      gpa: parseFloat(formData.gpa) || 0.0,
+      points: Number(formData.points) || 0,
+      bonus_points: Number(formData.bonus_points) || 0,
+      exams: Array.isArray(formData.exams) ? formData.exams : [],
+    };
+  
     try {
       const response = await fetch('https://personal-account-fastapi.onrender.com/predict/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-        }),
+        body: JSON.stringify(formattedData),
         credentials: 'include',
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         const sortedRecommendations = data.recomendate.map((item, index) => ({
           name: item,
           probability: data.classifier[index],
         })).sort((a, b) => b.probability - a.probability);
-
+  
         setRecommendations(sortedRecommendations);
       } else {
-        console.log('Ошибка при отправке данных');
+        const errorText = await response.text();
+        console.log('Ошибка при отправке данных:', errorText);
       }
     } catch (error) {
       console.error('Ошибка отправки данных:', error);
     }
   };
+  
+  
+  
 
   return (
     <div className="container mx-auto p-6 flex space-x-10">
       {/* Форма */}
       <form onSubmit={handleSubmit} className="bg-white p-8 shadow-xl rounded-lg w-1/2">
+      <label className="block mb-4 text-sm font-semibold">
+        Количество направлений:
+        <input
+          type="text"  // Используем тип "text", чтобы избежать проблем с преобразованием чисел в строку
+          value={formData.top_n}
+          onChange={handleChange}
+          name="top_n"
+          className="w-full p-2 mt-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+          required
+        />
+      </label>
+
+
         <label className="block mb-4 text-sm font-semibold">
-          Количество направлений:
+          Год:
           <input
             type="number"
-            value={formData.top_n}
+            value={formData.year}
             onChange={handleChange}
-            name="top_n"
+            name="year"
             className="w-full p-2 mt-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
             required
           />
         </label>
+
 
         <label className="block mb-4 text-sm font-semibold">
           Пол:

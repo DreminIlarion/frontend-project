@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import { Link } from 'react-router-dom';
 import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
@@ -11,6 +11,7 @@ const Profile = () => {
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const sidebarRef = useRef(null);
 
   const handleLogout = async () => {
     try {
@@ -22,12 +23,34 @@ const Profile = () => {
     }
   };
 
+  // Закрытие сайдбара при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setIsSidebarOpen(false);
+      }
+    };
+    if (isSidebarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
+
   return (
     <div className="flex flex-col font-sans min-h-screen">
       {/* Header */}
       <header className="w-full bg-blue-800 text-white shadow-md fixed top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <button className="lg:hidden text-white text-2xl" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+          {/* Кнопка открытия сайдбара */}
+          <button
+            className="lg:hidden text-white text-2xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSidebarOpen(!isSidebarOpen);
+            }}
+          >
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
           <h1 className="text-2xl font-bold flex-1 text-center lg:flex-none">Личный кабинет</h1>
@@ -41,11 +64,11 @@ const Profile = () => {
       <div className="flex flex-grow mt-16">
         {/* Sidebar */}
         <div
-          className={`fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-blue-900 to-blue-600 text-white shadow-lg transform ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 lg:relative lg:h-screen`}
+          ref={sidebarRef}
+          className={`fixed top-0 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-lg transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0 h-full' : '-translate-x-full'} lg:translate-x-0 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50`}
         >
-          <div className="flex items-center px-6 py-4 border-b border-blue-700">
+          <div className="flex items-center px-6 py-4 border-b border-blue-600">
             <FaUserCircle className="text-3xl text-white mr-3" />
             {user ? <span className="text-xl font-semibold">{user.email}</span> : <Link to="/login" className="text-white hover:underline">Войти</Link>}
           </div>
@@ -74,7 +97,7 @@ const Profile = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-4 lg:ml-64 min-h-screen bg-white overflow-auto">
+        <div className="flex-1 p-4 lg:ml-64 bg-white min-h-screen overflow-y-auto items-center ">
           {activeSection === 'form' && (
             <div className="mb-8">
               <h2 className="text-3xl font-bold mb-6 text-center text-black">Расширенный шанс поступления</h2>
@@ -84,8 +107,8 @@ const Profile = () => {
             </div>
           )}
           {activeSection === 'classifier' && (
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-6 text-center text-black">Базовый шанс поступления</h2>
+            <div className="mb-8 ">
+              <h2 className="text-3xl font-bold mb-6 text-center items-center text-black">Базовый шанс поступления</h2>
               <ClassifierForm />
             </div>
           )}
@@ -101,20 +124,22 @@ const Profile = () => {
       </div>
 
       {/* Chat Button */}
-      <div className="fixed bottom-4 right-4">
-        {!isChatVisible ? (
-          <button onClick={() => setIsChatVisible(true)} className="bg-blue-500 text-white rounded-full p-4 shadow-lg hover:bg-blue-600 transition duration-200 text-lg">
-            Чат
-          </button>
-        ) : (
-          <div className="fixed bottom-16 right-4 bg-white shadow-lg rounded-lg w-80 h-96 p-4 relative">
-            <button onClick={() => setIsChatVisible(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg">
-              ✕
+      {user && (
+        <div className="fixed bottom-4 right-4">
+          {!isChatVisible ? (
+            <button onClick={() => setIsChatVisible(true)} className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition duration-200 text-lg">
+              Чат
             </button>
-            <Chat />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="fixed bottom-16 right-4 bg-white shadow-lg rounded-lg w-[90%] max-w-sm h-96 relative">
+              <button onClick={() => setIsChatVisible(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg">
+                ✕
+              </button>
+              <Chat />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

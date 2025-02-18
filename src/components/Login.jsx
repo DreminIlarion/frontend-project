@@ -48,7 +48,7 @@ const Login = () => {
   
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+        
   
         const { access, refresh } = data;
   
@@ -81,7 +81,7 @@ const Login = () => {
         
             if (response.ok) {
               const data = await response.json();
-              console.log('Ответ с сервера:', data);
+              
               // Обработка ответа от сервера
             } else {
               console.log('Ошибка HTTP:', response.status);
@@ -94,8 +94,7 @@ const Login = () => {
         login(userData, access, refresh); // Используем метод login из контекста
   
         if (Cookies.get()) {
-          console.log('Куки успешно добавлены.');
-          console.log(userData); // Обработка данных о пользователе
+          
   
           toast.success('Вход выполнен успешно!');
           setTimeout(() => navigate('/profile'), 1500);
@@ -173,6 +172,7 @@ const Login = () => {
                 Электронная почта
               </label>
               <input
+              required
                 id="email"
                 type="email"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -187,6 +187,7 @@ const Login = () => {
                 Номер телефона
               </label>
               <input
+              required
                 id="phone_number"
                 type="tel"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -202,6 +203,7 @@ const Login = () => {
               Пароль
             </label>
             <input
+            required
               id="password"
               type="password"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
