@@ -2,6 +2,9 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import Cookies from "js-cookie";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const YandexCallback = () => {
   const navigate = useNavigate();
@@ -14,7 +17,7 @@ const YandexCallback = () => {
 
       if (code) {
         try {
-          // 1. Получение access_token с помощью /yandex/get/token
+          toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
             `https://registration-fastapi.onrender.com/yandex/get/token?code=${code}`,
             { withCredentials: true }
@@ -22,28 +25,35 @@ const YandexCallback = () => {
 
           if (tokenResponse.status === 200 && tokenResponse.data.access_token) {
             const accessToken = tokenResponse.data.access_token;
-
+            
             try {
-              // 2. Попытка входа через /yandex/login
+              toast.info("Попытка входа...");
               const loginResponse = await axios.get(
                 `https://registration-fastapi.onrender.com/yandex/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
 
               if (loginResponse.status === 200) {
-                console.log("Успешный вход:", loginResponse.data);
-
-                const userData = loginResponse.data;
+                toast.success("Успешный вход!");
+                const { access, refresh, ...userData } = loginResponse.data;
                 updateUser(userData);
 
+                Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+                Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+                
+                await axios.get(
+                  `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+                  { withCredentials: true }
+                );
+                
                 navigate("/profile");
               } else {
                 throw new Error("Ошибка входа");
               }
             } catch (loginError) {
               console.error("Ошибка входа:", loginError);
+              toast.error("Ошибка входа. Пробуем регистрацию...");
 
-              // 3. Если вход не удался, попытка регистрации через /yandex/registration
               try {
                 const registrationResponse = await axios.get(
                   `https://registration-fastapi.onrender.com/yandex/registration?access_token=${accessToken}`,
@@ -51,16 +61,26 @@ const YandexCallback = () => {
                 );
 
                 if (registrationResponse.status === 200) {
-                  console.log("Пользователь зарегистрирован:", registrationResponse.data);
-                  const userData = registrationResponse.data;
+                  toast.success("Регистрация успешна!");
+                  const { access, refresh, ...userData } = registrationResponse.data;
                   updateUser(userData);
 
+                  Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+                  Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+                  
+                  await axios.get(
+                    `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+                    { withCredentials: true }
+                  );
+                  
                   navigate("/profile");
                 } else {
                   throw new Error("Ошибка регистрации");
                 }
               } catch (registrationError) {
                 console.error("Ошибка регистрации:", registrationError);
+                toast.error("Ошибка регистрации. Попробуйте снова.");
+                navigate("/login");
               }
             }
           } else {
@@ -68,9 +88,13 @@ const YandexCallback = () => {
           }
         } catch (tokenError) {
           console.error("Ошибка получения access_token:", tokenError);
+          toast.error("Ошибка получения access_token. Попробуйте снова.");
+          navigate("/login");
         }
       } else {
         console.error("Код авторизации не найден в URL.");
+        toast.error("Код авторизации не найден в URL.");
+        navigate("/login");
       }
     };
 

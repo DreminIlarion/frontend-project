@@ -80,6 +80,7 @@ const MailCallback = () => {
               } catch (registrationError) {
                 console.error("Ошибка регистрации:", registrationError);
                 toast.error("Ошибка регистрации. Попробуйте снова.");
+                navigate("/login");
               }
             }
           } else {
@@ -88,10 +89,12 @@ const MailCallback = () => {
         } catch (tokenError) {
           console.error("Ошибка получения access_token:", tokenError);
           toast.error("Ошибка получения access_token. Попробуйте снова.");
+          navigate("/login");
         }
       } else {
         console.error("Код авторизации не найден в URL.");
         toast.error("Код авторизации не найден в URL.");
+        navigate("/login");
       }
     };
 

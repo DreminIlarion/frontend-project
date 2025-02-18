@@ -2,6 +2,9 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import Cookies from "js-cookie";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const VKCallback = () => {
   const navigate = useNavigate();
@@ -10,98 +13,88 @@ const VKCallback = () => {
   useEffect(() => {
     const handleVKCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const fullCode = urlParams.get("code");
+      const code = urlParams.get("code");
 
-      if (fullCode) {
-        const code = fullCode.split("&")[0]; // Получаем только код
-        const deviceId = urlParams.get("device_id");
-
+      if (code) {
         try {
-          // Получаем токен от ВКонтакте
+          toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/vk/get/token?code=${code}&device_id=${deviceId}`
+            `https://registration-fastapi.onrender.com/vk/get/token?code=${code}`,
+            { withCredentials: true }
           );
 
-          if (tokenResponse.status === 200) {
-            const { access_token } = tokenResponse.data;
-            console.log("Получен access_token:", access_token);
+          if (tokenResponse.status === 200 && tokenResponse.data.access_token) {
+            const accessToken = tokenResponse.data.access_token;
 
-            if (!access_token) {
-              throw new Error("Access token отсутствует");
-            }
-
-            // Логируем значение перед отправкой
-            console.log("Перед отправкой на вход: access_token", access_token);
-
-            // Пробуем авторизоваться с помощью полученного токена
-            const loginResponse = await axios.get(
-              `https://registration-fastapi.onrender.com/vk/login`, {
-                params: { access_token }, // Параметры передаем через params
-                withCredentials: true
-              }
-            );
-
-            if (loginResponse.status === 200) {
-              console.log("Авторизация успешна:", loginResponse.data);
-              const userData = loginResponse.data;
-              updateUser(userData);
-              navigate("/profile");
-            } else {
-              throw new Error("Ошибка авторизации. Попробуем регистрацию.");
-            }
-          } else {
-            throw new Error("Ошибка получения токенов от ВКонтакте");
-          }
-        } catch (error) {
-          console.error("Ошибка при авторизации или регистрации:", error);
-
-          // Проверка, если access_token доступен для регистрации
-          try {
-            const access_token_for_registration = error.response?.data?.access_token;
-            console.log("Пробуем регистрацию с access_token:", access_token_for_registration);
-
-            if (access_token_for_registration) {
-              const registrationResponse = await axios.post(
-                `https://registration-fastapi.onrender.com/vk/registration`,
-                { access_token: access_token_for_registration }, // Отправка на регистрацию
+            try {
+              toast.info("Попытка входа...");
+              const loginResponse = await axios.get(
+                `https://registration-fastapi.onrender.com/vk/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
 
-              if (registrationResponse.status === 200) {
-                console.log("Регистрация успешна:", registrationResponse.data);
-                const { access_token: newAccessToken } = registrationResponse.data;
-                console.log("Новый access_token после регистрации:", newAccessToken);
+              if (loginResponse.status === 200) {
+                toast.success("Успешный вход!");
+                const { access, refresh, ...userData } = loginResponse.data;
+                updateUser(userData);
 
-                // Логируем новый токен перед повторной попыткой входа
-                console.log("Перед отправкой на вход новый токен:", newAccessToken);
+                Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+                Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
 
-                const loginResponse = await axios.get(
-                  `https://registration-fastapi.onrender.com/vk/login`, {
-                    params: { access_token: newAccessToken },
-                    withCredentials: true
-                  }
+                await axios.get(
+                  `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+                  { withCredentials: true }
                 );
 
-                if (loginResponse.status === 200) {
-                  console.log("Вход выполнен успешно.");
-                  const userData = loginResponse.data;
+                navigate("/profile");
+              } else {
+                throw new Error("Ошибка входа");
+              }
+            } catch (loginError) {
+              console.error("Ошибка входа:", loginError);
+              toast.error("Ошибка входа. Пробуем регистрацию...");
+
+              try {
+                const registrationResponse = await axios.get(
+                  `https://registration-fastapi.onrender.com/vk/registration?access_token=${accessToken}`,
+                  { withCredentials: true }
+                );
+
+                if (registrationResponse.status === 200) {
+                  toast.success("Регистрация успешна!");
+                  const { access, refresh, ...userData } = registrationResponse.data;
                   updateUser(userData);
+
+                  Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+                  Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+
+                  await axios.get(
+                    `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+                    { withCredentials: true }
+                  );
+
                   navigate("/profile");
                 } else {
-                  console.error("Ошибка входа после регистрации.");
+                  throw new Error("Ошибка регистрации");
                 }
-              } else {
-                console.error("Ошибка регистрации: ", registrationResponse.status);
+              } catch (registrationError) {
+                console.error("Ошибка регистрации:", registrationError);
+                toast.error("Ошибка регистрации. Попробуйте снова.");
+                navigate("/login");
               }
-            } else {
-              throw new Error("Ошибка: access_token не найден для регистрации.");
             }
-          } catch (registrationError) {
-            console.error("Ошибка регистрации: ", registrationError);
+          } else {
+            throw new Error("Не удалось получить access_token");
           }
+        } catch (tokenError) {
+          console.error("Ошибка получения access_token:", tokenError);
+          toast.error("Ошибка получения access_token. Попробуйте снова.");
+          navigate("/login");
         }
       } else {
-        console.error("Не найден код авторизации в URL.");
+        console.error("Код авторизации не найден в URL.");
+        toast.error("Код авторизации не найден в URL.");
+        navigate("/login");
       }
     };
 
