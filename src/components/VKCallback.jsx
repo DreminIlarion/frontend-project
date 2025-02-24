@@ -29,7 +29,7 @@ const VKCallback = () => {
             console.log(tokenResponse.data);
             try {
               toast.info("Попытка входа...");
-              const loginResponse = await axios.get(
+              const loginResponse = await axios.post(
                 `https://registration-fastapi.onrender.com/vk/v1/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
@@ -56,7 +56,7 @@ const VKCallback = () => {
               toast.error("Ошибка входа. Пробуем регистрацию...");
 
               try {
-                const registrationResponse = await axios.get(
+                const registrationResponse = await axios.post(
                   `https://registration-fastapi.onrender.com/vk/v1/registration?access_token=${accessToken}`,
                   { withCredentials: true }
                 );
