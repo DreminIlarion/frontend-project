@@ -26,7 +26,8 @@ const YandexCallback = () => {
 
           if (tokenResponse.status === 200 && tokenResponse.data.access_token) {
             const accessToken = tokenResponse.data.access_token;
-
+            console.log(accessToken);
+            console.log(tokenResponse.data);
             try {
               toast.info("Попытка входа...");
               const loginResponse = await axios.get(
