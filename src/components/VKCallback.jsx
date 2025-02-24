@@ -19,7 +19,7 @@ const VKCallback = () => {
         try {
           toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/vk/get/token?code=${code}`,
+            `https://registration-fastapi.onrender.com/vk/v1/get/token?code=${code}`,
             { withCredentials: true }
           );
 
@@ -29,7 +29,7 @@ const VKCallback = () => {
             try {
               toast.info("Попытка входа...");
               const loginResponse = await axios.get(
-                `https://registration-fastapi.onrender.com/vk/login?access_token=${accessToken}`,
+                `https://registration-fastapi.onrender.com/vk/v1/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
 
@@ -56,7 +56,7 @@ const VKCallback = () => {
 
               try {
                 const registrationResponse = await axios.get(
-                  `https://registration-fastapi.onrender.com/vk/registration?access_token=${accessToken}`,
+                  `https://registration-fastapi.onrender.com/vk/v1/registration?access_token=${accessToken}`,
                   { withCredentials: true }
                 );
 

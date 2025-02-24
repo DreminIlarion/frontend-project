@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+toast.configure();
+
 const MailCallback = () => {
   const navigate = useNavigate();
   const { updateUser } = useUser();
@@ -19,7 +21,7 @@ const MailCallback = () => {
         try {
           toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/mail.ru/get/token?code=${code}`,
+            `https://registration-fastapi.onrender.com/mail.ru/v1/get/token?code=${code}`,
             { withCredentials: true }
           );
 
@@ -29,7 +31,7 @@ const MailCallback = () => {
             try {
               toast.info("Попытка входа...");
               const loginResponse = await axios.get(
-                `https://registration-fastapi.onrender.com/mail.ru/login?access_token=${accessToken}`,
+                `https://registration-fastapi.onrender.com/mail.ru/v1/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
 
@@ -80,7 +82,6 @@ const MailCallback = () => {
               } catch (registrationError) {
                 console.error("Ошибка регистрации:", registrationError);
                 toast.error("Ошибка регистрации. Попробуйте снова.");
-                navigate("/login");
               }
             }
           } else {
@@ -89,12 +90,10 @@ const MailCallback = () => {
         } catch (tokenError) {
           console.error("Ошибка получения access_token:", tokenError);
           toast.error("Ошибка получения access_token. Попробуйте снова.");
-          navigate("/login");
         }
       } else {
         console.error("Код авторизации не найден в URL.");
         toast.error("Код авторизации не найден в URL.");
-        navigate("/login");
       }
     };
 

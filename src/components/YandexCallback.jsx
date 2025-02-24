@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+toast.configure();
+
 const YandexCallback = () => {
   const navigate = useNavigate();
   const { updateUser } = useUser();
@@ -19,17 +21,17 @@ const YandexCallback = () => {
         try {
           toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/yandex/get/token?code=${code}`,
+            `https://registration-fastapi.onrender.com/yandex/v1/get/token?code=${code}`,
             { withCredentials: true }
           );
 
           if (tokenResponse.status === 200 && tokenResponse.data.access_token) {
             const accessToken = tokenResponse.data.access_token;
-            
+
             try {
               toast.info("Попытка входа...");
               const loginResponse = await axios.get(
-                `https://registration-fastapi.onrender.com/yandex/login?access_token=${accessToken}`,
+                `https://registration-fastapi.onrender.com/yandex/v1/login?access_token=${accessToken}`,
                 { withCredentials: true }
               );
 
@@ -56,7 +58,7 @@ const YandexCallback = () => {
 
               try {
                 const registrationResponse = await axios.get(
-                  `https://registration-fastapi.onrender.com/yandex/registration?access_token=${accessToken}`,
+                  `https://registration-fastapi.onrender.com/yandex/v1/registration?access_token=${accessToken}`,
                   { withCredentials: true }
                 );
 
@@ -80,7 +82,6 @@ const YandexCallback = () => {
               } catch (registrationError) {
                 console.error("Ошибка регистрации:", registrationError);
                 toast.error("Ошибка регистрации. Попробуйте снова.");
-                navigate("/login");
               }
             }
           } else {
@@ -89,12 +90,10 @@ const YandexCallback = () => {
         } catch (tokenError) {
           console.error("Ошибка получения access_token:", tokenError);
           toast.error("Ошибка получения access_token. Попробуйте снова.");
-          navigate("/login");
         }
       } else {
         console.error("Код авторизации не найден в URL.");
         toast.error("Код авторизации не найден в URL.");
-        navigate("/login");
       }
     };
 
