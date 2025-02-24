@@ -120,7 +120,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://registration-fastapi.onrender.com/${provider}/link`,
+        `https://registration-fastapi.onrender.com/${provider}/v1/link`,
         { method: 'GET' }
       );
 
