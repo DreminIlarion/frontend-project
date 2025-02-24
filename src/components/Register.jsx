@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaVk, FaYandex, FaEnvelope } from 'react-icons/fa';
 
-
 const Register = () => {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isChecked, setIsChecked] = useState(false); // Состояние для чекбокса
+    const [isChecked, setIsChecked] = useState(false);
     const navigate = useNavigate();
 
     const handleRegister = async (e) => {
@@ -17,6 +18,8 @@ const Register = () => {
         setIsLoading(true);
 
         const body = {
+            first_name: firstName,
+            last_name: lastName,
             phone_number: phoneNumber,
             email: email,
             hash_password: password
@@ -24,7 +27,7 @@ const Register = () => {
 
         try {
             const response = await fetch(
-                `https://registration-fastapi.onrender.com/authorization/registration`,
+                `https://registration-fastapi.onrender.com/authorization/v1/registration`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -48,12 +51,12 @@ const Register = () => {
     };
 
     const handleOAuthRedirect = async (provider) => {
-        if (!isChecked) return; // Блокируем OAuth-кнопки без согласия
+        if (!isChecked) return;
 
         setIsLoading(true);
         try {
             const response = await fetch(
-                `https://registration-fastapi.onrender.com/${provider}/link`,
+                `https://registration-fastapi.onrender.com/${provider}/v1/link`,
                 { method: 'GET' }
             );
 
@@ -80,12 +83,33 @@ const Register = () => {
                 <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Регистрация</h2>
                 <form onSubmit={handleRegister}>
                     <div className="mb-6">
-                        <label htmlFor="email" className="block text-sm font-semibold mb-2 text-gray-700">
-                            Электронная почта
-                        </label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Имя</label>
                         <input
-                        required
-                            id="email"
+                            required
+                            type="text"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Введите ваше имя"
+                        />
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Фамилия</label>
+                        <input
+                            required
+                            type="text"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Введите вашу фамилию"
+                        />
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Электронная почта</label>
+                        <input
+                            required
                             type="email"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             value={email}
@@ -95,12 +119,9 @@ const Register = () => {
                     </div>
 
                     <div className="mb-6">
-                        <label htmlFor="phone_number" className="block text-sm font-semibold mb-2 text-gray-700">
-                            Номер телефона
-                        </label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Номер телефона</label>
                         <input
-                        required
-                            id="phone_number"
+                            required
                             type="tel"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             value={phoneNumber}
@@ -110,12 +131,9 @@ const Register = () => {
                     </div>
 
                     <div className="mb-6">
-                        <label htmlFor="password" className="block text-sm font-semibold mb-2 text-gray-700">
-                            Пароль
-                        </label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Пароль</label>
                         <input
-                        required
-                            id="password"
+                            required
                             type="password"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             value={password}
@@ -146,12 +164,6 @@ const Register = () => {
                             </a>
                         </label>
                     </div>
-
-                    {!isChecked && (
-                        <p className="text-xs text-red-500 mb-4">
-                            Пожалуйста, поставьте галочку для согласия с обработкой персональных данных.
-                        </p>
-                    )}
 
                     <button
                         type="submit"
@@ -194,9 +206,7 @@ const Register = () => {
                             Яндекс
                         </button>
                     </div>
-                </div>
-
-                <p className="mt-6 text-center text-sm text-gray-700">
+                    <p className="mt-6 text-center text-sm text-gray-700">
                     Уже есть аккаунт?{' '}
                     <span
                         role="link"
@@ -207,6 +217,7 @@ const Register = () => {
                         Войдите
                     </span>
                 </p>
+                </div>
             </div>
         </div>
     );

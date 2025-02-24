@@ -29,8 +29,8 @@ const Login = () => {
       : { email: email, hash_password: password };
   
     const loginEndpoint = isPhoneLogin
-      ? '/authorization/login/phone/number'
-      : '/authorization/login/email';
+      ? '/authorization/v1/login/phone/number'
+      : '/authorization/v1/login/email';
   
     try {
       // Запрос авторизации
