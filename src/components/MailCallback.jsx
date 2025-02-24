@@ -58,7 +58,7 @@ const MailCallback = () => {
 
               try {
                 const registrationResponse = await axios.get(
-                  `https://registration-fastapi.onrender.com/mail.ru/registration?access_token=${accessToken}`,
+                  `https://registration-fastapi.onrender.com/mail.ru/v1/registration?access_token=${accessToken}`,
                   { withCredentials: true }
                 );
 

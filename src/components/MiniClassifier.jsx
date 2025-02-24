@@ -50,7 +50,7 @@ const ClassifierForm = () => {
     };
   
     try {
-      const response = await fetch('https://personal-account-fastapi.onrender.com/predict/free', {
+      const response = await fetch('https://personal-account-fastapi.onrender.com/predict/v1/free', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

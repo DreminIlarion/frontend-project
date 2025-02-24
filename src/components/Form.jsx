@@ -59,7 +59,7 @@ const Form = () => {
     };
   
     try {
-      const response = await fetch('https://personal-account-fastapi.onrender.com/predict/', {
+      const response = await fetch('https://personal-account-fastapi.onrender.com/predict/v1/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

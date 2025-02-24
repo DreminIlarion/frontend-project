@@ -14,12 +14,12 @@ const VKCallback = () => {
     const handleVKCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
-
+      const device_id = urlParams.get("device_id");
       if (code) {
         try {
           toast.info("Запрашиваем access_token...");
           const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/vk/v1/get/token?code=${code}`,
+            `https://registration-fastapi.onrender.com/vk/v1/get/token?code=${code}&device_id=${device_id}`,
             { withCredentials: true }
           );
 
