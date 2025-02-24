@@ -1,11 +1,9 @@
 import React, { useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 
 const YandexCallback = () => {
   const navigate = useNavigate();
@@ -16,85 +14,92 @@ const YandexCallback = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
 
-      if (code) {
-        try {
-          toast.info("Запрашиваем access_token...");
-          const tokenResponse = await axios.get(
-            `https://registration-fastapi.onrender.com/yandex/v1/get/token?code=${code}`,
-            { withCredentials: true }
-          );
-
-          if (tokenResponse.status === 200 && tokenResponse.data.access_token) {
-            const accessToken = tokenResponse.data.access_token;
-            console.log(accessToken);
-            console.log(tokenResponse.data);
-            try {
-              toast.info("Попытка входа...");
-              const loginResponse = await axios.post(
-                `https://registration-fastapi.onrender.com/yandex/v1/login?access_token=${accessToken}`,
-                { withCredentials: true }
-              );
-
-              if (loginResponse.status === 200) {
-                toast.success("Успешный вход!");
-                const { access, refresh, ...userData } = loginResponse.data;
-                updateUser(userData);
-
-                Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-                Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-                
-                await axios.get(
-                  `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
-                  { withCredentials: true }
-                );
-                
-                navigate("/profile");
-              } else {
-                throw new Error("Ошибка входа");
-              }
-            } catch (loginError) {
-              console.error("Ошибка входа:", loginError);
-              toast.error("Ошибка входа. Пробуем регистрацию...");
-
-              try {
-                const registrationResponse = await axios.post(
-                  `https://registration-fastapi.onrender.com/yandex/v1/registration?access_token=${accessToken}`,
-                  { withCredentials: true }
-                );
-
-                if (registrationResponse.status === 200) {
-                  toast.success("Регистрация успешна!");
-                  const { access, refresh, ...userData } = registrationResponse.data;
-                  updateUser(userData);
-
-                  Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-                  Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-                  
-                  await axios.get(
-                    `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
-                    { withCredentials: true }
-                  );
-                  
-                  navigate("/profile");
-                } else {
-                  throw new Error("Ошибка регистрации");
-                }
-              } catch (registrationError) {
-                console.error("Ошибка регистрации:", registrationError);
-                toast.error("Ошибка регистрации. Попробуйте снова.");
-              }
-            }
-          } else {
-            throw new Error("Не удалось получить access_token");
-          }
-        } catch (tokenError) {
-          console.error("Ошибка получения access_token:", tokenError);
-          toast.error("Ошибка получения access_token. Попробуйте снова.");
-        }
-      } else {
-        console.error("Код авторизации не найден в URL.");
+      if (!code) {
         toast.error("Код авторизации не найден в URL.");
+        navigate("/login");
+        return;
       }
+
+      try {
+        toast.info("Запрашиваем access_token...");
+        const tokenResponse = await fetch(
+          `https://registration-fastapi.onrender.com/yandex/v1/get/token?code=${code}`,
+          { credentials: "include" }
+        );
+        const tokenData = await tokenResponse.json();
+
+        if (!tokenResponse.ok || !tokenData.access_token) {
+          throw new Error("Не удалось получить access_token");
+        }
+
+        await loginWithYandex(tokenData.access_token);
+      } catch (error) {
+        console.error("Ошибка получения access_token:", error);
+        toast.error("Ошибка получения access_token. Попробуйте снова.");
+        navigate("/login");
+      }
+    };
+
+    const loginWithYandex = async (accessToken) => {
+      try {
+        toast.info("Попытка входа...");
+        const loginResponse = await fetch(
+          `https://registration-fastapi.onrender.com/yandex/v1/login?access_token=${accessToken}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const loginData = await loginResponse.json();
+
+        if (!loginResponse.ok) throw new Error("Ошибка входа");
+
+        await handleAuthSuccess(loginData);
+      } catch (error) {
+        console.error("Ошибка входа:", error);
+        toast.error("Ошибка входа. Пробуем регистрацию...");
+        await registerWithYandex(accessToken);
+      }
+    };
+
+    const registerWithYandex = async (accessToken) => {
+      try {
+        toast.info("Попытка регистрации...");
+        const registrationResponse = await fetch(
+          `https://registration-fastapi.onrender.com/yandex/v1/registration?access_token=${accessToken}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const registrationData = await registrationResponse.json();
+
+        if (!registrationResponse.ok) throw new Error("Ошибка регистрации");
+
+        await handleAuthSuccess(registrationData);
+      } catch (error) {
+        console.error("Ошибка регистрации:", error);
+        toast.error("Ошибка регистрации. Попробуйте снова.");
+        navigate("/login");
+      }
+    };
+
+    const handleAuthSuccess = async (data) => {
+      const { access, refresh, ...userData } = data;
+      updateUser(userData);
+
+      Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+      Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+
+      await fetch(
+        `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+        { credentials: "include" }
+      );
+
+      toast.success("Успешный вход!");
+      navigate("/profile");
     };
 
     handleYandexCallback();
