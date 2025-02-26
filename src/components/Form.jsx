@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Text, Legend } from 'recharts';
+
 const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
@@ -336,7 +336,7 @@ const Form = () => {
                   ))}
                 </>
               )}
-              {section === "points" && pointsHistory[rec.direction_id] && (
+              {/* {section === "points" && pointsHistory[rec.direction_id] && (
                 <>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Динамика баллов</h3>
                   <ResponsiveContainer width="100%" height={300}>
@@ -360,7 +360,7 @@ const Form = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </>
-              )}
+              )} */}
             </div>
           ))}
         </div>
