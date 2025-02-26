@@ -29,8 +29,8 @@ const Login = () => {
       : { email: email, hash_password: password };
   
     const loginEndpoint = isPhoneLogin
-      ? '/authorizations/v1/login/phone/number'
-      : '/authorizations/v1/login/email';
+      ? '/api/v1/authorizations/login/phone/number'
+      : '/api/v1/authorizations/login/email';
   
     try {
       // Запрос авторизации
@@ -122,7 +122,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://registration-fastapi.onrender.com/${provider}/v1/link`,
+        `https://registration-fastapi.onrender.com/api/v1/${provider}/link`,
         { method: 'GET' }
       );
 

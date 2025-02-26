@@ -27,7 +27,7 @@ const Register = () => {
 
         try {
             const response = await fetch(
-                `https://registration-fastapi.onrender.com/authorizations/v1/registration`,
+                `https://registration-fastapi.onrender.com/api/v1/authorizations/registration`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -56,7 +56,7 @@ const Register = () => {
         setIsLoading(true);
         try {
             const response = await fetch(
-                `https://registration-fastapi.onrender.com/${provider}/v1/link`,
+                `https://registration-fastapi.onrender.com/api/v1/${provider}/link`,
                 { method: 'GET' }
             );
 

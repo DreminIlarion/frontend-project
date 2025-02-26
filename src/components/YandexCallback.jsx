@@ -23,7 +23,7 @@ const YandexCallback = () => {
       try {
         toast.info("Запрашиваем access_token...");
         const tokenResponse = await fetch(
-          `https://registration-fastapi.onrender.com/yandex/v1/get/token/${code}`,
+          `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}`,
           { credentials: "include" }
         );
         const tokenData = await tokenResponse.json();
@@ -44,7 +44,7 @@ const YandexCallback = () => {
       try {
         toast.info("Попытка входа...");
         const loginResponse = await fetch(
-          `https://registration-fastapi.onrender.com/yandex/v1/login/${accessToken}`,
+          `https://registration-fastapi.onrender.com/api/v1/yandex/login/${accessToken}`,
           {
             method: "POST",
             credentials: "include",
@@ -67,7 +67,7 @@ const YandexCallback = () => {
       try {
         toast.info("Попытка регистрации...");
         const registrationResponse = await fetch(
-          `https://registration-fastapi.onrender.com/yandex/v1/registration/${accessToken}`,
+          `https://registration-fastapi.onrender.com/api/v1/yandex/registration/${accessToken}`,
           {
             method: "POST",
             credentials: "include",
