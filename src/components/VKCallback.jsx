@@ -24,7 +24,7 @@ const VKCallback = () => {
       try {
         toast.info("Запрашиваем access_token...");
         const tokenResponse = await fetch(
-          `https://registration-fastapi.onrender.com/vk/v1/get/token?code=${code}&device_id=${device_id}`,
+          `https://registration-fastapi.onrender.com/vk/v1/get/token/${code}/${device_id}`,
           { credentials: "include" }
         );
         const tokenData = await tokenResponse.json();
@@ -45,7 +45,7 @@ const VKCallback = () => {
       try {
         toast.info("Попытка входа...");
         const loginResponse = await fetch(
-          `https://registration-fastapi.onrender.com/vk/v1/login?access_token=${accessToken}`,
+          `https://registration-fastapi.onrender.com/vk/v1/login/${accessToken}`,
           {
             method: "POST",
             credentials: "include",
@@ -68,7 +68,7 @@ const VKCallback = () => {
       try {
         toast.info("Попытка регистрации...");
         const registrationResponse = await fetch(
-          `https://registration-fastapi.onrender.com/vk/v1/registration?access_token=${accessToken}`,
+          `https://registration-fastapi.onrender.com/vk/v1/registration/${accessToken}`,
           {
             method: "POST",
             credentials: "include",
