@@ -8,7 +8,7 @@ const Events = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("https://events-fastapi.onrender.com/api/events/v1/get/", {
+    fetch("https://events-fastapi.onrender.com/api/v1/events/get/", {
       credentials: "include",
     })
       .then((response) => {
@@ -22,7 +22,7 @@ const Events = () => {
 
   const handleRegistration = async (eventId) => {
     const isRegistered = registeredEvents.has(eventId);
-    const url = `https://events-fastapi.onrender.com/api/visitors/v1/${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `https://events-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
   
     try {
