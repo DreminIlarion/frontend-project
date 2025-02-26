@@ -57,12 +57,14 @@ const Login = () => {
           path: '/',
           secure: true,
           sameSite: 'None',
+          
           expires: 1, // 1 день
         });
         Cookies.set('refresh', refresh, {
           path: '/',
           secure: true,
           sameSite: 'None',
+          
           expires: 7, // 7 дней
         });
         const accessToken = getTokenFromCookies('access');  // Получение access токена из cookies

@@ -26,19 +26,17 @@ const Events = () => {
     const method = isRegistered ? "DELETE" : "POST";
   
     try {
-      const token = localStorage.getItem("access"); // Проверяем токен в локальном хранилище
+      
   
-      if (!token) {
-        console.error("Ошибка: Нет токена, пользователь не залогинен");
-        return;
-      }
+     
   
       const response = await fetch(url, {
         method,
-        credentials: "include", // Включаем отправку cookies
+        credentials: "include",
         headers: {
-          "Authorization": `Bearer ${token}`, // Передаём токен в заголовке
-        },
+          "Content-Type": "application/json",
+          
+        }
       });
   
       if (!response.ok) throw new Error(`Ошибка ${response.status}`);
@@ -52,6 +50,7 @@ const Events = () => {
       console.error("Ошибка при изменении записи:", error.message);
     }
   };
+  
   
 
   const toggleEventDetails = (eventId) => {
@@ -88,9 +87,9 @@ const Events = () => {
 
             {expandedEvent === event.id && (
               <div className="mt-3 space-y-2 text-gray-700">
-                <p><strong>📍 Место:</strong> {event.location || "Не указано"}</p>
-                <p><strong>ℹ️ Описание:</strong> {event.description || "Нет описания"}</p>
-                <p><strong>👥 Лимит:</strong> {event.limit_people > 0 ? event.limit_people : "Неограничено"}</p>
+                <p><strong> Место:</strong> {event.location || "Не указано"}</p>
+                <p><strong> Описание:</strong> {event.description || "Нет описания"}</p>
+                <p><strong> Лимит:</strong> {event.limit_people > 0 ? event.limit_people : "Неограничено"}</p>
               </div>
             )}
 

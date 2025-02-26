@@ -134,7 +134,7 @@ const handleLogout = async () => {
           )}
           {activeSection === 'events' && (
             <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-6 text-center text-black">События</h2>
+              
               <Events />
             </div>
           )}
