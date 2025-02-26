@@ -95,7 +95,7 @@ const VKCallback = () => {
       Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
 
       await fetch(
-        `https://personal-account-fastapi.onrender.com/get/token/?access=${access}&refresh=${refresh}`,
+        `https://personal-account-fastapi.onrender.com/get/token/${access}/${refresh}`,
         { credentials: "include" }
       );
 

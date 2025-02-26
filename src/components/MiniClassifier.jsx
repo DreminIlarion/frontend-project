@@ -90,10 +90,10 @@ const ClassifierForm = () => {
               required
             >
               <option value="">Выберите пол</option>
-              <option value="М">Мужской</option>
-              <option value="Ж">Женский</option>
+              <option value="male">Мужской</option>
+              <option value="female">Женский</option>
             </select>
-          </label>
+          </label>  
 
           <label className="block text-sm font-semibold">Средний балл аттестата:
             <input

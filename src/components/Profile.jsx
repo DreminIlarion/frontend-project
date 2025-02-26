@@ -6,6 +6,7 @@ import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
 import Cookies from "js-cookie";
+import Events from './Events';
 const Profile = () => {
   const { user, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
@@ -95,6 +96,12 @@ const handleLogout = async () => {
                   </button>
                 </li>
                 <li className="mb-2">
+                  <button onClick={() => { setActiveSection('events'); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    События
+                  </button>
+                </li>
+
+                <li className="mb-2">
                   <button onClick={() => { setActiveSection('classifier'); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
                     Базовый шанс поступления
                   </button>
@@ -125,6 +132,13 @@ const handleLogout = async () => {
               <ClassifierForm />
             </div>
           )}
+          {activeSection === 'events' && (
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold mb-6 text-center text-black">События</h2>
+              <Events />
+            </div>
+          )}
+
           {!activeSection && (
             <div className="flex items-center justify-center min-h-screen text-black text-center">
               <div className="mb-8">

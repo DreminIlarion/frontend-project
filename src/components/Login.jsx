@@ -69,7 +69,7 @@ const Login = () => {
         const refreshToken = getTokenFromCookies('refresh');
         try {
             const response = await fetch(
-              `https://personal-account-fastapi.onrender.com/get/token/?access=${accessToken}&refresh=${refreshToken}`,
+              `https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`,
               {
                 method: 'GET',
                 headers: {
