@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from "chart.js";
 
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
@@ -17,6 +20,45 @@ const Form = () => {
   const [pointsHistory, setPointsHistory] = useState({});
   const [openSections, setOpenSections] = useState({});
   const sortedRecommendations = [...recommendations].sort((a, b) => b.probability - a.probability);
+
+  const LineChartComponent = ({ data }) => {
+    const chartData = {
+      labels: data.map((item) => item.year), // Года по оси X
+      datasets: [
+        {
+          label: "Баллы",
+          data: data.map((item) => item.points), // Значения по Y
+          borderColor: "#4F46E5",
+          backgroundColor: "rgba(79, 70, 229, 0.2)",
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: "#4F46E5",
+          tension: 0.4, // Плавность линий
+        },
+      ],
+    };
+  
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Год", color: "#333" },
+        },
+        y: {
+          title: { display: true, text: "Баллы", color: "#333" },
+          beginAtZero: false,
+        },
+      },
+    };
+  
+    return <Line data={chartData} options={options} />;
+  };
+  
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -336,6 +378,16 @@ const Form = () => {
                   ))}
                 </>
               )}
+              {section === "points" && pointsHistory[rec.direction_id] && (
+              <>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Динамика баллов</h3>
+                <div className="h-60">
+                  <LineChartComponent data={pointsHistory[rec.direction_id]} />
+                </div>
+              </>
+            )}
+
+
               {/* {section === "points" && pointsHistory[rec.direction_id] && (
                 <>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Динамика баллов</h3>
