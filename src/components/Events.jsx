@@ -22,7 +22,7 @@ const Events = () => {
 
   const handleRegistration = async (eventId) => {
     const isRegistered = registeredEvents.has(eventId);
-    const url = `https://events-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `https://personal-account-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
   
     try {
