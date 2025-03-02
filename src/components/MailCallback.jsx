@@ -33,8 +33,7 @@ const MailCallback = () => {
 
         await loginWithMail(tokenData.access_token);
       } catch (error) {
-        console.error("Ошибка получения access_token:", error);
-        toast.error("Ошибка получения access_token. Попробуйте снова.");
+        
       }
     };
 
@@ -55,8 +54,7 @@ const MailCallback = () => {
 
         await handleAuthSuccess(loginData);
       } catch (error) {
-        console.error("Ошибка входа:", error);
-        toast.error("Ошибка входа. Пробуем регистрацию...");
+        
         await registerWithMail(accessToken);
       }
     };
@@ -78,8 +76,7 @@ const MailCallback = () => {
 
         await handleAuthSuccess(registrationData);
       } catch (error) {
-        console.error("Ошибка регистрации:", error);
-        toast.error("Ошибка регистрации. Попробуйте снова.");
+        
       }
     };
 

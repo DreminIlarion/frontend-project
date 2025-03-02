@@ -15,8 +15,7 @@ const YandexCallback = () => {
       const code = urlParams.get("code");
 
       if (!code) {
-        toast.error("Код авторизации не найден в URL.");
-        navigate("/login");
+        
         return;
       }
 
@@ -34,9 +33,7 @@ const YandexCallback = () => {
 
         await loginWithYandex(tokenData.access_token);
       } catch (error) {
-        console.error("Ошибка получения access_token:", error);
-        toast.error("Ошибка получения access_token. Попробуйте снова.");
-        navigate("/login");
+        
       }
     };
 
@@ -57,8 +54,7 @@ const YandexCallback = () => {
 
         await handleAuthSuccess(loginData);
       } catch (error) {
-        console.error("Ошибка входа:", error);
-        toast.error("Ошибка входа. Пробуем регистрацию...");
+        
         await registerWithYandex(accessToken);
       }
     };
@@ -80,9 +76,7 @@ const YandexCallback = () => {
 
         await handleAuthSuccess(registrationData);
       } catch (error) {
-        console.error("Ошибка регистрации:", error);
-        toast.error("Ошибка регистрации. Попробуйте снова.");
-        navigate("/login");
+        
       }
     };
 

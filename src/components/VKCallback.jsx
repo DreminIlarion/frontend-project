@@ -16,8 +16,7 @@ const VKCallback = () => {
       const device_id = urlParams.get("device_id");
 
       if (!code) {
-        toast.error("Код авторизации не найден в URL.");
-        navigate("/login");
+       
         return;
       }
 
@@ -35,9 +34,7 @@ const VKCallback = () => {
 
         await loginWithVK(tokenData.access_token);
       } catch (error) {
-        console.error("Ошибка получения access_token:", error);
-        toast.error("Ошибка получения access_token. Попробуйте снова.");
-        navigate("/login");
+        
       }
     };
 
@@ -58,8 +55,7 @@ const VKCallback = () => {
 
         await handleAuthSuccess(loginData);
       } catch (error) {
-        console.error("Ошибка входа:", error);
-        toast.error("Ошибка входа. Пробуем регистрацию...");
+        
         await registerWithVK(accessToken);
       }
     };
@@ -81,9 +77,7 @@ const VKCallback = () => {
 
         await handleAuthSuccess(registrationData);
       } catch (error) {
-        console.error("Ошибка регистрации:", error);
-        toast.error("Ошибка регистрации. Попробуйте снова.");
-        navigate("/login");
+        
       }
     };
 
