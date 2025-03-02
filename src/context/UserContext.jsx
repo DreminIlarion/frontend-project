@@ -28,8 +28,9 @@ export const UserProvider = ({ children }) => {
 
 // Функция для логина пользователя
 export const userLogin = async (username, password) => {
-  const response = await fetch('https://registration-fastapi.onrender.com/login', {
+  const response = await fetch('https://registration-fastapi.onrender.com/api/v1/authorizations/login/email', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ username, password }),
       
@@ -44,8 +45,9 @@ export const userLogin = async (username, password) => {
 
 // Функция для регистрации нового пользователя
 export const userRegister = async (userData) => {
-  const response = await fetch('https://registration-fastapi.onrender.com/registration', {
+  const response = await fetch('https://registration-fastapi.onrender.com/api/v1/authorizations/registration', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
   });
