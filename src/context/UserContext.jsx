@@ -32,7 +32,7 @@ export const UserProvider = ({ children }) => {
           }
         } catch (error) {
           console.error("Ошибка при проверке токенов:", error);
-          logout();
+          
         }
       }
       setLoading(false);
