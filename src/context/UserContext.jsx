@@ -25,6 +25,7 @@ export const UserProvider = ({ children }) => {
 
           if (response.ok) {
             const data = await response.json();
+            console.log("Данные от сервера:", data);
             setUser(data.user);
           } else {
             console.log("Токен недействителен. Нужно перелогиниться.");

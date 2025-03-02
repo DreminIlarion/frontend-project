@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '../context/UserContext';
-import { Link } from 'react-router-dom';
+import { Link,Navigate } from 'react-router-dom';
 import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
@@ -25,7 +25,7 @@ const Profile = () => {
       Cookies.remove("refresh", { path: "/" });
 
       logout();
-      window.location.reload();
+      
     } catch (error) {
       console.error("Ошибка при выходе:", error);
     }
@@ -45,9 +45,10 @@ const Profile = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen]);
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Загрузка...</div>;
-  }
+  console.log("Пользователь в Profile:", user);
+if (loading) return <div>Загрузка...</div>;
+if (!user) return <Navigate to="/login" />;
+
 
   return (
     <div className="flex flex-col font-sans min-h-screen">
