@@ -15,8 +15,9 @@ import Test from "./components/Cht";
 const ProtectedRoute = ({ element }) => {
   const { user, loading } = useUser();
 
-  if (loading) return <div>Загрузка...</div>; // Показываем загрузку
-  return user ? element : <Navigate to="/login" replace />;
+  if (loading) return <div>Загрузка...</div>;
+  if (!user) return <Navigate to="/login" />;
+
 };
 
 const App = () => {
