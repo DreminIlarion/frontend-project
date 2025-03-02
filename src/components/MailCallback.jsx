@@ -22,7 +22,7 @@ const MailCallback = () => {
       try {
         toast.info("Запрашиваем access_token...");
         const tokenResponse = await fetch(
-          `https://registration-fastapi.onrender.com/api/v1/mail.ru/get/${code}`,
+          `https://registration-fastapi.onrender.com/api/v1/mail.ru/get/token/${code}`,
           { credentials: "include" }
         );
         const tokenData = await tokenResponse.json();

@@ -114,7 +114,7 @@ const Form = () => {
 
   const fetchDetails = async (directionId) => {
     try {
-      const response = await fetch(`https://personal-account-fastapi.onrender.com/predict/v1/direction/${directionId}`, {
+      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/direction/${directionId}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -148,7 +148,7 @@ const Form = () => {
 
   const fetchPointsHistory = async (directionId) => {
     try {
-      const response = await fetch(`https://personal-account-fastapi.onrender.com/predict/v1/points/${directionId}`, {
+      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/points/${directionId}`, {
         method: 'GET',
 
         credentials: 'include',
@@ -169,7 +169,7 @@ const Form = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://personal-account-fastapi.onrender.com/predict/v1/', {
+      const response = await fetch('https://personal-account-fastapi.onrender.com/api/v1/predict/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
