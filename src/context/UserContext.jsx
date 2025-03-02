@@ -11,7 +11,7 @@ export const UserProvider = ({ children }) => {
     const loadUserFromCookies = async () => {
       const access = Cookies.get("access");
       const refresh = Cookies.get("refresh");
-
+  
       if (access && refresh) {
         try {
           const response = await fetch(
@@ -22,25 +22,27 @@ export const UserProvider = ({ children }) => {
               credentials: "include",
             }
           );
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log("Данные от сервера:", data);
+  
+          const data = await response.json();
+          console.log("🔍 Ответ от сервера:", data);
+  
+          if (response.ok && data.user) {
             setUser(data.user);
           } else {
-            console.log("Токен недействителен. Нужно перелогиниться.");
+            console.log("❌ Токен недействителен или пользователь не найден.");
             logout();
           }
         } catch (error) {
           console.error("Ошибка при проверке токенов:", error);
-          
         }
       }
+  
       setLoading(false);
     };
-
+  
     loadUserFromCookies();
-  }, []); // Убрал сложные зависимости
+  }, []);
+  
 
   const login = (userData, access, refresh) => {
     setUser(userData);
