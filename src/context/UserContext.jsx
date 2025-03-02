@@ -8,46 +8,60 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUserFromCookies = async () => {
+    const checkAuth = async () => {
       const access = Cookies.get("access");
       const refresh = Cookies.get("refresh");
-  
-      if (access && refresh) {
-        try {
-          const response = await fetch(
-            `https://personal-account-fastapi.onrender.com/get/token/${access}/${refresh}`,
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-            }
-          );
-  
-          const data = await response.json();
-          console.log("🔍 Ответ от сервера:", data);
-  
-          if (response.ok && data.user) {
-            setUser(data.user);
-          } else {
-            console.log("❌ Токен недействителен или пользователь не найден.");
-            logout();
-          }
-        } catch (error) {
-          console.error("Ошибка при проверке токенов:", error);
-        }
+
+      if (!access || !refresh) {
+        console.log("⚠ Токены отсутствуют, требуется авторизация.");
+        setLoading(false);
+        return;
       }
-  
-      setLoading(false);
+
+      try {
+        const response = await fetch(
+          `https://personal-account-fastapi.onrender.com/get/token/${access}/${refresh}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          }
+        );
+
+        const data = await response.json();
+        console.log("🔍 Ответ от сервера при проверке токена:", data);
+
+        if (response.ok && data.user) {
+          setUser(data.user);
+        } else {
+          console.log("❌ Сервер не вернул пользователя, разлогиниваем.");
+          logout();
+        }
+      } catch (error) {
+        console.error("❌ Ошибка при проверке токенов:", error);
+        logout();
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    loadUserFromCookies();
+
+    checkAuth();
   }, []);
-  
 
   const login = (userData, access, refresh) => {
     setUser(userData);
-    Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-    Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+    Cookies.set("access", access, {
+      path: "/",
+      secure: true,
+      sameSite: "None",
+      expires: 1,
+    });
+    Cookies.set("refresh", refresh, {
+      path: "/",
+      secure: true,
+      sameSite: "None",
+      expires: 7,
+    });
   };
 
   const logout = () => {
