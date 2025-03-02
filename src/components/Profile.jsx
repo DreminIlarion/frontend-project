@@ -8,36 +8,28 @@ import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
 const Profile = () => {
-  const { user, logout } = useUser();
+  const { user, logout, loading } = useUser();
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
+  const handleLogout = async () => {
+    try {
+      await fetch("https://personal-account-fastapi.onrender.com/logout/", {
+        method: "GET",
+        credentials: "include",
+      });
 
+      Cookies.remove("access", { path: "/" });
+      Cookies.remove("refresh", { path: "/" });
 
-const handleLogout = async () => {
-  try {
-    await fetch("https://personal-account-fastapi.onrender.com/logout/", {
-      method: "GET",
-      credentials: "include", // Убеждаемся, что сервер отправляет Set-Cookie на удаление
-    });
-
-    // Принудительное удаление куки
-    Cookies.remove("access", { path: "/", domain: "personal-account-fastapi.onrender.com" });
-    Cookies.remove("refresh", { path: "/", domain: "personal-account-fastapi.onrender.com" });
-
-    // Удаление без домена (на случай, если куки без него)
-    Cookies.remove("access");
-    Cookies.remove("refresh");
-
-    logout();
-    window.location.reload();
-  } catch (error) {
-    console.error("Ошибка при выходе:", error);
-  }
-};
-
+      logout();
+      window.location.reload();
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -46,12 +38,16 @@ const handleLogout = async () => {
       }
     };
     if (isSidebarOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Загрузка...</div>;
+  }
 
   return (
     <div className="flex flex-col font-sans min-h-screen">
@@ -68,8 +64,12 @@ const handleLogout = async () => {
           </button>
           <h1 className="text-2xl font-bold flex-1 text-center lg:flex-none">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-4">
-            <Link to="/help" className="hover:underline">Помощь</Link>
-            <Link to="/contact" className="hover:underline">Контакты</Link>
+            <Link to="/help" className="hover:underline">
+              Помощь
+            </Link>
+            <Link to="/contact" className="hover:underline">
+              Контакты
+            </Link>
           </div>
         </div>
       </header>
@@ -78,7 +78,7 @@ const handleLogout = async () => {
         <div
           ref={sidebarRef}
           className={`fixed top-0 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-lg transition-transform duration-300 ease-in-out
-          ${isSidebarOpen ? 'translate-x-0 h-full' : '-translate-x-full'} lg:translate-x-0 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50`}
+          ${isSidebarOpen ? "translate-x-0 h-full" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50`}
         >
           <div className="flex items-center px-6 py-4 border-b border-blue-600">
             <FaUserCircle className="text-3xl text-white mr-3" />
@@ -86,67 +86,42 @@ const handleLogout = async () => {
           </div>
           <ul className="mt-4">
             <li className="mb-2">
-              <Link to="/" className="w-full text-left px-6 py-3 block hover:text-white">Главная страница</Link>
+              <Link to="/" className="w-full text-left px-6 py-3 block hover:text-white">
+                Главная страница
+              </Link>
             </li>
             {user && (
               <>
                 <li className="mb-2">
-                  <button onClick={() => { setActiveSection('form'); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                  <button onClick={() => setActiveSection("form")} className="w-full text-left px-6 py-3 hover:text-white">
                     Расширенный шанс поступления
                   </button>
                 </li>
                 <li className="mb-2">
-                  <button onClick={() => { setActiveSection('events'); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                  <button onClick={() => setActiveSection("events")} className="w-full text-left px-6 py-3 hover:text-white">
                     События
                   </button>
                 </li>
-
                 <li className="mb-2">
-                  <button onClick={() => { setActiveSection('classifier'); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                  <button onClick={() => setActiveSection("classifier")} className="w-full text-left px-6 py-3 hover:text-white">
                     Базовый шанс поступления
                   </button>
                 </li>
                 <li className="mb-2">
-                  <button onClick={handleLogout} className="w-full text-left px-6 py-3 hover:text-white">Выход</button>
+                  <button onClick={handleLogout} className="w-full text-left px-6 py-3 hover:text-white">
+                    Выход
+                  </button>
                 </li>
               </>
             )}
           </ul>
-          <div className="absolute bottom-4 w-full text-center text-sm text-gray-300">
-            <p>© 2025 TyuIU</p>
-          </div>
         </div>
 
-        <div className="flex-1 p-4 lg:ml-64 bg-white min-h-screen overflow-y-auto items-center ">
-          {activeSection === 'form' && (
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-6 text-center text-black">Расширенный шанс поступления</h2>
-              <div className="overflow-auto max-h-[calc(100vh-200px)] lg:max-h-full">
-                <Form />
-              </div>
-            </div>
-          )}
-          {activeSection === 'classifier' && (
-            <div className="mb-8 ">
-              <h2 className="text-3xl font-bold mb-6 text-center items-center text-black">Базовый шанс поступления</h2>
-              <ClassifierForm />
-            </div>
-          )}
-          {activeSection === 'events' && (
-            <div className="mb-8">
-              
-              <Events />
-            </div>
-          )}
-
-          {!activeSection && (
-            <div className="flex items-center justify-center min-h-screen text-black text-center">
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold mb-6 text-center text-black">Базовый шанс поступления</h2>
-                <ClassifierForm />
-              </div>
-            </div>
-          )}
+        <div className="flex-1 p-4 lg:ml-64 bg-white min-h-screen overflow-y-auto">
+          {activeSection === "form" && <Form />}
+          {activeSection === "classifier" && <ClassifierForm />}
+          {activeSection === "events" && <Events />}
+          {!activeSection && <ClassifierForm />}
         </div>
       </div>
 
@@ -169,5 +144,4 @@ const handleLogout = async () => {
     </div>
   );
 };
-
 export default Profile;
