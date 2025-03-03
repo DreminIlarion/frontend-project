@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useUser } from '../context/UserContext';
+import { useUser } from '../context/UserContext'; // Импортируем контекст
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import Form from './Form';
@@ -9,14 +9,13 @@ import Cookies from "js-cookie";
 import Events from './Events';
 
 const Profile = () => {
-  const { user, logout } = useUser();
+  const { user, setUser, logout } = useUser(); // Доступ к setUser через контекст
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
   const navigate = useNavigate();
 
-  // Оборачиваем handleLogout в useCallback, чтобы не создавать его заново при каждом рендере
   const handleLogout = useCallback(async () => {
     try {
       await fetch("https://personal-account-fastapi.onrender.com/logout/", {
@@ -34,15 +33,36 @@ const Profile = () => {
     }
   }, [logout, navigate]);
 
-  // useEffect с логикой
   useEffect(() => {
-    // Этот блок сработает только при изменении handleLogout
-    console.log("Компонент обновился, handleLogout изменен");
-
-    return () => {
-      console.log("Компонент размонтирован");
-    };
-  }, [handleLogout]);
+    const accessToken = Cookies.get("access");
+    const refreshToken = Cookies.get("refresh");
+  
+    if (accessToken && refreshToken) {
+      console.log("✅ Токены найдены, пытаемся получить пользователя...");
+      const fetchToken = async () => {
+        try {
+          const response = await fetch(`https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`);
+          const data = await response.json();
+          
+          console.log("Полученные данные:", data);
+  
+          if (data.token) {
+            setUser(data.user);  // Устанавливаем пользователя в контекст
+          } else {
+            setUser(null); // Если нет токена, разлогиниваем
+          }
+        } catch (error) {
+          console.error("Ошибка при получении нового токена:", error);
+          setUser(null);
+        }
+      };
+  
+      fetchToken();
+    } else {
+      console.log("⚠ Токены не найдены.");
+    }
+  }, [setUser]);
+  
 
   return (
     <div className="flex flex-col font-sans min-h-screen">

@@ -1,17 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom"; // Используем useNavigate внутри контекста
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children, navigate }) => {
+export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Используем useNavigate внутри контекста
 
   const logout = useCallback(() => {
     setUser(null);
     Cookies.remove("access");
     Cookies.remove("refresh");
-    if (navigate) navigate("/login");
+    navigate("/login"); // Перенаправление на страницу логина
   }, [navigate]);
 
   const checkAuth = useCallback(async () => {
@@ -39,7 +41,7 @@ export const UserProvider = ({ children, navigate }) => {
         if (data.user) {
           console.log("✅ Пользователь успешно загружен:", data.user);
           setUser(data.user);
-          if (navigate) navigate("/profile"); // Автоматический вход
+          navigate("/profile"); // Автоматический вход
         }
       } else {
         console.log("❌ Ошибка авторизации, разлогиниваем.");
@@ -67,14 +69,15 @@ export const UserProvider = ({ children, navigate }) => {
   }, [checkAuth]);
 
   const login = (userData, access, refresh) => {
-    setUser(userData);
+    setUser(userData);  // Устанавливаем пользователя в контексте
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
     Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-    if (navigate) navigate("/profile");
+    navigate("/profile");  // Переход к профилю
   };
+  
 
   return (
-    <UserContext.Provider value={{ user, login, logout, loading }}>
+    <UserContext.Provider value={{ user, setUser, login, logout, loading }}>
       {children}
     </UserContext.Provider>
   );
