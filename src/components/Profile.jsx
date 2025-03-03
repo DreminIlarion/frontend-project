@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
-import { Link,Navigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
+
 const Profile = () => {
-  const { user, logout, loading } = useUser();
+  const { user, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
+  const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  // Оборачиваем handleLogout в useCallback, чтобы не создавать его заново при каждом рендере
+  const handleLogout = useCallback(async () => {
     try {
       await fetch("https://personal-account-fastapi.onrender.com/logout/", {
         method: "GET",
@@ -25,14 +28,21 @@ const Profile = () => {
       Cookies.remove("refresh", { path: "/" });
 
       logout();
-      
+      navigate('/login');
     } catch (error) {
       console.error("Ошибка при выходе:", error);
     }
-  };
+  }, [logout, navigate]);
 
+  // useEffect с логикой
+  useEffect(() => {
+    // Этот блок сработает только при изменении handleLogout
+    console.log("Компонент обновился, handleLogout изменен");
 
-
+    return () => {
+      console.log("Компонент размонтирован");
+    };
+  }, [handleLogout]);
 
   return (
     <div className="flex flex-col font-sans min-h-screen">
@@ -129,4 +139,5 @@ const Profile = () => {
     </div>
   );
 };
+
 export default Profile;
