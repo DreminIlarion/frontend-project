@@ -1,19 +1,17 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children }) => {
+export const UserProvider = ({ children, navigate }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   const logout = useCallback(() => {
     setUser(null);
     Cookies.remove("access");
     Cookies.remove("refresh");
-    navigate("/login");
+    if (navigate) navigate("/login");
   }, [navigate]);
 
   const checkAuth = useCallback(async () => {
@@ -41,7 +39,7 @@ export const UserProvider = ({ children }) => {
         if (data.user) {
           console.log("✅ Пользователь успешно загружен:", data.user);
           setUser(data.user);
-          navigate("/profile"); // Автоматический переход в профиль
+          if (navigate) navigate("/profile"); // Автоматический вход
         }
       } else {
         console.log("❌ Ошибка авторизации, разлогиниваем.");
@@ -72,7 +70,7 @@ export const UserProvider = ({ children }) => {
     setUser(userData);
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
     Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-    navigate("/profile"); // После логина сразу в профиль
+    if (navigate) navigate("/profile");
   };
 
   return (
