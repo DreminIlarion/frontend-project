@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 
@@ -9,20 +9,14 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const access = Cookies.get("access");
-    const refresh = Cookies.get("refresh");
+  const logout = useCallback(() => {
+    setUser(null);
+    Cookies.remove("access");
+    Cookies.remove("refresh");
+    navigate("/login");
+  }, [navigate]);
 
-    if (access && refresh) {
-      console.log("✅ Найдены токены в cookies, проверяем пользователя...");
-      checkAuth();
-    } else {
-      console.log("⚠ Нет токенов, требуется авторизация.");
-      setLoading(false);
-    }
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const access = Cookies.get("access");
       const refresh = Cookies.get("refresh");
@@ -59,20 +53,26 @@ export const UserProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, logout]);
+
+  useEffect(() => {
+    const access = Cookies.get("access");
+    const refresh = Cookies.get("refresh");
+
+    if (access && refresh) {
+      console.log("✅ Найдены токены в cookies, проверяем пользователя...");
+      checkAuth();
+    } else {
+      console.log("⚠ Нет токенов, требуется авторизация.");
+      setLoading(false);
+    }
+  }, [checkAuth]);
 
   const login = (userData, access, refresh) => {
     setUser(userData);
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
     Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
     navigate("/profile"); // После логина сразу в профиль
-  };
-
-  const logout = () => {
-    setUser(null);
-    Cookies.remove("access");
-    Cookies.remove("refresh");
-    navigate("/login");
   };
 
   return (
