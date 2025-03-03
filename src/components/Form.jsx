@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from "chart.js";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 const Form = () => {
@@ -20,6 +22,8 @@ const Form = () => {
   const [pointsHistory, setPointsHistory] = useState({});
   const [openSections, setOpenSections] = useState({});
   const sortedRecommendations = [...recommendations].sort((a, b) => b.probability - a.probability);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const LineChartComponent = ({ data }) => {
     const chartData = {
@@ -169,14 +173,18 @@ const Form = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.gender) {
-      alert("Пожалуйста, выберите пол.");
+      console.log("Ошибка: Пол не указан");
+      toast.error("Пожалуйста, выберите пол.");
       return;
     }
   
     if (!formData.year) {
-      alert("Пожалуйста, выберите год.");
+      toast.error("Пожалуйста, выберите год.");
       return;
     }
+
+    setLoading(true );
+
     try {
       const response = await fetch('https://personal-account-fastapi.onrender.com/api/v1/predict/', {
         method: 'POST',
@@ -189,7 +197,7 @@ const Form = () => {
       
       if (response.ok) {
         const data = await response.json();
-        
+        setLoading(false );
         if (data.recomendate && Array.isArray(data.recomendate)) {
           setRecommendations(data.recomendate.map((rec, index) => ({
             direction_id: rec.direction_id,  // Добавляем ID направления!
@@ -211,6 +219,7 @@ const Form = () => {
 
   return (
     <div className="container mx-auto p-6 flex space-x-10">
+      <ToastContainer />
       <form onSubmit={handleSubmit} className="bg-white p-8 shadow-xl rounded-lg w-1/2">
       <label className="block mb-4 text-sm font-semibold">Пол:</label>
       <div className="flex items-center gap-4">
@@ -334,9 +343,17 @@ const Form = () => {
           ))}
         </label>
 
-        
-        <button type="submit" className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-          Рассчитать
+        {loading && (
+          <div className="flex justify-center my-4">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        <button
+          type="submit"
+          className={`w-full py-2 rounded-lg ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+          disabled={loading}
+        >
+          {loading ? "Загрузка..." : "Рассчитать"}
         </button>
       </form>
 
