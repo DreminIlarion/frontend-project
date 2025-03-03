@@ -217,6 +217,14 @@ const Register = () => {
                         Войдите
                     </span>
                 </p>
+                <div className="mt-4 text-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-600 font-semibold"
+          >
+            Вернуться на главную
+          </button>
+        </div>
                 </div>
             </div>
         </div>

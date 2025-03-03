@@ -21,8 +21,7 @@ export const UserProvider = ({ children, navigate }) => {
       const accessToken = Cookies.get("access");
       const refreshToken = Cookies.get("refresh");
   
-      console.log("Access Token из Cookies:", accessToken);
-      console.log("Refresh Token из Cookies:", refreshToken);
+      
   
       // Проверяем, что токены существуют и являются строками
       if (!accessToken || !refreshToken) {
@@ -46,7 +45,7 @@ export const UserProvider = ({ children, navigate }) => {
       );
   
       const data = await response.json();
-      console.log("Ответ сервера:", data);
+      
   
       if (data.status_code === 200 && data.detail === "OK") {
         setUser({ loggedIn: true });
@@ -68,8 +67,7 @@ export const UserProvider = ({ children, navigate }) => {
 
   // Логика входа
   const login = (access, refresh) => {
-    console.log("Access Token до сохранения:", access);
-    console.log("Refresh Token до сохранения:", refresh);
+    
   
     // Убедимся, что это строки, а не объекты
     if (typeof access !== "string") {

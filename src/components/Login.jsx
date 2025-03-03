@@ -44,6 +44,7 @@ const Login = () => {
   
       if (response.ok) {
         const data = await response.json();
+       
         const { access, refresh } = data;
   
         if (typeof access !== "string" || typeof refresh !== "string") {
@@ -59,7 +60,11 @@ const Login = () => {
         login(access, refresh); // ✅ Передаем правильные данные
   
         toast.success("Вход выполнен успешно!");
-        setTimeout(() => navigate("/profile"), 1500);
+        setTimeout(() => {
+          navigate("/profile");
+          window.location.reload();  // 🔄 Принудительно обновляем страницу
+        }, 1500);
+
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || "Ошибка авторизации.");
@@ -71,7 +76,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
   
 
   const handleOAuthRedirect = async (provider) => {
@@ -98,7 +102,6 @@ const Login = () => {
     }
   };
 
-  
   
 
   return (
@@ -223,10 +226,19 @@ const Login = () => {
             Зарегистрируйтесь
           </span>
         </p>
+
+        {/* Button to return to home */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-600 font-semibold"
+          >
+            Вернуться на главную
+          </button>
+        </div>
       </div>
     </div>
   );
-
 };
 
 export default Login;

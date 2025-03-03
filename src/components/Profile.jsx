@@ -16,22 +16,35 @@ const Profile = () => {
   const sidebarRef = useRef(null);
   const navigate = useNavigate();
 
+
+
+
+
   const handleLogout = useCallback(async () => {
     try {
+      // Удаляем куки с основного API
       await fetch("https://personal-account-fastapi.onrender.com/logout/", {
         method: "GET",
         credentials: "include",
       });
-
-      Cookies.remove("access", { path: "/" });
-      Cookies.remove("refresh", { path: "/" });
-
+  
+     
+      // Принудительно очищаем куки на клиенте
+      Cookies.remove("access", { path: "/", domain: "personal-account-fastapi.onrender.com" });
+      Cookies.remove("refresh", { path: "/", domain: "personal-account-fastapi.onrender.com" });
+  
+      Cookies.remove("access", { path: "/", domain: "events-fastapi.onrender.com" });
+      Cookies.remove("refresh", { path: "/", domain: "events-fastapi.onrender.com" });
+  
       logout();
       navigate('/login');
+      window.location.reload();
     } catch (error) {
       console.error("Ошибка при выходе:", error);
     }
   }, [logout, navigate]);
+  
+  
 
   useEffect(() => {
     const accessToken = Cookies.get("access");
@@ -44,7 +57,7 @@ const Profile = () => {
           const response = await fetch(`https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`);
           const data = await response.json();
           
-          console.log("Полученные данные:", data);
+          
   
           if (data.token) {
              // Устанавливаем пользователя в контекст
@@ -53,7 +66,6 @@ const Profile = () => {
           }
         } catch (error) {
           console.error("Ошибка при получении нового токена:", error);
-          
         }
       };
   
@@ -62,7 +74,22 @@ const Profile = () => {
       console.log("⚠ Токены не найдены.");
     }
   }, [setUser]);
-  
+
+  // Обработчик клика вне шторки
+  const handleClickOutside = (e) => {
+    if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    // Добавляем событие для клика вне шторки
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col font-sans min-h-screen">
@@ -105,30 +132,31 @@ const Profile = () => {
                 Главная страница
               </Link>
             </li>
-            {user && user.loggedIn && (  // Показываем меню только для авторизованных пользователей
-          <>
-            <li className="mb-2">
-              <button onClick={() => setActiveSection("form")} className="w-full text-left px-6 py-3 hover:text-white">
-                Расширенный шанс поступления
-              </button>
-            </li>
-            <li className="mb-2">
-              <button onClick={() => setActiveSection("events")} className="w-full text-left px-6 py-3 hover:text-white">
-                События
-              </button>
-            </li>
-            <li className="mb-2">
-              <button onClick={() => setActiveSection("classifier")} className="w-full text-left px-6 py-3 hover:text-white">
-                Базовый шанс поступления
-              </button>
-            </li>
-            <li className="mb-2">
-              <button onClick={handleLogout} className="w-full text-left px-6 py-3 hover:text-white">
-                Выход
-              </button>
-            </li>
-          </>
-        )}
+            {user && user.loggedIn && (
+              <>
+                <li className="mb-2">
+                  <button onClick={() => { setActiveSection("form"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    Расширенный шанс поступления
+                  </button>
+                </li>
+                <li className="mb-2">
+                  <button onClick={() => { setActiveSection("events"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    События
+                  </button>
+                </li>
+                <li className="mb-2">
+                  <button onClick={() => { setActiveSection("classifier"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    Базовый шанс поступления
+                  </button>
+                </li>
+                <li className="mb-2">
+                  <button onClick={() => { handleLogout(); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    Выход
+                  </button>
+                </li>
+
+              </>
+            )}
           </ul>
         </div>
 
