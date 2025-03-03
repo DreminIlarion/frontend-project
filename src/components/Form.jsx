@@ -7,10 +7,10 @@ const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
     foreign_citizenship: '',
-    military_service: '',
+    military_service: 'no',
     gpa: '',
     points: 0,
-    bonus_points: '',
+    bonus_points: 0,
     exams: [],
     year: ''
   });
@@ -258,14 +258,19 @@ const Form = () => {
           <span className="mr-2">Военная служба:</span>
           <input
             type="checkbox"
-            
             name="military_service"
-            checked={formData.military_service === "yes"}
-            onChange={(e) => handleChange({ target: { name: "military_service", value: e.target.checked ? "yes" : "no" } })}
+            checked={formData.military_service === "yes"} 
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                military_service: e.target.checked ? "yes" : "no",
+              }))
+            }
             className="w-5 h-5 accent-blue-600 cursor-pointer"
           />
           <span className="ml-2">{formData.military_service === "yes" ? "Да" : "Нет"}</span>
         </label>
+
 
         <label className="block mb-2 text-sm font-semibold">Год:</label>
         <div className="grid grid-cols-3 gap-2">
