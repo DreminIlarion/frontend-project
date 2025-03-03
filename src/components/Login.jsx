@@ -16,55 +16,62 @@ const Login = () => {
   const { login } = useUser();  // Получаем метод login из контекста
 
 
-    const getTokenFromCookies = (tokenName) => {
-        return Cookies.get(tokenName);
-      };
-
-      const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-      
-        const body = isPhoneLogin
-          ? { phone_number: phoneNumber, hash_password: password }
-          : { email: email, hash_password: password };
-      
-        const loginEndpoint = isPhoneLogin
-          ? "/api/v1/authorizations/login/phone/number"
-          : "/api/v1/authorizations/login/email";
-      
-        try {
-          const response = await fetch(
-            `https://registration-fastapi.onrender.com${loginEndpoint}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
-            }
-          );
-      
-          if (response.ok) {
-            const data = await response.json();
-            const { access, refresh } = data;
-      
-            Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-            Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-      
-            login({ email }, access, refresh); // Обновляем контекст
-      
-            toast.success("Вход выполнен успешно!");
-            setTimeout(() => navigate("/profile"), 1500);
-          } else {
-            const errorData = await response.json();
-            toast.error(errorData.message || "Ошибка авторизации.");
-          }
-        } catch (error) {
-          console.error("Ошибка при авторизации:", error);
-          toast.error("Ошибка соединения с сервером.");
-        } finally {
-          setIsLoading(false);
+  const getTokenFromCookies = (tokenName) => {
+    return Cookies.get(tokenName);
+  };
+  
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+  
+    const body = isPhoneLogin
+      ? { phone_number: phoneNumber, hash_password: password }
+      : { email: email, hash_password: password };
+  
+    const loginEndpoint = isPhoneLogin
+      ? "/api/v1/authorizations/login/phone/number"
+      : "/api/v1/authorizations/login/email";
+  
+    try {
+      const response = await fetch(
+        `https://registration-fastapi.onrender.com${loginEndpoint}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         }
-      };
-      
+      );
+  
+      if (response.ok) {
+        const data = await response.json();
+        const { access, refresh } = data;
+  
+        if (typeof access !== "string" || typeof refresh !== "string") {
+          console.error("Ошибка: Токены должны быть строками!");
+          toast.error("Ошибка авторизации: некорректные токены.");
+          setIsLoading(false);
+          return;
+        }
+  
+        Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+        Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+  
+        login(access, refresh); // ✅ Передаем правильные данные
+  
+        toast.success("Вход выполнен успешно!");
+        setTimeout(() => navigate("/profile"), 1500);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Ошибка авторизации.");
+      }
+    } catch (error) {
+      console.error("Ошибка при авторизации:", error);
+      toast.error("Ошибка соединения с сервером.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   
 
   const handleOAuthRedirect = async (provider) => {

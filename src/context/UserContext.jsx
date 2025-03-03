@@ -20,13 +20,23 @@ export const UserProvider = ({ children, navigate }) => {
     try {
       const accessToken = Cookies.get("access");
       const refreshToken = Cookies.get("refresh");
-
+  
+      console.log("Access Token из Cookies:", accessToken);
+      console.log("Refresh Token из Cookies:", refreshToken);
+  
+      // Проверяем, что токены существуют и являются строками
       if (!accessToken || !refreshToken) {
-        console.log("⚠ Токены отсутствуют, разлогиниваем.");
-        setUser(null);  // Если нет токенов, сбрасываем пользователя
+        console.error("❌ Ошибка: Токены отсутствуют!");
+        setUser(null);
         return;
       }
-
+  
+      if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
+        console.error("❌ Ошибка: Токены должны быть строками.");
+        setUser(null);
+        return;
+      }
+  
       const response = await fetch(
         `https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`,
         {
@@ -34,21 +44,22 @@ export const UserProvider = ({ children, navigate }) => {
           credentials: "include",
         }
       );
-
+  
       const data = await response.json();
-      console.log("Полученные данные:", data);
-
+      console.log("Ответ сервера:", data);
+  
       if (data.status_code === 200 && data.detail === "OK") {
-        setUser({ loggedIn: true });  // Если токены валидны, устанавливаем пользователя
+        setUser({ loggedIn: true });
       } else {
-        console.log("❌ Ошибка при проверке токенов, разлогиниваем.");
-        setUser(null);  // Если токены не валидны, разлогиниваем
+        console.log("❌ Ошибка проверки токенов, разлогиниваем.");
+        setUser(null);
       }
     } catch (error) {
-      console.error("Ошибка при проверке токенов:", error);
-      setUser(null);  // В случае ошибки разлогиниваем
+      console.error("❌ Ошибка при проверке токенов:", error);
+      setUser(null);
     }
   };
+  
 
   // Проверка токенов при монтировании компонента
   useEffect(() => {
@@ -57,12 +68,27 @@ export const UserProvider = ({ children, navigate }) => {
 
   // Логика входа
   const login = (access, refresh) => {
+    console.log("Access Token до сохранения:", access);
+    console.log("Refresh Token до сохранения:", refresh);
+  
+    // Убедимся, что это строки, а не объекты
+    if (typeof access !== "string") {
+      console.error("❌ Ошибка: accessToken не является строкой!");
+    }
+    if (typeof refresh !== "string") {
+      console.error("❌ Ошибка: refreshToken не является строкой!");
+    }
+  
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
     Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-    setUser({ loggedIn: true });  // Устанавливаем пользователя как авторизованного
+  
+    setUser({ loggedIn: true });
     if (navigate) navigate("/profile");
   };
-
+  
+  
+  
+  
   return (
     <UserContext.Provider value={{ user, login, logout, loading }}>
       {children}
