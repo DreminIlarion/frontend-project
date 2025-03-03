@@ -168,6 +168,15 @@ const Form = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.gender) {
+      alert("Пожалуйста, выберите пол.");
+      return;
+    }
+  
+    if (!formData.year) {
+      alert("Пожалуйста, выберите год.");
+      return;
+    }
     try {
       const response = await fetch('https://personal-account-fastapi.onrender.com/api/v1/predict/', {
         method: 'POST',
@@ -198,6 +207,7 @@ const Form = () => {
     }
   };
 
+  
 
   return (
     <div className="container mx-auto p-6 flex space-x-10">
@@ -248,7 +258,7 @@ const Form = () => {
           <span className="mr-2">Военная служба:</span>
           <input
             type="checkbox"
-            required
+            
             name="military_service"
             checked={formData.military_service === "yes"}
             onChange={(e) => handleChange({ target: { name: "military_service", value: e.target.checked ? "yes" : "no" } })}
@@ -388,31 +398,7 @@ const Form = () => {
             )}
 
 
-              {/* {section === "points" && pointsHistory[rec.direction_id] && (
-                <>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Динамика баллов</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={pointsHistory[rec.direction_id]} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} />
-                      <XAxis dataKey="year" tick={{ fill: '#555' }} label={{ value: 'Год', position: 'insideBottom', offset: -5, fill: '#333' }} />
-                      <YAxis tick={{ fill: '#555' }} label={{ value: 'Баллы', angle: -90, position: 'insideLeft', fill: '#333' }} />
-                      <Tooltip contentStyle={{ backgroundColor: "rgba(255,255,255,0.9)", borderRadius: "8px" }} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="points" 
-                        stroke="#8884d8" 
-                        strokeWidth={3} 
-                        dot={{ r: 6, strokeWidth: 2, fill: "#fff", stroke: "#8884d8" }} 
-                        activeDot={{ r: 8 }} 
-                        animationDuration={500} 
-                        label={({ x, y, value }) => (
-                          <text x={x} y={y - 10} textAnchor="middle" fontSize={12} fill="#333">{value}</text>
-                        )}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </>
-              )} */}
+              
             </div>
           ))}
         </div>
