@@ -105,30 +105,30 @@ const Profile = () => {
                 Главная страница
               </Link>
             </li>
-            {user && (
-              <>
-                <li className="mb-2">
-                  <button onClick={() => setActiveSection("form")} className="w-full text-left px-6 py-3 hover:text-white">
-                    Расширенный шанс поступления
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => setActiveSection("events")} className="w-full text-left px-6 py-3 hover:text-white">
-                    События
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => setActiveSection("classifier")} className="w-full text-left px-6 py-3 hover:text-white">
-                    Базовый шанс поступления
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={handleLogout} className="w-full text-left px-6 py-3 hover:text-white">
-                    Выход
-                  </button>
-                </li>
-              </>
-            )}
+            {user && user.loggedIn && (  // Показываем меню только для авторизованных пользователей
+          <>
+            <li className="mb-2">
+              <button onClick={() => setActiveSection("form")} className="w-full text-left px-6 py-3 hover:text-white">
+                Расширенный шанс поступления
+              </button>
+            </li>
+            <li className="mb-2">
+              <button onClick={() => setActiveSection("events")} className="w-full text-left px-6 py-3 hover:text-white">
+                События
+              </button>
+            </li>
+            <li className="mb-2">
+              <button onClick={() => setActiveSection("classifier")} className="w-full text-left px-6 py-3 hover:text-white">
+                Базовый шанс поступления
+              </button>
+            </li>
+            <li className="mb-2">
+              <button onClick={handleLogout} className="w-full text-left px-6 py-3 hover:text-white">
+                Выход
+              </button>
+            </li>
+          </>
+        )}
           </ul>
         </div>
 
