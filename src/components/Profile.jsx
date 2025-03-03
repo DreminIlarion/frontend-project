@@ -31,23 +31,7 @@ const Profile = () => {
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setIsSidebarOpen(false);
-      }
-    };
-    if (isSidebarOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isSidebarOpen]);
 
-  console.log("Пользователь в Profile:", user);
-if (loading) return <div>Загрузка...</div>;
-if (!user) return <Navigate to="/login" />;
 
 
   return (
