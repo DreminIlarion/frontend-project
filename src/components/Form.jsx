@@ -186,7 +186,7 @@ const Form = () => {
         body: JSON.stringify(formData),
         credentials: 'include',
       });
-      console.log(JSON.stringify(formData));
+      
       if (response.ok) {
         const data = await response.json();
         
