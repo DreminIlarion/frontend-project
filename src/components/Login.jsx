@@ -231,11 +231,12 @@ const Login = () => {
         <div className="mt-4 text-center">
           <button
             onClick={() => navigate('/')}
-            className="text-blue-600 font-semibold"
+            className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all hover:bg-blue-600 hover:shadow-lg"
           >
             Вернуться на главную
           </button>
         </div>
+
       </div>
     </div>
   );
