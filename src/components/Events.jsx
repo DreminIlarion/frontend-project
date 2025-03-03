@@ -20,27 +20,39 @@ const Events = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Загружаем список событий, на которые пользователь уже записан
+  useEffect(() => {
+    fetch("https://personal-account-fastapi.onrender.com/api/v1/visitors/get", {
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        const registeredIds = new Set(data.map((entry) => entry.event_id)); // Берем event_id из ответа
+        setRegisteredEvents(registeredIds);
+      })
+      .catch((error) => console.error("Ошибка загрузки записей:", error.message));
+  }, []);
+  
+
   const handleRegistration = async (eventId) => {
     const isRegistered = registeredEvents.has(eventId);
     const url = `https://personal-account-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
-  
+
     try {
-      
-  
-     
-  
       const response = await fetch(url, {
         method,
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          
         }
       });
-  
+
       if (!response.ok) throw new Error(`Ошибка ${response.status}`);
-  
+
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
         isRegistered ? newSet.delete(eventId) : newSet.add(eventId);
@@ -50,8 +62,6 @@ const Events = () => {
       console.error("Ошибка при изменении записи:", error.message);
     }
   };
-  
-  
 
   const toggleEventDetails = (eventId) => {
     setExpandedEvent(expandedEvent === eventId ? null : eventId);
@@ -87,9 +97,9 @@ const Events = () => {
 
             {expandedEvent === event.id && (
               <div className="mt-3 space-y-2 text-gray-700">
-                <p><strong> Место:</strong> {event.location || "Не указано"}</p>
-                <p><strong> Описание:</strong> {event.description || "Нет описания"}</p>
-                <p><strong> Лимит:</strong> {event.limit_people > 0 ? event.limit_people : "Неограничено"}</p>
+                <p><strong>Место:</strong> {event.location || "Не указано"}</p>
+                <p><strong>Описание:</strong> {event.description || "Нет описания"}</p>
+                <p><strong>Лимит:</strong> {event.limit_people > 0 ? event.limit_people : "Неограничено"}</p>
               </div>
             )}
 
