@@ -3,39 +3,40 @@ import Cookies from "js-cookie";
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children, navigate }) => {
+export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Логика выхода
+  // Функция выхода (удаляет токены, но НЕ редиректит)
   const logout = useCallback(() => {
-    setUser(null);  // Сбрасываем состояние пользователя
-    Cookies.remove("access");
-    Cookies.remove("refresh");
-    if (navigate) navigate("/login");
-  }, [navigate]);
+    console.log("⛔ Удаляем все куки...");
+  
+    // Удаляем все куки, включая серверные
+    const cookies = document.cookie.split("; ");
+    cookies.forEach((cookie) => {
+      const [name] = cookie.split("=");
+      Cookies.remove(name, { path: "/", domain: "personal-account-fastapi.onrender.com" });
+      Cookies.remove(name, { path: "/" }); // Удаление на основном домене
+    });
+  
+    setUser(null);
+  }, []);
+  
 
-  // Проверка токенов и авторизация пользователя
-  const fetchToken = async () => {
+  // Проверка токенов
+  const fetchToken = useCallback(async () => {
+    setLoading(true);
+
     try {
       const accessToken = Cookies.get("access");
       const refreshToken = Cookies.get("refresh");
-  
-      
-  
-      // Проверяем, что токены существуют и являются строками
+
       if (!accessToken || !refreshToken) {
-        console.error("❌ Ошибка: Токены отсутствуют!");
-        setUser(null);
+        console.warn("❌ Токены отсутствуют или истекли.");
+        logout();
         return;
       }
-  
-      if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
-        console.error("❌ Ошибка: Токены должны быть строками.");
-        setUser(null);
-        return;
-      }
-  
+
       const response = await fetch(
         `https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`,
         {
@@ -43,50 +44,43 @@ export const UserProvider = ({ children, navigate }) => {
           credentials: "include",
         }
       );
-  
+
       const data = await response.json();
-      
-  
+
       if (data.status_code === 200 && data.detail === "OK") {
         setUser({ loggedIn: true });
       } else {
-        console.log("❌ Ошибка проверки токенов, разлогиниваем.");
-        setUser(null);
+        console.warn("⚠️ Токены недействительны. Удаляем их.");
+        logout();
       }
     } catch (error) {
       console.error("❌ Ошибка при проверке токенов:", error);
-      setUser(null);
+      logout();
+    } finally {
+      setLoading(false);
     }
-  };
-  
+  }, [logout]);
 
-  // Проверка токенов при монтировании компонента
+  // Проверяем токены при загрузке + каждые 10 минут
   useEffect(() => {
     fetchToken();
-  }, []);
+    const interval = setInterval(fetchToken, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchToken]);
 
-  // Логика входа
+  // Функция входа
   const login = (access, refresh) => {
-    
-  
-    // Убедимся, что это строки, а не объекты
-    if (typeof access !== "string") {
-      console.error("❌ Ошибка: accessToken не является строкой!");
+    if (typeof access !== "string" || typeof refresh !== "string") {
+      console.error("❌ Ошибка: Токены должны быть строками!");
+      return;
     }
-    if (typeof refresh !== "string") {
-      console.error("❌ Ошибка: refreshToken не является строкой!");
-    }
-  
+
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
     Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-  
+
     setUser({ loggedIn: true });
-    if (navigate) navigate("/profile");
   };
-  
-  
-  
-  
+
   return (
     <UserContext.Provider value={{ user, login, logout, loading }}>
       {children}

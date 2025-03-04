@@ -18,31 +18,41 @@ const Profile = () => {
 
 
 
-
+  const deleteAllCookies = () => {
+    document.cookie.split(";").forEach((cookie) => {
+      const [name] = cookie.split("=");
+      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+    });
+  };
+  
 
   const handleLogout = useCallback(async () => {
     try {
-      // Удаляем куки с основного API
+      // Запрос на сервер для выхода (если сервер чистит сессию)
       await fetch("https://personal-account-fastapi.onrender.com/logout/", {
         method: "GET",
         credentials: "include",
       });
   
-     
-      // Принудительно очищаем куки на клиенте
-      Cookies.remove("access", { path: "/", domain: "personal-account-fastapi.onrender.com" });
-      Cookies.remove("refresh", { path: "/", domain: "personal-account-fastapi.onrender.com" });
-  
-      Cookies.remove("access", { path: "/", domain: "events-fastapi.onrender.com" });
-      Cookies.remove("refresh", { path: "/", domain: "events-fastapi.onrender.com" });
-  
+      // Удаляем все куки
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
+      // Завершаем сессию на клиенте
       logout();
-      navigate('/login');
+      navigate("/login");
       window.location.reload();
     } catch (error) {
       console.error("Ошибка при выходе:", error);
     }
   }, [logout, navigate]);
+  
   
   
 
