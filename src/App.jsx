@@ -12,7 +12,7 @@ import PrivacyPolicy from "./components/PrivacyPolicy";
 import Home from './components/Home';
 import Test from './components/Cht';
 // import NotFound from "./components/NotFound";
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
+// import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './App.css'; // Импорт стилей для анимаций
 
 const AppWrapper = () => {
@@ -20,8 +20,8 @@ const AppWrapper = () => {
 
   return (
     <UserProvider navigate={navigate}>
-      <TransitionGroup>
-        <CSSTransition timeout={300} classNames="fade" key={window.location.pathname}>
+      {/* <TransitionGroup>
+        <CSSTransition timeout={300} classNames="fade" key={window.location.pathname}> */}
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
@@ -36,8 +36,8 @@ const AppWrapper = () => {
             <Route path='/test' element={<Test />} />
             {/* <Route path="*" element={<NotFound />} /> */}
           </Routes>
-        </CSSTransition>
-      </TransitionGroup>
+        {/* </CSSTransition>
+      </TransitionGroup> */}
     </UserProvider>
   );
 };
