@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import Cookies from "js-cookie";
@@ -8,21 +8,30 @@ import "react-toastify/dist/ReactToastify.css";
 const YandexCallback = () => {
   const navigate = useNavigate();
   const { updateUser } = useUser();
+  const [codeVerifier, setCodeVerifier] = useState(null);
 
   useEffect(() => {
     const handleYandexCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
 
-      if (!code) {
-        
-        return;
-      }
+      if (!code) return;
 
       try {
+        toast.info("Запрашиваем code_verifier...");
+        const verifierResponse = await fetch(
+          "https://personal-account-fastapi.onrender.com/api/v1/yandex/link"
+        );
+        const verifierData = await verifierResponse.json();
+
+        if (!verifierResponse.ok || !verifierData.code_verifier) {
+          throw new Error("Не удалось получить code_verifier");
+        }
+
+        setCodeVerifier(verifierData.code_verifier);
         toast.info("Запрашиваем access_token...");
         const tokenResponse = await fetch(
-          `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}`,
+          `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${verifierData.code_verifier}`,
           { credentials: "include" }
         );
         const tokenData = await tokenResponse.json();
@@ -33,7 +42,7 @@ const YandexCallback = () => {
 
         await loginWithYandex(tokenData.access_token);
       } catch (error) {
-        
+        console.error("Ошибка при получении токена:", error);
       }
     };
 
@@ -54,7 +63,7 @@ const YandexCallback = () => {
 
         await handleAuthSuccess(loginData);
       } catch (error) {
-        
+        console.error("Ошибка входа, пробуем зарегистрироваться:", error);
         await registerWithYandex(accessToken);
       }
     };
@@ -63,7 +72,7 @@ const YandexCallback = () => {
       try {
         toast.info("Попытка регистрации...");
         const registrationResponse = await fetch(
-          `https://registration-fastapi.onrender.com/api/v1/yandex/registration/${accessToken}`,
+          `https://personal-account-fastapi.onrender.com/api/v1/yandex/registration/${accessToken}`,
           {
             method: "POST",
             credentials: "include",
@@ -76,7 +85,7 @@ const YandexCallback = () => {
 
         await handleAuthSuccess(registrationData);
       } catch (error) {
-        
+        console.error("Ошибка регистрации:", error);
       }
     };
 

@@ -8,9 +8,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
-    foreign_citizenship: '',
-    military_service: 'no',
-    gpa: '',
+    gpa: 0,
     points: 0,
     bonus_points: 0,
     exams: [],
@@ -118,18 +116,18 @@ const Form = () => {
 
   const fetchDetails = async (directionId) => {
     try {
-      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/direction/${directionId}`, {
+      const response = await fetch(`${process.env.REACT_APP_PREDICT_DIRECTION}${directionId}`, {
         method: 'GET',
         credentials: 'include',
       });
   
       if (response.ok) {
         const data = await response.text();
-        
+        console.log(data.body);
 
         setDetails((prev) => ({ 
           ...prev, 
-          [directionId]: data
+          [directionId]: data 
             .replace(/\\n/g, ' ') // Заменяет закодированные \n на пробелы
             .replace(/\s+/g, ' ') // Убирает лишние пробелы
             .replace(/([а-яА-Я]):([А-Я])/g, '$1: $2') // Добавляет пробел после двоеточий
@@ -149,10 +147,10 @@ const Form = () => {
     }
   };
   
-
+  
   const fetchPointsHistory = async (directionId) => {
     try {
-      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/points/${directionId}`, {
+      const response = await fetch(`${process.env.REACT_APP_PREDICT_POINTS}${directionId}`, {
         method: 'GET',
 
         credentials: 'include',
@@ -184,9 +182,9 @@ const Form = () => {
     }
 
     setLoading(true );
-
+    
     try {
-      const response = await fetch('https://personal-account-fastapi.onrender.com/api/v1/predict/', {
+      const response = await fetch(`${process.env.REACT_APP_PREDICT}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -194,15 +192,16 @@ const Form = () => {
         body: JSON.stringify(formData),
         credentials: 'include',
       });
-      
+      console.log(JSON.stringify(formData));
       if (response.ok) {
         const data = await response.json();
+        console.log(data.body);
         setLoading(false );
-        if (data.recomendate && Array.isArray(data.recomendate)) {
-          setRecommendations(data.recomendate.map((rec, index) => ({
+        if (data.body.recomendate && Array.isArray(data.body.recomendate)) {
+          setRecommendations(data.body.recomendate.map((rec, index) => ({
             direction_id: rec.direction_id,  // Добавляем ID направления!
             name: rec.name,
-            probability: data.classifier ? data.classifier[index] : 0,
+            probability: data.body.classifier ? data.body.classifier[index] : 0,
           })));
           
           
@@ -258,27 +257,7 @@ const Form = () => {
       </div>
       <br></br>
         
-        <label className="block mb-4 text-sm font-semibold">
-          Гражданство:
-          <input type="text" name="foreign_citizenship" value={formData.foreign_citizenship} onChange={handleChange} className="w-full p-2 mt-2 border rounded-lg" />
-        </label>
-
-        <label className="block mb-4 text-sm font-semibold flex items-center">
-          <span className="mr-2">Военная служба:</span>
-          <input
-            type="checkbox"
-            name="military_service"
-            checked={formData.military_service === "yes"} 
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                military_service: e.target.checked ? "yes" : "no",
-              }))
-            }
-            className="w-5 h-5 accent-blue-600 cursor-pointer"
-          />
-          <span className="ml-2">{formData.military_service === "yes" ? "Да" : "Нет"}</span>
-        </label>
+        
 
 
         <label className="block mb-2 text-sm font-semibold">Год:</label>

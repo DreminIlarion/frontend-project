@@ -37,7 +37,7 @@ const Chat = () => {
     try {
       const encodedMessage = encodeURIComponent(inputMessage);
       const response = await fetch(
-        `https://personal-account-fastapi.onrender.com/answer/v1/${encodedMessage}`,
+        `${process.env.REACT_APP_ANSWER}${encodedMessage}`,
         {
           method: 'GET',
           credentials: 'include',

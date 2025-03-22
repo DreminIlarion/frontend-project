@@ -50,7 +50,7 @@ const ClassifierForm = () => {
     };
   
     try {
-      const response = await fetch('https://personal-account-fastapi.onrender.com/api/v1/predict/free', {
+      const response = await fetch(`${process.env.REACT_APP_PREDICT_FREE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -61,8 +61,8 @@ const ClassifierForm = () => {
       const result = await response.json();
       
   
-      if (result && typeof result === 'number') {
-        setPrediction(result);
+      if (result.body && typeof result.body === 'number') {
+        setPrediction(result.body);
       } else {
         setPrediction(null);
         toast.error("Ошибка: сервер не вернул предсказание.");

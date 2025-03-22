@@ -9,37 +9,11 @@ const Events = () => {
   const [registeredEvents, setRegisteredEvents] = useState(new Set());
   const [visitorData, setVisitorData] = useState({});
 
-  const loadEvents = async (page) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`, {
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error(`Ошибка загрузки событий: ${response.status}`);
-      const data = await response.json();
-
-      // Добавляем только уникальные события
-      setEvents((prevEvents) => {
-        const newEventsSet = new Set(prevEvents.map((event) => event.id)); // Множество с id уже загруженных событий
-        const newEvents = data.filter((event) => !newEventsSet.has(event.id)); // Фильтруем уже загруженные события
-        return [...prevEvents, ...newEvents];
-      });
-
-      // Проверяем, есть ли еще события для загрузки
-      if (data.length < 10) {
-        setHasMore(false); // Если загружено меньше 10 событий, значит это последняя страница
-      }
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   // Загрузка зарегистрированных событий для текущего пользователя
   useEffect(() => {
-    fetch("https://personal-account-fastapi.onrender.com/api/v1/visitors/get", {
+    fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
       credentials: "include",
     })
       .then((response) => response.json())
@@ -55,10 +29,6 @@ const Events = () => {
       .catch((error) => console.error("Ошибка загрузки записей:", error.message));
   }, []);
 
-  // Загрузка событий при монтировании
-  useEffect(() => {
-    loadEvents(page);
-  }, [page]);
 
   // Обработчик прокрутки для ленивой загрузки
   const handleScroll = (e) => {
@@ -71,7 +41,7 @@ const Events = () => {
   // Обработчик регистрации / отписки
   const handleRegistration = async (eventId) => {
     const isRegistered = registeredEvents.has(eventId);
-    const url = `https://personal-account-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
@@ -97,7 +67,7 @@ const Events = () => {
   const getQRCode = async (eventId) => {
     const uniqueString = visitorData[eventId];
     if (!uniqueString) return;
-    const qrUrl = `https://personal-account-fastapi.onrender.com/api/v1/visitors/make/qr/${uniqueString}`;
+    const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
     window.open(qrUrl, "_blank");
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -15,11 +15,14 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useUser();  // Получаем метод login из контекста
 
+  const API_URL = process.env.REACT_APP1_GET_TOKEN;
 
   const getTokenFromCookies = (tokenName) => {
     return Cookies.get(tokenName);
   };
+
   
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -34,7 +37,7 @@ const Login = () => {
   
     try {
       const response = await fetch(
-        `https://registration-fastapi.onrender.com${loginEndpoint}`,
+        `${process.env.REACT_APP_DOMAIN_REGISTRATION}${loginEndpoint}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -44,7 +47,7 @@ const Login = () => {
   
       if (response.ok) {
         const data = await response.json();
-       
+        
         const { access, refresh } = data;
   
         if (typeof access !== "string" || typeof refresh !== "string") {
@@ -82,7 +85,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://registration-fastapi.onrender.com/api/v1/${provider}/link`,
+        `${process.env.REACT_APP_LINK}${provider}/link`,
         { method: 'GET' }
       );
 
@@ -186,32 +189,25 @@ const Login = () => {
         <div className="mt-6 text-center">
           <p className="text-sm font-medium mb-4 text-gray-700">Или войдите через:</p>
           <div className="grid grid-cols-1 gap-4">
-            {/* VK button */}
+           {/* VK button */}
             <button
-              onClick={() => handleOAuthRedirect('vk')}
-              className="flex items-center justify-center py-4 w-full bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-            >
-              <FaVk size={24} className="mr-2" />
-              Войти через ВКонтакте
-            </button>
-            
-            {/* Mail.ru button */}
-            <button
-              onClick={() => handleOAuthRedirect('mail.ru')}
-              className="flex items-center justify-center py-4 w-full bg-blue-400 text-white font-semibold rounded-lg hover:bg-blue-500 transition"
-            >
-              <FaEnvelope size={24} className="mr-2" />
-              Войти через Mail.ru
-            </button>
-            
+                      onClick={() => handleOAuthRedirect("vk")}
+                      className={`flex items-center justify-center gap-2 h-10 rounded-md font-bold text-white bg-[#0077FF] transition-all hover:bg-[#005bbf] active:scale-95 shadow-md `}
+                      
+                    >
+                      <FaVk size={20} /> VK ID
+                    </button>
+
             {/* Yandex button */}
             <button
-              onClick={() => handleOAuthRedirect('yandex')}
-              className="flex items-center justify-center py-4 w-full bg-[#F50000] text-white font-semibold rounded-lg hover:bg-[#D40000] transition"
-            >
-              <FaYandex size={24} className="mr-2" />
-              Войти через Яндекс
-            </button>
+                      onClick={() => handleOAuthRedirect("yandex")}
+                      className={`flex items-center justify-center gap-2 h-10 rounded-md font-bold text-white bg-red-600 transition-all hover:bg-red-700 active:scale-95 shadow-md`}
+                      
+                    >
+                      <FaYandex size={18} /> Яндекс
+                    </button>
+
+
           </div>
         </div>
   

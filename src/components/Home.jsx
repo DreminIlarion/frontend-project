@@ -12,48 +12,21 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true); // Есть ли еще события для загрузки
 
   // Загрузка событий с пагинацией
-  useEffect(() => {
-    const loadEvents = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`,
-          {
-            credentials: "include",
-          }
-        );
-        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
-        const data = await response.json();
 
-        // Добавляем новые события только если их еще нет в списке
-        setEvents((prevEvents) => {
-          const newEventsSet = new Set(prevEvents.map((event) => event.id)); // Множество с id уже загруженных событий
-          const newEvents = data.filter((event) => !newEventsSet.has(event.id)); // Фильтруем уже загруженные события
-          return [...prevEvents, ...newEvents];
-        });
-
-        // Если загружено меньше 10 событий, это последняя страница
-        if (data.length < 10) {
-          setHasMore(false);
-        }
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEvents();
-  }, [page]);
 
   // Загрузка зарегистрированных событий для текущего пользователя
   useEffect(() => {
-    fetch("https://personal-account-fastapi.onrender.com/api/v1/visitors/get", {
+    fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
       credentials: "include",
-    })
+    })  
+    
       .then((response) => response.json())
       .then((data) => {
         const registeredIds = new Set(data.map((entry) => entry.event_id));
+
+
+
+
         setRegisteredEvents(registeredIds);
         const visitorMap = data.reduce((acc, entry) => {
           acc[entry.event_id] = entry.unique_string;
@@ -66,11 +39,14 @@ const Home = () => {
 
   // Проверка авторизации
   useEffect(() => {
-    fetch("https://personal-account-fastapi.onrender.com/api/v1/visitors/get", {
+    fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
       credentials: "include",
     })
       .then((response) => {
         if (response.ok) {
+
+
+
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -86,7 +62,7 @@ const Home = () => {
     }
 
     const isRegistered = registeredEvents.has(eventId);
-    const url = `https://personal-account-fastapi.onrender.com/api/v1/visitors/${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
@@ -112,7 +88,7 @@ const Home = () => {
   const getQRCode = async (eventId) => {
     const uniqueString = visitorData[eventId];
     if (!uniqueString) return;
-    const qrUrl = `https://personal-account-fastapi.onrender.com/api/v1/visitors/make/qr/${uniqueString}`;
+    const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
     window.open(qrUrl, "_blank");
   };
 
@@ -150,46 +126,55 @@ const Home = () => {
           className="container mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           onScroll={handleScroll}
         >
-          {events.length > 0 ? (
-            events.map((event) => (
-              <div
-                key={event.id}
-                className="bg-white shadow-lg rounded-lg p-6 transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:bg-gray-100"
-                style={{ cursor: "pointer" }}
-              >
-                <div className="flex flex-col">
-                  {/* Название и дата */}
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-500 truncate">
+                      {events.length > 0 ? (
+                        events.map((event) => (
+                          <div
+                            key={event.id}
+                            className="bg-white shadow-lg rounded-lg p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:bg-gray-100 group"
+                            style={{ cursor: "pointer", wordBreak: "break-word" }} // Предотвращаем разрыв макета
+                          >
+                    <div className="flex flex-col">
+                      {/* Название и дата */}
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 
+                      className="text-xl font-semibold text-gray-900 hover:text-blue-500 max-w-full truncate group-hover:whitespace-normal"
+                    >
                       {event.name_event}
                     </h3>
-                    <span className="text-sm text-gray-500">
-                      {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
-                    </span>
-                  </div>
 
-                  {/* Дополнительная информация */}
-                  <div className="mt-4 space-y-2 text-gray-700">
-                    <p><strong>Место:</strong> {event.location || "Не указано"}</p>
-                    <p><strong>Лимит людей:</strong> {event.limit_people || "Не ограничено"}</p>
-                    <p><strong>Описание:</strong> {event.description || "Описание не доступно"}</p>
-                  </div>
-                </div>
 
-                <div className="flex gap-4 mt-4">
-                  {isAuthenticated ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRegistration(event.id);
-                      }}
-                      className={`flex-1 py-3 text-white font-semibold rounded-lg transition-all transform hover:scale-105 ${
-                        registeredEvents.has(event.id) ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
-                      }`}
-                    >
-                      {registeredEvents.has(event.id) ? "Отписаться ❌" : "Записаться ✅"}
-                    </button>
-                  ) : (
+                        <span className="text-sm text-gray-500">
+                          {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
+                        </span>
+                      </div>
+
+                      {/* Дополнительная информация */}
+                      <div className="mt-4 space-y-2 text-gray-700">
+                        <p><strong>Место:</strong> {event.location || "Не указано"}</p>
+                        <p><strong>Лимит людей:</strong> {event.limit_people || "Не ограничено"}</p>
+                        <p 
+                          className="line-clamp-3 overflow-hidden group-hover:line-clamp-none transition-all duration-300 ease-in-out"
+                          title={event.description} // Полный текст при наведении
+                        >
+                          <strong>Описание:</strong> {event.description || "Описание не доступно"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 mt-4">
+                      {isAuthenticated ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRegistration(event.id);
+                          }}
+                          className={`flex-1 py-3 text-white font-semibold rounded-lg transition-all transform hover:scale-105 ${
+                            registeredEvents.has(event.id) ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
+                          }`}
+                        >
+                          {registeredEvents.has(event.id) ? "Отписаться ❌" : "Записаться ✅"}
+                        </button>
+                      )  : (
                     <Link
                       to="/login"
                       className="flex-1 py-3 text-center text-white font-semibold bg-blue-500 hover:bg-blue-600 rounded-lg transition-all transform hover:scale-105"
@@ -204,7 +189,7 @@ const Home = () => {
             <p className="text-center text-gray-500 col-span-2">Загрузка...</p>
           )}
         </section>
-        {loading && <p className="text-center text-gray-500">Загрузка...</p>}
+        
         {!hasMore && !loading && <p className="text-center text-gray-500">Больше событий нет.</p>}
       </main>
     </div>

@@ -27,7 +27,7 @@ const Register = () => {
 
         try {
             const response = await fetch(
-                `https://registration-fastapi.onrender.com/api/v1/authorizations/registration`,
+                `${process.env.REACT_APP_REGISTRATION}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -50,31 +50,7 @@ const Register = () => {
         }
     };
 
-    const handleOAuthRedirect = async (provider) => {
-        if (!isChecked) return;
-
-        setIsLoading(true);
-        try {
-            const response = await fetch(
-                `https://registration-fastapi.onrender.com/api/v1/${provider}/link`,
-                { method: 'GET' }
-            );
-
-            const textResponse = await response.text();
-
-            if (response.ok && textResponse) {
-                const cleanLink = textResponse.replace(/^"|"$/g, '');
-                window.location.href = cleanLink;
-            } else {
-                toast.error('Ошибка получения ссылки.');
-            }
-        } catch (error) {
-            console.error('Ошибка при получении ссылки:', error);
-            toast.error('Ошибка сети. Проверьте соединение.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    
 
     return (
         <div className="min-h-screen flex justify-center items-center bg-gradient-to-r from-blue-500 to-purple-600">
@@ -176,36 +152,7 @@ const Register = () => {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <p className="text-sm font-medium mb-4 text-gray-700">Или зарегистрируйтесь через:</p>
-                    <div className="grid grid-cols-1 gap-4">
-                        <button
-                            onClick={() => handleOAuthRedirect('vk')}
-                            className={`flex items-center justify-center py-4 w-full text-white font-semibold rounded-lg transition
-                                ${!isChecked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-                            disabled={!isChecked}
-                        >
-                            <FaVk size={24} className="mr-2" />
-                            ВКонтакте
-                        </button>
-                        <button
-                            onClick={() => handleOAuthRedirect('mail.ru')}
-                            className={`flex items-center justify-center py-4 w-full text-white font-semibold rounded-lg transition
-                                ${!isChecked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-400 hover:bg-blue-500'}`}
-                            disabled={!isChecked}
-                        >
-                            <FaEnvelope size={24} className="mr-2" />
-                            Mail.ru
-                        </button>
-                        <button
-                            onClick={() => handleOAuthRedirect('yandex')}
-                            className={`flex items-center justify-center py-4 w-full text-white font-semibold rounded-lg transition
-                                ${!isChecked ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#F50000] hover:bg-[#D40000]'}`}
-                            disabled={!isChecked}
-                        >
-                            <FaYandex size={24} className="mr-2" />
-                            Яндекс
-                        </button>
-                    </div>
+                    
                     <p className="mt-6 text-center text-sm text-gray-700">
                     Уже есть аккаунт?{' '}
                     <span

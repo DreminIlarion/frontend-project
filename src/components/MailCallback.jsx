@@ -22,7 +22,7 @@ const MailCallback = () => {
       try {
         toast.info("Запрашиваем access_token...");
         const tokenResponse = await fetch(
-          `https://registration-fastapi.onrender.com/api/v1/mail.ru/get/token/${code}`,
+          `${process.env.REACT_APP_MAILRU_GET_TOKEN}${code}`,
           { credentials: "include" }
         );
         const tokenData = await tokenResponse.json();
@@ -41,7 +41,7 @@ const MailCallback = () => {
       try {
         toast.info("Попытка входа...");
         const loginResponse = await fetch(
-          `https://registration-fastapi.onrender.com/api/v1/mail.ru/login/${accessToken}`,
+          `${process.env.REACT_APP_MAILRU_LOGIN}${accessToken}`,
           {
             method: "POST",
             credentials: "include",
@@ -88,7 +88,7 @@ const MailCallback = () => {
       Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
 
       await fetch(
-        `https://personal-account-fastapi.onrender.com/get/token/${access}/${refresh}`,
+        `${process.env.REACT_APP_MAILRU_LOGIN}${access}/${refresh}`,
         { credentials: "include" }
       );
 

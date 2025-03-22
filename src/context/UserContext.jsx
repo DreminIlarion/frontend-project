@@ -38,7 +38,7 @@ export const UserProvider = ({ children }) => {
       }
 
       const response = await fetch(
-        `https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`,
+        `https://personal-account-fastapi.onrender.com/set/token/${accessToken}/${refreshToken}`,
         {
           method: "GET",
           credentials: "include",
@@ -47,7 +47,7 @@ export const UserProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (data.status_code === 200 && data.detail === "OK") {
+      if (data.status_code === 200 && data.message === "Выполненно") {
         setUser({ loggedIn: true });
       } else {
         console.warn("⚠️ Токены недействительны. Удаляем их.");

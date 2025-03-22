@@ -7,6 +7,7 @@ import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
+import Dop_register from './Register_dop_service';
 
 const Profile = () => {
   const { user, setUser, logout } = useUser(); // Доступ к setUser через контекст
@@ -30,7 +31,7 @@ const Profile = () => {
   const handleLogout = useCallback(async () => {
     try {
       // Запрос на сервер для выхода (если сервер чистит сессию)
-      await fetch("https://personal-account-fastapi.onrender.com/logout/", {
+      await fetch(`${process.env.REACT_APP_LOGOUT}`, {
         method: "GET",
         credentials: "include",
       });
@@ -64,7 +65,12 @@ const Profile = () => {
       console.log("✅ Токены найдены, пытаемся получить пользователя...");
       const fetchToken = async () => {
         try {
-          const response = await fetch(`https://personal-account-fastapi.onrender.com/get/token/${accessToken}/${refreshToken}`);
+          const response = await fetch(`${process.env.REACT_APP_GET_TOKEN}${accessToken}/${refreshToken}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
           const data = await response.json();
           
           
@@ -155,6 +161,11 @@ const Profile = () => {
                   </button>
                 </li>
                 <li className="mb-2">
+                  <button onClick={() => { setActiveSection("dop_register"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
+                    Регистрация через доп сервисы
+                  </button>
+                </li>
+                <li className="mb-2">
                   <button onClick={() => { setActiveSection("classifier"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
                     Базовый шанс поступления
                   </button>
@@ -174,6 +185,7 @@ const Profile = () => {
           {activeSection === "form" && <Form />}
           {activeSection === "classifier" && <ClassifierForm />}
           {activeSection === "events" && <Events />}
+          {activeSection === "dop_register" && <Dop_register />}
           {!activeSection && <ClassifierForm />}
         </div>
       </div>
