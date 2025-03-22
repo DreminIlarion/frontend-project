@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
 import { useUser } from '../context/UserContext';  // Импортируем контекст
-import { FaVk, FaYandex, FaEnvelope } from 'react-icons/fa';
+// import { FaVk, FaYandex, FaEnvelope } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 
 const Login = () => {
@@ -195,7 +195,7 @@ const Login = () => {
                       className={`flex items-center justify-center gap-2 h-10 rounded-md font-bold text-white bg-[#0077FF] transition-all hover:bg-[#005bbf] active:scale-95 shadow-md `}
                       
                     >
-                      <FaVk size={20} /> VK ID
+                      {/* <FaVk size={20} /> VK ID */}
                     </button>
 
             {/* Yandex button */}
@@ -204,7 +204,7 @@ const Login = () => {
                       className={`flex items-center justify-center gap-2 h-10 rounded-md font-bold text-white bg-red-600 transition-all hover:bg-red-700 active:scale-95 shadow-md`}
                       
                     >
-                      <FaYandex size={18} /> Яндекс
+                      {/* <FaYandex size={18} /> Яндекс */}
                     </button>
 
 
