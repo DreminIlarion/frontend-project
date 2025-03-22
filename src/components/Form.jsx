@@ -22,6 +22,8 @@ const Form = () => {
   const sortedRecommendations = [...recommendations].sort((a, b) => b.probability - a.probability);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [exams, setExams] = useState([]);
+  const [examScores, setExamScores] = useState({});
 
   const LineChartComponent = ({ data }) => {
     const chartData = {
@@ -215,6 +217,42 @@ const Form = () => {
     }
   };
 
+
+  const fetchExamScores = async (directionId) => {
+    try {
+      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/exams/${directionId}`, 
+        {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+    });
+  
+      // Проверяем Content-Type, чтобы убедиться, что пришел JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text(); // Читаем текст ошибки
+        console.error("Ошибка: сервер вернул не JSON. Ответ:", text);
+        return;
+      }
+  
+      const data = await response.json();
+  
+      if (data.status_code === 200 && Array.isArray(data.body)) {
+        setExamScores(prev => ({
+          ...prev,
+          [directionId]: data.body // массив с экзаменами
+        }));
+      } else {
+        console.error("Неверный формат данных:", data);
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки баллов экзаменов:", error);
+    }
+  };
+  
+  
   
 
   return (
@@ -344,14 +382,19 @@ const Form = () => {
         <div key={index} className="p-4 mb-4 bg-blue-100 rounded-md">
           <p className="text-lg font-semibold text-blue-700">{rec.name}</p>
           <p className="text-lg mt-1 text-gray-600">
-            <strong className="text-lg text-blue-600">Вероятность поступления:</strong> 
-            <span className="text-xl font-semibold text-green-600">
-              {Math.round(rec.probability * 100)}%
-            </span>
-          </p>
+          <strong className="text-lg text-blue-600">Вероятность поступления:</strong> 
+          <span className={`text-xl font-semibold ${
+            rec.probability >= 0.5 ? "text-green-600" :
+            rec.probability >= 0.3 ? "text-orange-500" :
+            "text-red-600"
+          }`}>
+            {Math.round(rec.probability * 100)}%
+          </span>
+        </p>
+
 
           {/* Кнопки */}
-          <div className="mt-2">
+          <div className="mt-">
             <button 
               onClick={() => {
                 fetchDetails(rec.direction_id);
@@ -367,10 +410,21 @@ const Form = () => {
                 fetchPointsHistory(rec.direction_id);
                 toggleSection(rec.direction_id, "points");
               }} 
-              className={`px-4 py-2 rounded-lg ${openSections[rec.direction_id]?.includes("points") ? "bg-purple-700 text-white" : "bg-purple-500 text-white"}`}
+              className={`px-4 py-2  mr-2 rounded-lg ${openSections[rec.direction_id]?.includes("points") ? "bg-purple-700 text-white" : "bg-purple-500 text-white"}`}
             >
               Динамика баллов
             </button>
+
+            <button 
+              onClick={() => {
+                fetchExamScores(rec.direction_id);
+                toggleSection(rec.direction_id, "exams");
+              }} 
+              className={`px-4 py-2 rounded-lg ${openSections[rec.direction_id]?.includes("exams") ? "bg-blue-700 text-white" : "bg-blue-500 text-white"}`}
+            >
+              Показать экзамены
+            </button>
+
           </div>
 
           {/* Отображение блоков в нужном порядке */}
@@ -396,6 +450,19 @@ const Form = () => {
                 <div className="h-60">
                   <LineChartComponent data={pointsHistory[rec.direction_id]} />
                 </div>
+              </>
+            )}
+
+            {section === "exams" && examScores[rec.direction_id] && (
+              <>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Минимальные баллы по экзаменам</h3>
+                <ul className="list-disc pl-5">
+                  {examScores[rec.direction_id].map((exam, index) => (
+                    <li key={index} className="text-sm text-gray-700">
+                      {exam.name}: {exam.min_points}
+                    </li>
+                  ))}
+                </ul>
               </>
             )}
 
