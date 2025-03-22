@@ -122,12 +122,12 @@ const Form = () => {
       });
   
       if (response.ok) {
-        const data = await response.text();
-        console.log(data.body);
+        const data = await response.json();
+        console.log(data);
 
         setDetails((prev) => ({ 
           ...prev, 
-          [directionId]: data 
+          [directionId]: data.body
             .replace(/\\n/g, ' ') // Заменяет закодированные \n на пробелы
             .replace(/\s+/g, ' ') // Убирает лишние пробелы
             .replace(/([а-яА-Я]):([А-Я])/g, '$1: $2') // Добавляет пробел после двоеточий
@@ -158,7 +158,8 @@ const Form = () => {
   
       if (response.ok) {
         const data = await response.json();
-        setPointsHistory((prev) => ({ ...prev, [directionId]: data }));
+        
+        setPointsHistory((prev) => ({ ...prev, [directionId]: data.body }));
       } else {
         console.error('Ошибка загрузки динамики баллов:', await response.text());
       }

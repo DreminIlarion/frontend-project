@@ -12,7 +12,39 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true); // Есть ли еще события для загрузки
 
   // Загрузка событий с пагинацией
+  useEffect(() => {
+    const loadEvents = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `https://events-fastapi.onrender.com/api/v1/events/get/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
+        const data = await response.json();
 
+        // Добавляем новые события только если их еще нет в списке
+        setEvents((prevEvents) => {
+          const newEventsSet = new Set(prevEvents.map((event) => event.id)); // Множество с id уже загруженных событий
+          const newEvents = data.filter((event) => !newEventsSet.has(event.id)); // Фильтруем уже загруженные события
+          return [...prevEvents, ...newEvents];
+        });
+
+        // Если загружено меньше 10 событий, это последняя страница
+        if (data.length < 10) {
+          setHasMore(false);
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, [page]);
 
   // Загрузка зарегистрированных событий для текущего пользователя
   useEffect(() => {
@@ -22,13 +54,13 @@ const Home = () => {
     
       .then((response) => response.json())
       .then((data) => {
-        const registeredIds = new Set(data.map((entry) => entry.event_id));
+        const registeredIds = new Set(data.body.map((entry) => entry.event_id));
 
 
 
 
         setRegisteredEvents(registeredIds);
-        const visitorMap = data.reduce((acc, entry) => {
+        const visitorMap = data.body.reduce((acc, entry) => {
           acc[entry.event_id] = entry.unique_string;
           return acc;
         }, {});
