@@ -11,7 +11,7 @@ import OAuthCallback from "./components/OAuthCallback";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import Home from './components/Home';
 import Test from './components/Cht';
-// import NotFound from "./components/NotFound";
+import NotFound from "./components/NotFound";
 // import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './App.css'; // Импорт стилей для анимаций
 
@@ -34,7 +34,7 @@ const AppWrapper = () => {
             <Route path="/yandex/callback" element={<YandexCallback />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path='/test' element={<Test />} />
-            {/* <Route path="*" element={<NotFound />} /> */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         {/* </CSSTransition>
       </TransitionGroup> */}
