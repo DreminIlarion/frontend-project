@@ -29,7 +29,7 @@ const AppWrapper = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/vk/callback" element={<OAuthCallback />} />
+            <Route path="/OAuthCallback" element={<OAuthCallback />} />
             <Route path="/mail.ru/callback" element={<MailCallback />} />
             <Route path="/yandex/callback" element={<YandexCallback />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
