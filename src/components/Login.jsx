@@ -70,16 +70,17 @@ const Login = () => {
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link`, {
         method: "GET",
       });
-
+  
       if (!response.ok) {
         throw new Error(`Ошибка ${response.status}`);
       }
-
+  
       const data = await response.json(); // Парсим JSON
       console.log(`Ответ от /${provider}/link:`, data);
-
+  
       if (data.url && data.code_verifier) {
         localStorage.setItem(`${provider}_code_verifier`, data.code_verifier); // Сохраняем code_verifier
+        console.log(`Сохранён code_verifier для ${provider}:`, data.code_verifier);
         console.log(`Перенаправление на:`, data.url);
         window.location.href = data.url; // Перенаправляем на правильный URL
       } else {

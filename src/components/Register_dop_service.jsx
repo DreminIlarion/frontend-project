@@ -6,13 +6,14 @@ const RegisterOAuth = () => {
 
   const handleOAuth = async (provider) => {
     if (!isChecked) return;
-
+  
     try {
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link`);
       const data = await response.json();
-      console.log(data);
-      if (data.url) {
+      console.log(`Ответ от /${provider}/link:`, data);
+      if (data.url && data.code_verifier) {
         localStorage.setItem(`${provider}_code_verifier`, data.code_verifier);
+        console.log(`Сохранён code_verifier для ${provider}:`, data.code_verifier);
         window.location.href = data.url;
       } else {
         console.error("Ошибка при получении ссылки", data.url);

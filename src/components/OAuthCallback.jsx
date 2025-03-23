@@ -4,11 +4,11 @@ import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { provider } = useParams(); // "vk" или "yandex"
+  const { provider } = useParams();
 
   useEffect(() => {
     const code = searchParams.get("code");
-    const deviceId = searchParams.get("device_id"); // Извлекаем device_id из query-параметров
+    const deviceId = searchParams.get("device_id");
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
@@ -17,7 +17,6 @@ const OAuthCallback = () => {
     console.log("Полный URL:", window.location.href);
     console.log("Search Params:", Object.fromEntries(searchParams));
 
-    // Fallback для provider
     const inferredProvider = window.location.href.includes("vk") ? "vk" : window.location.href.includes("yandex") ? "yandex" : null;
 
     if (!code || (!provider && !inferredProvider)) {
@@ -42,7 +41,6 @@ const OAuthCallback = () => {
           return;
         }
 
-        // Шаг 1: Получение токена от провайдера
         const tokenUrl =
           finalProvider === "vk"
             ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
@@ -50,78 +48,58 @@ const OAuthCallback = () => {
         console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
-          credentials: "include", // Куки для personal-account-fastapi
+          credentials: "include",
         });
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
 
         if (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token) {
-          const accessToken = tokenData.body.access_token; // Извлекаем access_token из body
+          const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          // Шаг 2: Попытка логина
-          const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
-          console.log("Запрос логина по URL:", loginUrl);
-          const loginResponse = await fetch(loginUrl, { method: "POST" });
-          const loginData = await loginResponse.json();
-          console.log("Ответ от /login:", loginData);
-          let finalAccess, finalRefresh;
+          // Шаг 1: Регистрация
+          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+          console.log("Запрос регистрации по URL:", registrationUrl);
+          const registrationResponse = await fetch(registrationUrl, {
+            method: "POST",
+            credentials: "include",
+          });
+          const registrationData = await registrationResponse.json();
+          console.log("Ответ от /registration:", registrationData);
 
-          if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
-            console.log("Успешный вход");
-            finalAccess = loginData.access;
-            finalRefresh = loginData.refresh;
-          } else {
-            console.warn("Пользователь не найден, пробуем регистрацию...");
+          if (registrationData.status_code === 200) {
+            console.log("Регистрация успешна, выполняем логин для получения токенов...");
 
-            // Шаг 3: Регистрация
-            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
-            console.log("Запрос регистрации по URL:", registrationUrl);
-            const registrationResponse = await fetch(registrationUrl, {
-              method: "POST",
-              credentials: "include", // Куки для personal-account-fastapi
-            });
-            const registrationData = await registrationResponse.json();
-            console.log("Ответ от /registration:", registrationData);
+            // Шаг 2: Логин для получения токенов
+            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
+            console.log("Запрос логина по URL:", loginUrl);
+            const loginResponse = await fetch(loginUrl, { method: "POST" });
+            const loginData = await loginResponse.json();
+            console.log("Ответ от /login:", loginData);
 
-            if (registrationData.status_code === 200) {
-              console.log("Регистрация успешна, выполняем логин для получения токенов...");
+            if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
+              const finalAccess = loginData.access;
+              const finalRefresh = loginData.refresh;
 
-              // Шаг 4: Повторный вызов /login после регистрации
-              const retryLoginResponse = await fetch(loginUrl, { method: "POST" });
-              const retryLoginData = await retryLoginResponse.json();
-              console.log("Ответ от повторного /login:", retryLoginData);
+              // Шаг 3: Установка токенов
+              const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+              console.log("Установка токенов по URL:", setTokenUrl);
+              await fetch(setTokenUrl, {
+                method: "POST",
+                credentials: "include",
+              });
 
-              if (retryLoginData.status_code === 200 && retryLoginData.access && retryLoginData.refresh) {
-                finalAccess = retryLoginData.access;
-                finalRefresh = retryLoginData.refresh;
-              } else {
-                console.error("Ошибка при повторном логине после регистрации", retryLoginData);
-                return;
-              }
+              console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
+              document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
+              document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
+
+              console.log("Перенаправление на /dashboard");
+              navigate("/dashboard");
             } else {
-              console.error("Ошибка при регистрации", registrationData);
-              return;
+              console.error("Ошибка при логине после регистрации", loginData);
             }
-          }
-
-          // Шаг 5: Установка токенов
-          if (finalAccess && finalRefresh) {
-            const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
-            console.log("Установка токенов по URL:", setTokenUrl);
-            await fetch(setTokenUrl, {
-              method: "POST",
-              credentials: "include", // Куки для personal-account-fastapi
-            });
-
-            console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
-            document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
-            document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
-
-            console.log("Перенаправление на /dashboard");
-            navigate("/dashboard");
           } else {
-            console.error("Токены не получены после всех шагов");
+            console.error("Ошибка при регистрации", registrationData);
           }
         } else {
           console.error("Ошибка получения токена или неверный формат ответа", tokenData);
@@ -154,11 +132,11 @@ const OAuthCallback = () => {
           </svg>
         </div>
         <h2 className="text-2xl font-semibold text-gray-800 text-center mb-4 fade-in">
-          Авторизация через{" "}
+          Регистрация через{" "}
           {provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Неизвестный провайдер"}
         </h2>
         <p className="text-gray-600 text-center mb-6 slide-in">
-          Пожалуйста, подождите, пока мы проверяем ваши данные...
+          Пожалуйста, подождите, пока мы создаем ваш аккаунт...
         </p>
         <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load" />
