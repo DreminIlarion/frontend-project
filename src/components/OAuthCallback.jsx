@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
-import { toast, Toaster } from "react-hot-toast"; // Исправляем импорт
+import { toast, Toaster } from "react-hot-toast";
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -108,9 +108,12 @@ const OAuthCallback = () => {
               console.log("Регистрация успешна, выполняем логин для получения токенов...");
               await performLogin(accessToken, finalProvider);
             } else if (registrationData.status_code === 401) {
-              console.log("Пользователь уже зарегистрирован, выполняем автоматический вход...");
-              toast.info("Аккаунт уже зарегистрирован. Выполняем вход...");
-              await performLogin(accessToken, finalProvider);
+              console.log("Пользователь уже зарегистрирован, перенаправляем на dashboard...");
+              toast.success(`ТЫ ЗАРЕГИСТРИРОВАН В ${finalProvider.toUpperCase()}`);
+              setTimeout(() => {
+                navigate("/dashboard");
+                window.location.reload(); // Обновляем страницу после перехода на /dashboard
+              }, 1500);
             } else {
               console.error("Ошибка при регистрации", registrationData);
               toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
@@ -169,12 +172,12 @@ const OAuthCallback = () => {
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
-          console.log("Перенаправление на /profile");
-          toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
+          console.log("Перенаправление на /dashboard");
+          toast.success("Вход выполнен успешно! Вы будете перенаправлены на dashboard...");
           setTimeout(() => {
-            navigate("/profile");
-            window.location.reload(); // Обновляем страницу после перехода на /profile
-          }, 500);
+            navigate("/dashboard");
+            window.location.reload(); // Обновляем страницу после перехода на /dashboard
+          }, 1500);
         } else {
           console.error("Ошибка при входе", loginData);
           toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
