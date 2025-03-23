@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
 import { Link, useNavigate } from 'react-router-dom';
-// import { FaUserCircle, FaBars, FaTimes, FaHome, FaChartBar, FaCalendar, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
+
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
@@ -71,8 +71,13 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    // Используем mousedown и touchstart для лучшей совместимости с мобильными устройствами
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   return (
@@ -103,22 +108,31 @@ const Profile = () => {
           ref={sidebarRef}
           className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         >
-          <div className="flex items-center px-6 py-4 border-b border-blue-600/30">
-            
-            {user ? (
-              <span className="text-lg font-semibold truncate">{user.email}</span>
-            ) : (
-              <Link to="/login" className="text-white hover:underline">Войти</Link>
-            )}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-blue-600/30">
+            <div className="flex items-center">
+              
+              {user ? (
+                <span className="text-lg font-semibold truncate">{user.email}</span>
+              ) : (
+                <Link to="/login" className="text-white hover:underline">Войти</Link>
+              )}
+            </div>
+            {/* Добавляем кнопку закрытия для мобильных устройств */}
+            <button
+              className="lg:hidden text-white text-xl hover:text-blue-300 transition-colors duration-200"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              
+            </button>
           </div>
           <nav className="mt-4 space-y-1 px-2">
             {[
-              { to: '/', label: 'Главная страница'},
+              { to: '/', label: 'Главная страница' },
               ...(user && user.loggedIn
                 ? [
                     { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления' },
                     { action: () => setActiveSection('events'), label: 'События' },
-                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через дополнительные сервисы'},
+                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через дополнительные сервисы' },
                     { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления' },
                     { action: handleLogout, label: 'Выход' },
                   ]
