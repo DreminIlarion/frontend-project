@@ -84,7 +84,7 @@ const Home = () => {
     setLoadingEventId(eventId);
     const isRegistered = registeredEvents.has(eventId);
     const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
-    const method = isRegistered ? "DELETE" : "POST";
+      const method = isRegistered ? "DELETE" : "POST";
 
     try {
       const response = await fetch(url, {
@@ -127,11 +127,11 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-100">
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-6 px-8 flex justify-between items-center shadow-lg backdrop-blur-md bg-opacity-90 sticky top-0 z-10">
-        <h1 className="text-3xl font-bold">Главная страница</h1>
+        <h1 className="text-3xl font-bold fade-in">Главная страница</h1>
         <nav>
           <Link
             to="/profile"
-            className="bg-white text-blue-700 px-6 py-3 rounded-full shadow-md hover:bg-blue-100 transition-all duration-300 transform hover:scale-105"
+            className="bg-white text-blue-700 px-6 py-3 rounded-full shadow-md hover:bg-blue-100 transition-all duration-300 hover:scale-105"
           >
             Личный кабинет
           </Link>
@@ -140,16 +140,16 @@ const Home = () => {
 
       {/* Main Section */}
       <main className="flex flex-col items-center justify-center text-center py-12 px-6">
-        <h2 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+        <h2 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 fade-in">
           Добро пожаловать!
         </h2>
-        <p className="text-lg text-gray-700 mb-12 max-w-2xl">
+        <p className="text-lg text-gray-700 mb-12 max-w-2xl slide-in">
           Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные события и управлять своим аккаунтом.
         </p>
 
         {/* Events Section */}
         <section className="container mx-auto px-6 py-12">
-          <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center">События</h3>
+          <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">События</h3>
           <div
             className="grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto"
             onScroll={handleScroll}
@@ -158,7 +158,7 @@ const Home = () => {
               events.map((event) => (
                 <div
                   key={event.id}
-                  className="bg-white/95 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-blue-200/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col"
+                  className="bg-white/95 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-blue-200/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col slide-in"
                 >
                   <div className="mb-4">
                     <div className="flex justify-between items-start gap-4">
@@ -196,7 +196,7 @@ const Home = () => {
                           e.stopPropagation();
                           handleRegistration(event.id);
                         }}
-                        className={`inline-flex py-2 px-6 text-white font-semibold rounded-full shadow-md transition-all duration-300 items-center justify-center ${
+                        className={`inline-flex py-2 px-6 text-white font-semibold rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 ${
                           registeredEvents.has(event.id)
                             ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
                             : "bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-green-500/50"
@@ -214,7 +214,7 @@ const Home = () => {
                     ) : (
                       <Link
                         to="/login"
-                        className="inline-flex py-2 px-6 text-white font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-md hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 items-center justify-center"
+                        className="inline-flex py-2 px-6 text-white font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50 items-center justify-center"
                       >
                         Войдите, чтобы записаться 🔑
                       </Link>
@@ -223,15 +223,15 @@ const Home = () => {
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500 col-span-full">
+              <p className="text-center text-gray-500 col-span-full slide-in">
                 {loading ? "Загрузка..." : "События не найдены"}
               </p>
             )}
           </div>
           {!hasMore && !loading && (
-            <p className="text-center text-gray-500 mt-6">Больше событий нет.</p>
+            <p className="text-center text-gray-500 mt-6 slide-in">Больше событий нет.</p>
           )}
-          <p className="text-gray-600 mt-10 max-w-2xl text-center mx-auto">
+          <p className="text-gray-600 mt-10 max-w-2xl text-center mx-auto slide-in">
             Здесь вы найдете список актуальных событий. Нажмите на название для подробностей или войдите, чтобы записаться!
           </p>
         </section>
@@ -239,11 +239,11 @@ const Home = () => {
 
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 fade-in"
           onClick={closeModal}
         >
           <div
-            className="bg-white p-8 rounded-3xl shadow-xl w-[85%] max-w-5xl max-h-[90vh] overflow-y-auto"
+            className="bg-white p-8 rounded-3xl shadow-xl w-[85%] max-w-5xl max-h-[90vh] overflow-y-auto modal-slide-in"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-3xl font-semibold text-gray-900 mb-6 break-words leading-tight">
@@ -268,7 +268,7 @@ const Home = () => {
               {user?.loggedIn && (
                 <button
                   onClick={() => handleRegistration(selectedEvent.id)}
-                  className={`py-3 px-6 text-white font-semibold rounded-full shadow-md transition-all duration-300 flex items-center justify-center ${
+                  className={`py-3 px-6 text-white font-semibold rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 ${
                     registeredEvents.has(selectedEvent.id)
                       ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
                       : "bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-green-500/50"

@@ -58,16 +58,13 @@ const Form = () => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      // Для gender, year, foreign_citizenship, military_service — строковые значения
       if (['gender', 'year', 'foreign_citizenship', 'military_service'].includes(name)) {
         return { ...prev, [name]: value };
       }
 
-      // Для числовых полей (gpa, bonus_points, экзамены)
       const parsedValue = name === 'gpa' || name === 'bonus_points' ? value : parseInt(value) || '';
       const newFormData = { ...prev, [name]: parsedValue };
 
-      // Пересчет суммы баллов
       const totalPoints =
         (parseInt(newFormData.russian) || 0) +
         (parseInt(newFormData.math) || 0) +
@@ -171,7 +168,6 @@ const Form = () => {
       return;
     }
 
-    // Преобразование экзаменов в массив
     const examsArray = [
       { subject: 'russian', points: parseInt(formData.russian) || 0 },
       { subject: 'math', points: parseInt(formData.math) || 0 },
@@ -180,7 +176,7 @@ const Form = () => {
       { subject: 'history', points: parseInt(formData.history) || 0 },
       { subject: 'informatics', points: parseInt(formData.informatics) || 0 },
       { subject: 'social_science', points: parseInt(formData.social_science) || 0 },
-    ].filter(exam => exam.points > 0); // Отправляем только экзамены с баллами
+    ].filter(exam => exam.points > 0);
 
     const dataToSend = {
       gender: formData.gender,
@@ -231,9 +227,9 @@ const Form = () => {
       <div className="w-1/2">
         <form
           onSubmit={handleSubmit}
-          className="bg-white/90 backdrop-blur-lg p-8 shadow-xl rounded-2xl border border-blue-100/50"
+          className="bg-white/90 backdrop-blur-lg p-8 shadow-xl rounded-2xl border border-blue-100/50 slide-in"
         >
-          <h1 className="text-3xl font-bold text-blue-900 mb-6 text-center">Расширенный шанс поступления</h1>
+          <h1 className="text-3xl font-bold text-blue-900 mb-6 text-center fade-in">Расширенный шанс поступления</h1>
 
           <label className="block mb-4 text-sm font-semibold text-gray-800">Пол:</label>
           <div className="flex items-center gap-4 mb-6">
@@ -247,8 +243,8 @@ const Form = () => {
                 className="hidden"
               />
               <span
-                className={`px-4 py-2 rounded-lg border transition-all ${
-                  formData.gender === 'male' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                className={`px-4 py-2 rounded-lg border transition-all duration-200 ${
+                  formData.gender === 'male' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 Мужской
@@ -264,18 +260,14 @@ const Form = () => {
                 className="hidden"
               />
               <span
-                className={`px-4 py-2 rounded-lg border transition-all ${
-                  formData.gender === 'female' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700'
+                className={`px-4 py-2 rounded-lg border transition-all duration-200 ${
+                  formData.gender === 'female' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 Женский
               </span>
             </label>
           </div>
-
-          
-
-          
 
           <label className="block mb-2 text-sm font-semibold text-gray-800">Год:</label>
           <div className="grid grid-cols-3 gap-2 mb-6">
@@ -284,7 +276,7 @@ const Form = () => {
                 key={year}
                 type="button"
                 onClick={() => handleChange({ target: { name: 'year', value: year } })}
-                className={`px-3 py-2 text-sm rounded-md border transition-all ${
+                className={`px-3 py-2 text-sm rounded-md border transition-all duration-200 ${
                   formData.year === year
                     ? 'bg-blue-500 text-white font-semibold shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -305,7 +297,7 @@ const Form = () => {
               name="gpa"
               value={formData.gpa}
               onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
           </label>
 
@@ -335,7 +327,7 @@ const Form = () => {
               name="bonus_points"
               value={formData.bonus_points}
               onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
           </label>
 
@@ -359,7 +351,7 @@ const Form = () => {
                   name={key}
                   value={formData[key] || ''}
                   onChange={handleChange}
-                  className="ml-2 p-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 w-24"
+                  className="ml-2 p-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 w-24"
                 />
               </div>
             ))}
@@ -373,12 +365,10 @@ const Form = () => {
 
           <button
             type="submit"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`w-full py-2 rounded-lg shadow-md transition-all ${
+            className={`w-full py-2 rounded-lg shadow-md transition-transform duration-300 ${
               loading
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/50'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105 active:scale-95 hover:shadow-blue-500/50'
             }`}
             disabled={loading}
           >
@@ -386,7 +376,7 @@ const Form = () => {
           </button>
         </form>
 
-        <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50">
+        <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in">
           <p className="text-sm text-gray-700 leading-relaxed">
             <span className="font-semibold text-blue-900">Расширенный шанс поступления</span> — это мощный инструмент
             для точной оценки ваших перспектив. Введите данные об экзаменах, баллах ЕГЭ, аттестате и дополнительных
@@ -397,11 +387,11 @@ const Form = () => {
       </div>
 
       {/* Рекомендации */}
-      <div className="w-1/2 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-y-auto" style={{ maxHeight: '95vh' }}>
-        <h2 className="text-2xl font-semibold text-blue-900 mb-4">Рекомендации</h2>
+      <div className="w-1/2 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-y-auto slide-in" style={{ maxHeight: '95vh' }}>
+        <h2 className="text-2xl font-semibold text-blue-900 mb-4 fade-in">Рекомендации</h2>
         {sortedRecommendations.length > 0 ? (
           sortedRecommendations.map((rec, index) => (
-            <div key={index} className="p-4 mb-4 bg-blue-100/70 backdrop-blur-sm rounded-md">
+            <div key={index} className="p-4 mb-4 bg-blue-100/70 backdrop-blur-sm rounded-md slide-in">
               <p className="text-lg font-semibold text-blue-700">{rec.name}</p>
               <p className="text-lg mt-1 text-gray-600">
                 <strong className="text-blue-600">Вероятность поступления:</strong>{' '}
@@ -424,12 +414,10 @@ const Form = () => {
                     fetchDetails(rec.direction_id);
                     toggleSection(rec.direction_id, 'details');
                   }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
                     openSections[rec.direction_id]?.includes('details')
                       ? 'bg-green-700 text-white'
-                      : 'bg-green-500 text-white'
+                      : 'bg-green-500 text-white hover:shadow-green-500/50'
                   }`}
                 >
                   Подробнее
@@ -440,12 +428,10 @@ const Form = () => {
                     fetchPointsHistory(rec.direction_id);
                     toggleSection(rec.direction_id, 'points');
                   }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
                     openSections[rec.direction_id]?.includes('points')
                       ? 'bg-purple-700 text-white'
-                      : 'bg-purple-500 text-white'
+                      : 'bg-purple-500 text-white hover:shadow-purple-500/50'
                   }`}
                 >
                   Динамика баллов
@@ -456,12 +442,10 @@ const Form = () => {
                     fetchExamScores(rec.direction_id);
                     toggleSection(rec.direction_id, 'exams');
                   }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
                     openSections[rec.direction_id]?.includes('exams')
                       ? 'bg-blue-700 text-white'
-                      : 'bg-blue-500 text-white'
+                      : 'bg-blue-500 text-white hover:shadow-blue-500/50'
                   }`}
                 >
                   Показать экзамены
@@ -469,10 +453,10 @@ const Form = () => {
               </div>
 
               {openSections[rec.direction_id]?.slice().reverse().map((section) => (
-                <div key={section} className="mt-4 p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative">
+                <div key={section} className="mt-4 p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative slide-in">
                   <button
                     onClick={() => toggleSection(rec.direction_id, section)}
-                    className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                    className="absolute top-2 right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
                   >
                     ✕
                   </button>

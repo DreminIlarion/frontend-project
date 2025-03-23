@@ -9,7 +9,6 @@ import Cookies from "js-cookie";
 import Events from './Events';
 import DopRegister from './Register_dop_service';
 
-
 const Profile = () => {
   const { user, setUser, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
@@ -90,7 +89,7 @@ const Profile = () => {
           >
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
-          <h1 className="text-2xl font-bold flex-1 text-center tracking-tight">Личный кабинет</h1>
+          <h1 className="text-2xl font-bold flex-1 text-center tracking-tight fade-in">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-6 text-sm font-medium">
             <Link to="/help" className="hover:text-blue-300 transition-colors duration-200">Помощь</Link>
             <Link to="/contact" className="hover:text-blue-300 transition-colors duration-200">Контакты</Link>
@@ -102,10 +101,7 @@ const Profile = () => {
         {/* Sidebar */}
         <aside
           ref={sidebarRef}
-          initial={{ x: -300 }}
-          animate={{ x: isSidebarOpen ? 0 : -300 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl"
+          className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         >
           <div className="flex items-center px-6 py-4 border-b border-blue-600/30">
             <FaUserCircle className="text-3xl text-white mr-3 drop-shadow-sm" />
@@ -132,7 +128,7 @@ const Profile = () => {
                 <Link
                   key={index}
                   to={item.to}
-                  className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-800"
+                  className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
                   onClick={() => setIsSidebarOpen(false)}
                 >
                   <span className="text-lg mr-3">{item.icon}</span>
@@ -145,7 +141,7 @@ const Profile = () => {
                     item.action();
                     setIsSidebarOpen(false);
                   }}
-                  className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-800"
+                  className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
                 >
                   <span className="text-lg mr-3">{item.icon}</span>
                   <span>{item.label}</span>
@@ -156,12 +152,9 @@ const Profile = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6  min-h-screen flex justify-center ">
+        <main className="flex-1 p-6 min-h-screen flex justify-center">
           <div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-blue-100/50 w-full max-w-7xl"
+            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-blue-100/50 w-full max-w-7xl slide-in"
           >
             {activeSection === 'form' && <Form />}
             {activeSection === 'classifier' && <ClassifierForm />}
@@ -175,43 +168,31 @@ const Profile = () => {
       {/* Chat */}
       {user && (
         <div className="fixed bottom-6 right-6 z-50">
-          
-    
-            {!isChatVisible ? (
-              <button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                onClick={() => setIsChatVisible(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-blue-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="text-2xl">💬</span>
-              </button>
-            ) : (
-              <div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="w-[90vw] max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-blue-100/50 overflow-hidden"
-              >
-                <div className="p-4 border-b border-blue-100/50 flex justify-between items-center bg-blue-500/50">
-                  <span className="text-sm font-medium text-gray-900">Чат</span>
-                  <button
-                    onClick={() => setIsChatVisible(false)}
-                    className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                  >
-                    
-                    ✕
-                  </button>
-                </div>
-                <div className="p-4 h-[calc(100%-3.5rem)]">
-                  <Chat />
-                </div>
+          {!isChatVisible ? (
+            <button
+              onClick={() => setIsChatVisible(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-blue-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center hover:scale-110 active:scale-95 fade-in"
+            >
+              <span className="text-2xl">💬</span>
+            </button>
+          ) : (
+            <div
+              className="w-[90vw] max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-blue-100/50 overflow-hidden slide-in"
+            >
+              <div className="p-4 border-b border-blue-100/50 flex justify-between items-center bg-blue-500/50">
+                <span className="text-sm font-medium text-gray-900">Чат</span>
+                <button
+                  onClick={() => setIsChatVisible(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                >
+                  ✕
+                </button>
               </div>
-            )}
-          
+              <div className="p-4 h-[calc(100%-3.5rem)]">
+                <Chat />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

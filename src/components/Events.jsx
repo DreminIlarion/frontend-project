@@ -97,7 +97,7 @@ const Events = () => {
   if (loading && page === 1)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
-        <p className="text-lg text-gray-600 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md">
+        <p className="text-lg text-gray-600 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
           Загрузка событий...
         </p>
       </div>
@@ -115,10 +115,7 @@ const Events = () => {
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 flex flex-col items-center p-6">
         <h2
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10"
+          className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in"
         >
           Мои события
         </h2>
@@ -133,10 +130,7 @@ const Events = () => {
               .map((event) => (
                 <div
                   key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-blue-100/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+                  className="bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-blue-100/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 slide-in"
                 >
                   <div className="flex flex-col">
                     <div className="flex justify-between items-start mb-4">
@@ -171,9 +165,7 @@ const Events = () => {
                         e.stopPropagation();
                         handleRegistration(event.id);
                       }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-1 py-3 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300 hover:shadow-red-500/50"
+                      className="flex-1 py-3 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-red-500/50"
                     >
                       Отписаться ❌
                     </button>
@@ -183,9 +175,7 @@ const Events = () => {
                         e.stopPropagation();
                         getQRCode(event.id);
                       }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="py-3 px-5 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 hover:shadow-blue-500/50"
+                      className="py-3 px-5 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
                     >
                       QR-код 📲
                     </button>
@@ -200,27 +190,20 @@ const Events = () => {
         </div>
 
         {loading && (
-          <p className="text-center text-gray-600 mt-6 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md">
+          <p className="text-center text-gray-600 mt-6 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
             Загрузка...
           </p>
         )}
       </div>
 
-      {/* Модальное окно на уровне корня компонента */}
+      {/* Модальное окно */}
       {selectedEvent && (
         <div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto"
+          className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto fade-in"
           onClick={closeModal}
         >
           <div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white w-full max-w-lg mx-4 my-8 p-6 rounded-2xl shadow-xl flex flex-col gap-4 sm:max-w-xl"
+            className="bg-white w-full max-w-lg mx-4 my-8 p-6 rounded-2xl shadow-xl flex flex-col gap-4 sm:max-w-xl modal-slide-in"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-2xl font-semibold text-gray-900 break-words leading-tight">
@@ -244,23 +227,19 @@ const Events = () => {
             <div className="flex flex-col gap-3 mt-4 sm:flex-row sm:gap-4 sm:justify-end">
               <button
                 onClick={() => handleRegistration(selectedEvent.id)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300 hover:shadow-red-500/50"
+                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-red-500/50"
               >
                 Отписаться ❌
               </button>
               <button
                 onClick={() => getQRCode(selectedEvent.id)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 hover:shadow-blue-500/50"
+                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
               >
                 QR-код 📲
               </button>
               <button
                 onClick={closeModal}
-                className="w-full sm:w-auto py-2 px-4 text-gray-700 font-semibold rounded-full border border-gray-300 hover:bg-gray-100 transition-all duration-300"
+                className="w-full sm:w-auto py-2 px-4 text-gray-700 font-semibold rounded-full border border-gray-300 transition-all duration-300 hover:bg-gray-100"
               >
                 Закрыть
               </button>

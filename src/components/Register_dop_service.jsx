@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FaVk, FaYandex } from "react-icons/fa";
 
-
 const RegisterOAuth = () => {
   const [isChecked, setIsChecked] = useState(false);
 
@@ -28,13 +27,10 @@ const RegisterOAuth = () => {
       <div className="flex flex-col items-center gap-6 max-w-xl w-full mx-auto p-6">
         {/* Основной контейнер */}
         <div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-6 p-8 bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl border border-blue-100/50 w-full"
+          className="flex flex-col items-center gap-6 p-8 bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl border border-blue-100/50 w-full slide-in"
         >
           {/* Заголовок */}
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center fade-in">
             Регистрация через сервисы
           </h2>
 
@@ -42,10 +38,8 @@ const RegisterOAuth = () => {
           <div className="grid grid-cols-2 gap-4 w-full">
             <button
               onClick={() => handleOAuth("vk")}
-              whileHover={isChecked ? { scale: 1.05 } : {}}
-              whileTap={isChecked ? { scale: 0.95 } : {}}
-              className={`flex items-center justify-center gap-2 h-12 rounded-full font-semibold text-white bg-gradient-to-r from-[#0077FF] to-[#005BBF] shadow-md transition-all duration-300 ${
-                !isChecked ? "opacity-50 cursor-not-allowed" : "hover:shadow-blue-500/50"
+              className={`flex items-center justify-center gap-2 h-12 rounded-full font-semibold text-white bg-gradient-to-r from-[#0077FF] to-[#005BBF] shadow-md transition-transform duration-300 ${
+                !isChecked ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
               }`}
               disabled={!isChecked}
             >
@@ -54,10 +48,8 @@ const RegisterOAuth = () => {
 
             <button
               onClick={() => handleOAuth("yandex")}
-              whileHover={isChecked ? { scale: 1.05 } : {}}
-              whileTap={isChecked ? { scale: 0.95 } : {}}
-              className={`flex items-center justify-center gap-2 h-12 rounded-full font-semibold text-white bg-gradient-to-r from-red-600 to-red-800 shadow-md transition-all duration-300 ${
-                !isChecked ? "opacity-50 cursor-not-allowed" : "hover:shadow-red-500/50"
+              className={`flex items-center justify-center gap-2 h-12 rounded-full font-semibold text-white bg-gradient-to-r from-red-600 to-red-800 shadow-md transition-transform duration-300 ${
+                !isChecked ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95 hover:shadow-red-500/50"
               }`}
               disabled={!isChecked}
             >
@@ -87,10 +79,7 @@ const RegisterOAuth = () => {
 
         {/* Описание */}
         <div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-blue-100/50 w-full text-center"
+          className="p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-blue-100/50 w-full text-center slide-in-delayed"
         >
           <p className="text-sm text-gray-700 leading-relaxed">
             <span className="font-semibold text-blue-900">Быстрая регистрация</span> через ваши любимые сервисы!

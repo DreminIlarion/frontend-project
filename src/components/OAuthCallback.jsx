@@ -1,14 +1,17 @@
 import { useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 
-
-const OAuthCallback = ({ provider }) => {
+const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { provider } = useParams(); // "vk" или "yandex" из URL (/oauth/vk/callback или /oauth/yandex/callback)
   const code = searchParams.get("code");
 
   useEffect(() => {
-    if (!code) return;
+    if (!code || !provider) {
+      console.error("Отсутствует code или provider");
+      return;
+    }
 
     const exchangeToken = async () => {
       try {
@@ -18,19 +21,20 @@ const OAuthCallback = ({ provider }) => {
           return;
         }
 
-        const tokenResponse = await fetch(
-          `https://personal-account-fastapi.onrender.com/api/v1/${provider}/get/token/${code}/randomDeviceId/${codeVerifier}`
-        );
+        // Шаг 1: Получение токена от провайдера (на personal-account-fastapi)
+        const tokenUrl =
+          provider === "vk"
+            ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/randomDeviceId/${codeVerifier}`
+            : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+        const tokenResponse = await fetch(tokenUrl, { method: "GET" });
         const tokenData = await tokenResponse.json();
 
         if (tokenData.status_code === 200) {
           const accessToken = tokenData.body.access;
 
-          const loginResponse = await fetch(
-            `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`,
-            { method: "POST" }
-          );
-
+          // Шаг 2: Попытка логина (на registration-fastapi)
+          const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
+          const loginResponse = await fetch(loginUrl, { method: "POST" });
           const loginData = await loginResponse.json();
           let finalAccess, finalRefresh;
 
@@ -41,14 +45,13 @@ const OAuthCallback = ({ provider }) => {
           } else {
             console.warn("Пользователь не найден, пробуем регистрацию...");
 
-            const registrationResponse = await fetch(
-              `https://personal-account-fastapi.onrender.com/api/v1/${provider}/registration/${accessToken}`,
-              { method: "POST" }
-            );
-
+            // Шаг 3: Регистрация, если логин не удался (на personal-account-fastapi)
+            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${provider}/registration/${accessToken}`;
+            const registrationResponse = await fetch(registrationUrl, { method: "POST" });
             const registrationData = await registrationResponse.json();
+
             if (registrationData.status_code === 200) {
-              console.log("Регистрация успешна, теперь можно войти");
+              console.log("Регистрация успешна");
               finalAccess = registrationData.body.access;
               finalRefresh = registrationData.body.refresh;
             } else {
@@ -57,14 +60,14 @@ const OAuthCallback = ({ provider }) => {
             }
           }
 
+          // Шаг 4: Установка токенов и сохранение в куки
           if (finalAccess && finalRefresh) {
-            await fetch(
-              `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`,
-              { method: "POST" }
-            );
+            const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+            await fetch(setTokenUrl, { method: "POST", credentials: "include" });
 
-            document.cookie = `access=${finalAccess}; path=/; Secure; HttpOnly`;
-            document.cookie = `refresh=${finalRefresh}; path=/; Secure; HttpOnly`;
+            // Сохранение токенов в куки
+            document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
+            document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
             navigate("/dashboard");
           }
@@ -81,18 +84,8 @@ const OAuthCallback = ({ provider }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-indigo-100">
-      <div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white/90 backdrop-blur-lg p-8 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-blue-200/50"
-      >
-        {/* Логотип или иконка */}
-        <div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="flex justify-center mb-6"
-        >
+      <div className="bg-white/90 backdrop-blur-lg p-8 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-blue-200/50 slide-in">
+        <div className="flex justify-center mb-6">
           <svg
             className="w-16 h-16 text-blue-600"
             fill="none"
@@ -108,45 +101,24 @@ const OAuthCallback = ({ provider }) => {
             />
           </svg>
         </div>
-
-        {/* Заголовок */}
-        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-4">
-          Авторизация через {provider.charAt(0).toUpperCase() + provider.slice(1)}
+        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-4 fade-in">
+          Авторизация через{" "}
+          {provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Неизвестный провайдер"}
         </h2>
-
-        {/* Текст состояния */}
-        <p className="text-gray-600 text-center mb-6">
+        <p className="text-gray-600 text-center mb-6 slide-in">
           Пожалуйста, подождите, пока мы проверяем ваши данные...
         </p>
-
-        {/* Полоса загрузки */}
         <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500"
-            initial={{ width: "0%" }}
-            animate={{ width: "100%" }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load"
           />
         </div>
-
-        {/* Дополнительная анимация точек */}
-        <div
-          className="flex justify-center gap-2 mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="flex justify-center gap-2 mt-6">
           {[0, 1, 2].map((index) => (
             <div
               key={index}
-              className="w-3 h-3 bg-blue-500 rounded-full"
-              animate={{ y: [0, -10, 0] }}
-              transition={{
-                duration: 0.8,
-                repeat: Infinity,
-                delay: index * 0.2,
-                ease: "easeInOut",
-              }}
+              className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
+              style={{ animationDelay: `${index * 0.2}s` }}
             />
           ))}
         </div>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -82,42 +81,29 @@ const Chat = () => {
     <div className="flex flex-col h-full w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-hidden">
       {/* Блок с сообщениями */}
       <div className="flex-1 max-h-[45vh] overflow-y-auto space-y-3 p-4">
-
-        
-          {messages.map((msg, index) => (
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} message-slide-in`}
+          >
             <div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`max-w-[80%] p-3 rounded-xl text-sm shadow-md ${
+                msg.sender === 'user'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
+                  : 'bg-gray-100/80 backdrop-blur-sm text-gray-900'
+              }`}
             >
-              <div
-                className={`max-w-[80%] p-3 rounded-xl text-sm shadow-md ${
-                  msg.sender === 'user'
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
-                    : 'bg-gray-100/80 backdrop-blur-sm text-gray-900'
-                }`}
-              >
-                {msg.text}
-              </div>
+              {msg.text}
             </div>
-          ))}
-          {isTyping && (
-            <div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex justify-start"
-            >
-              <div className="max-w-[70%] p-3 rounded-xl text-sm shadow-md bg-gray-100/80 backdrop-blur-sm text-gray-900 animate-pulse">
-                Чат-бот печатает...
-              </div>
+          </div>
+        ))}
+        {isTyping && (
+          <div className="flex justify-start message-slide-in">
+            <div className="max-w-[70%] p-3 rounded-xl text-sm shadow-md bg-gray-100/80 backdrop-blur-sm text-gray-900 animate-pulse">
+              Чат-бот печатает...
             </div>
-          )}
-        
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -133,9 +119,7 @@ const Chat = () => {
         />
         <button
           onClick={sendMessage}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-md hover:shadow-blue-500/50 transition-all whitespace-nowrap"
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-md hover:scale-105 active:scale-95 transition-transform duration-200 whitespace-nowrap"
         >
           Отправить
         </button>
