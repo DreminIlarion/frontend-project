@@ -8,17 +8,21 @@ const RegisterOAuth = () => {
 
     try {
       const sessionId = Date.now().toString();
-      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${sessionId}`);
+      // Добавляем action=register в state
+      const state = JSON.stringify({ sessionId, action: "register" });
+      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${state}`);
       const data = await response.json();
       console.log(`Ответ от /${provider}/link:`, data);
       if (data.url && data.code_verifier) {
-        // Извлекаем state из URL, если сервер его заменил
         const urlParams = new URLSearchParams(new URL(data.url).search);
-        const stateFromUrl = urlParams.get("state") || sessionId; // Используем переданный state, если сервер его не вернул
-        localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
-        localStorage.setItem(`${provider}_session_id`, stateFromUrl); // Сохраняем sessionId отдельно
+        const stateFromUrl = urlParams.get("state") || state;
+        const parsedState = JSON.parse(stateFromUrl);
+        localStorage.setItem(`${provider}_code_verifier_${parsedState.sessionId}`, data.code_verifier);
+        localStorage.setItem(`${provider}_session_id`, parsedState.sessionId);
+        localStorage.setItem(`${provider}_action`, "register"); // Сохраняем action
         console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
-        console.log(`Сохранён sessionId для ${provider}:`, stateFromUrl);
+        console.log(`Сохранён sessionId для ${provider}:`, parsedState.sessionId);
+        console.log(`Сохранён action для ${provider}: register`);
         window.location.href = data.url;
       } else {
         console.error("Ошибка при получении ссылки", data);

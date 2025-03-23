@@ -68,7 +68,9 @@ const Login = () => {
     setIsLoading(true);
     try {
       const sessionId = Date.now().toString();
-      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${sessionId}`, {
+      // Добавляем action=login в state
+      const state = JSON.stringify({ sessionId, action: "login" });
+      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${state}`, {
         method: "GET",
       });
 
@@ -81,11 +83,13 @@ const Login = () => {
 
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);
-        const stateFromUrl = urlParams.get("state") || sessionId;
-        localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
-        localStorage.setItem(`${provider}_session_id`, stateFromUrl);
+        const stateFromUrl = urlParams.get("state") || state;
+        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
+        localStorage.setItem(`${provider}_session_id`, sessionId);
+        localStorage.setItem(`${provider}_action`, "login"); // Сохраняем action
         console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
-        console.log(`Сохранён sessionId для ${provider}:`, stateFromUrl);
+        console.log(`Сохранён sessionId для ${provider}:`, sessionId);
+        console.log(`Сохранён action для ${provider}: login`);
         console.log(`Перенаправление на:`, data.url);
         window.location.href = data.url;
       } else {

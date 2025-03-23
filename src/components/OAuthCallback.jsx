@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast"; // Добавляем react-hot-toast для уведомлений
+import toast, { Toaster } from "react-hot-toast";
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -40,10 +40,21 @@ const OAuthCallback = () => {
     const finalProvider = provider || inferredProvider;
     console.log("Используемый provider:", finalProvider);
 
-    // Если sessionId отсутствует, пытаемся извлечь его из localStorage
-    if (!sessionId) {
+    // Парсим state, чтобы извлечь sessionId и action
+    let action = "register"; // По умолчанию считаем, что это регистрация
+    if (sessionId) {
+      try {
+        const parsedState = JSON.parse(sessionId);
+        sessionId = parsedState.sessionId;
+        action = parsedState.action || "register";
+      } catch (error) {
+        console.error("Ошибка парсинга state:", error);
+      }
+    } else {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
+      action = localStorage.getItem(`${finalProvider}_action`) || "register";
       console.log("Session ID из localStorage:", sessionId);
+      console.log("Action из localStorage:", action);
     }
 
     const exchangeToken = async () => {
@@ -73,71 +84,37 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
-          console.log("Запрос регистрации по URL:", registrationUrl);
-          const registrationResponse = await fetch(registrationUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-            },
-            credentials: "include",
-            body: JSON.stringify({ access_token: accessToken }),
-          });
-          const registrationData = await registrationResponse.json();
-          console.log("Ответ от /registration:", registrationData);
-
-          if (registrationData.status_code === 200) {
-            console.log("Регистрация успешна, выполняем логин для получения токенов...");
-            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
-            console.log("Запрос логина по URL:", loginUrl);
-            const loginResponse = await fetch(loginUrl, {
+          if (action === "register") {
+            // Выполняем регистрацию
+            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+            console.log("Запрос регистрации по URL:", registrationUrl);
+            const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${accessToken}`,
               },
+              credentials: "include",
               body: JSON.stringify({ access_token: accessToken }),
             });
-            const loginData = await loginResponse.json();
-            console.log("Ответ от /login:", loginData);
+            const registrationData = await registrationResponse.json();
+            console.log("Ответ от /registration:", registrationData);
 
-            if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
-              const finalAccess = loginData.access;
-              const finalRefresh = loginData.refresh;
-
-              const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
-              console.log("Установка токенов по URL:", setTokenUrl);
-              await fetch(setTokenUrl, {
-                method: "POST",
-                credentials: "include",
-              });
-
-              console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
-              document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
-              document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
-
-              console.log("Перенаправление на /dashboard");
-              toast.success("Регистрация успешна! Вы будете перенаправлены на dashboard...");
-              setTimeout(() => {
-                navigate("/dashboard");
-              }, 1500);
+            if (registrationData.status_code === 200) {
+              console.log("Регистрация успешна, выполняем логин для получения токенов...");
+              await performLogin(accessToken, finalProvider);
+            } else if (registrationData.status_code === 401) {
+              console.log("Пользователь уже зарегистрирован, выполняем автоматический вход...");
+              toast.info("Аккаунт уже зарегистрирован. Выполняем вход...");
+              await performLogin(accessToken, finalProvider);
             } else {
-              console.error("Ошибка при логине после регистрации", loginData);
-              toast.error("Ошибка при логине после регистрации.");
+              console.error("Ошибка при регистрации", registrationData);
+              toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
             }
-          } else if (registrationData.status_code === 401) {
-            // Обрабатываем случай, когда пользователь уже зарегистрирован
-            console.log("Пользователь уже зарегистрирован, перенаправляем на страницу входа...");
-            toast.error(
-              "Этот аккаунт уже зарегистрирован. Пожалуйста, войдите в систему."
-            );
-            setTimeout(() => {
-              navigate("/login");
-            }, 2000);
-          } else {
-            console.error("Ошибка при регистрации", registrationData);
-            toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
+          } else if (action === "login") {
+            // Выполняем вход
+            console.log("Пользователь пытается войти, выполняем вход...");
+            await performLogin(accessToken, finalProvider);
           }
         } else {
           console.error("Ошибка получения токена или неверный формат ответа", tokenData);
@@ -151,6 +128,58 @@ const OAuthCallback = () => {
           localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
         }
         localStorage.removeItem(`${finalProvider}_session_id`);
+        localStorage.removeItem(`${finalProvider}_action`);
+      }
+    };
+
+    const performLogin = async (accessToken, provider) => {
+      try {
+        const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
+        console.log("Запрос логина по URL:", loginUrl);
+        const loginResponse = await fetch(loginUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ access_token: accessToken }),
+        });
+        const loginData = await loginResponse.json();
+        console.log("Ответ от /login:", loginData);
+
+        if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
+          const finalAccess = loginData.access;
+          const finalRefresh = loginData.refresh;
+
+          const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+          console.log("Установка токенов по URL:", setTokenUrl);
+          await fetch(setTokenUrl, {
+            method: "POST",
+            credentials: "include",
+          });
+
+          console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
+          document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
+          document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
+
+          console.log("Перенаправление на /dashboard");
+          toast.success("Вход выполнен успешно! Вы будете перенаправлены на dashboard...");
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        } else {
+          console.error("Ошибка при входе", loginData);
+          toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
+          setTimeout(() => {
+            navigate("/login");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Ошибка при выполнении входа:", error);
+        toast.error("Ошибка при входе: " + error.message);
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       }
     };
 
@@ -178,11 +207,11 @@ const OAuthCallback = () => {
           </svg>
         </div>
         <h2 className="text-2xl font-semibold text-gray-800 text-center mb-4 fade-in">
-          Регистрация через{" "}
+          {searchParams.get("state")?.includes("login") ? "Вход" : "Регистрация"} через{" "}
           {provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Неизвестный провайдер"}
         </h2>
         <p className="text-gray-600 text-center mb-6 slide-in">
-          Пожалуйста, подождите, пока мы создаем ваш аккаунт...
+          Пожалуйста, подождите, пока мы {searchParams.get("state")?.includes("login") ? "выполняем вход" : "создаем ваш аккаунт"}...
         </p>
         <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load" />
