@@ -16,13 +16,12 @@ const RegisterOAuth = () => {
         console.log(`Сохранён code_verifier для ${provider}:`, data.code_verifier);
         window.location.href = data.url;
       } else {
-        console.error("Ошибка при получении ссылки", data.url);
+        console.error("Ошибка при получении ссылки", data);
       }
     } catch (error) {
       console.error("Ошибка запроса:", error);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
       <div className="flex flex-col items-center gap-6 max-w-xl w-full mx-auto p-6">

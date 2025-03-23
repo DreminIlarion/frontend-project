@@ -1,12 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { provider } = useParams();
+  const hasRun = useRef(false); // Флаг для предотвращения повторного вызова
 
   useEffect(() => {
+    if (hasRun.current) return; // Если уже выполнялось, выходим
+    hasRun.current = true;
+
     const code = searchParams.get("code");
     const deviceId = searchParams.get("device_id");
 
