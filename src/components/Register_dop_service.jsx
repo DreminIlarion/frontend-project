@@ -12,11 +12,13 @@ const RegisterOAuth = () => {
       const data = await response.json();
       console.log(`Ответ от /${provider}/link:`, data);
       if (data.url && data.code_verifier) {
-        // Извлекаем state из URL, так как сервер может заменить наш state
+        // Извлекаем state из URL, если сервер его заменил
         const urlParams = new URLSearchParams(new URL(data.url).search);
-        const stateFromUrl = urlParams.get("state");
+        const stateFromUrl = urlParams.get("state") || sessionId; // Используем переданный state, если сервер его не вернул
         localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
+        localStorage.setItem(`${provider}_session_id`, stateFromUrl); // Сохраняем sessionId отдельно
         console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
+        console.log(`Сохранён sessionId для ${provider}:`, stateFromUrl);
         window.location.href = data.url;
       } else {
         console.error("Ошибка при получении ссылки", data);

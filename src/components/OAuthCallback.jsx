@@ -13,7 +13,7 @@ const OAuthCallback = () => {
 
     const code = searchParams.get("code");
     const deviceId = searchParams.get("device_id");
-    const sessionId = searchParams.get("state");
+    let sessionId = searchParams.get("state");
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
@@ -37,13 +37,19 @@ const OAuthCallback = () => {
     const finalProvider = provider || inferredProvider;
     console.log("Используемый provider:", finalProvider);
 
+    // Если sessionId отсутствует, пытаемся извлечь его из localStorage
+    if (!sessionId) {
+      sessionId = localStorage.getItem(`${finalProvider}_session_id`);
+      console.log("Session ID из localStorage:", sessionId);
+    }
+
     const exchangeToken = async () => {
       try {
         console.log("Запуск exchangeToken для провайдера:", finalProvider);
         const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
         console.log("Code Verifier из localStorage:", codeVerifier);
-        if (!codeVerifier || !sessionId) {
-          console.error("Отсутствует code_verifier или session_id для", finalProvider);
+        if (!codeVerifier) {
+          console.error("Отсутствует code_verifier для", finalProvider);
           return;
         }
 
@@ -63,18 +69,15 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          // Отправляем access_token в URL
           const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
           console.log("Запрос регистрации по URL:", registrationUrl);
           const registrationResponse = await fetch(registrationUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // Добавляем access_token в заголовок на всякий случай
               "Authorization": `Bearer ${accessToken}`,
             },
             credentials: "include",
-            // Добавляем тело запроса
             body: JSON.stringify({ access_token: accessToken }),
           });
           const registrationData = await registrationResponse.json();
@@ -124,7 +127,10 @@ const OAuthCallback = () => {
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
       } finally {
-        localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
+        if (sessionId) {
+          localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
+        }
+        localStorage.removeItem(`${finalProvider}_session_id`);
       }
     };
 

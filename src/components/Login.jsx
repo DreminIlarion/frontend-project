@@ -81,9 +81,11 @@ const Login = () => {
 
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);
-        const stateFromUrl = urlParams.get("state");
+        const stateFromUrl = urlParams.get("state") || sessionId;
         localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
+        localStorage.setItem(`${provider}_session_id`, stateFromUrl);
         console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
+        console.log(`Сохранён sessionId для ${provider}:`, stateFromUrl);
         console.log(`Перенаправление на:`, data.url);
         window.location.href = data.url;
       } else {
