@@ -7,13 +7,16 @@ const RegisterOAuth = () => {
     if (!isChecked) return;
 
     try {
-      const sessionId = Date.now().toString(); // Уникальный ID сессии
+      const sessionId = Date.now().toString();
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${sessionId}`);
       const data = await response.json();
       console.log(`Ответ от /${provider}/link:`, data);
       if (data.url && data.code_verifier) {
-        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
-        console.log(`Сохранён code_verifier для ${provider} с sessionId ${sessionId}:`, data.code_verifier);
+        // Извлекаем state из URL, так как сервер может заменить наш state
+        const urlParams = new URLSearchParams(new URL(data.url).search);
+        const stateFromUrl = urlParams.get("state");
+        localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
+        console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
         window.location.href = data.url;
       } else {
         console.error("Ошибка при получении ссылки", data);

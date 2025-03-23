@@ -80,8 +80,10 @@ const Login = () => {
       console.log(`Ответ от /${provider}/link:`, data);
 
       if (data.url && data.code_verifier) {
-        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
-        console.log(`Сохранён code_verifier для ${provider} с sessionId ${sessionId}:`, data.code_verifier);
+        const urlParams = new URLSearchParams(new URL(data.url).search);
+        const stateFromUrl = urlParams.get("state");
+        localStorage.setItem(`${provider}_code_verifier_${stateFromUrl}`, data.code_verifier);
+        console.log(`Сохранён code_verifier для ${provider} с state ${stateFromUrl}:`, data.code_verifier);
         console.log(`Перенаправление на:`, data.url);
         window.location.href = data.url;
       } else {
