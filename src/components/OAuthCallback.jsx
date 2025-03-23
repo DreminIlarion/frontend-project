@@ -15,7 +15,7 @@ const OAuthCallback = () => {
     console.log("Полный URL:", window.location.href);
     console.log("Search Params:", Object.fromEntries(searchParams));
 
-    // Fallback: если provider не определен, можно попытаться угадать из контекста
+    // Fallback для provider
     const inferredProvider = window.location.href.includes("vk") ? "vk" : window.location.href.includes("yandex") ? "yandex" : null;
 
     if (!code || (!provider && !inferredProvider)) {
@@ -36,12 +36,16 @@ const OAuthCallback = () => {
           return;
         }
 
+        // Шаг 1: Получение токена от провайдера
         const tokenUrl =
           finalProvider === "vk"
             ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/randomDeviceId/${codeVerifier}`
             : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
         console.log("Запрос токена по URL:", tokenUrl);
-        const tokenResponse = await fetch(tokenUrl, { method: "GET" });
+        const tokenResponse = await fetch(tokenUrl, {
+          method: "GET",
+          credentials: "include", // Добавляем куки
+        });
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
 
@@ -49,6 +53,7 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access;
           console.log("Access Token получен:", accessToken);
 
+          // Шаг 2: Попытка логина
           const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
           console.log("Запрос логина по URL:", loginUrl);
           const loginResponse = await fetch(loginUrl, { method: "POST" });
@@ -58,31 +63,50 @@ const OAuthCallback = () => {
 
           if (loginData.status_code === 200) {
             console.log("Успешный вход");
-            finalAccess = loginData.body.access;
-            finalRefresh = loginData.body.refresh;
+            finalAccess = loginData.access; // Токены напрямую в корне объекта
+            finalRefresh = loginData.refresh;
           } else {
             console.warn("Пользователь не найден, пробуем регистрацию...");
 
+            // Шаг 3: Регистрация
             const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
             console.log("Запрос регистрации по URL:", registrationUrl);
-            const registrationResponse = await fetch(registrationUrl, { method: "POST" });
+            const registrationResponse = await fetch(registrationUrl, {
+              method: "POST",
+              credentials: "include", // Добавляем куки
+            });
             const registrationData = await registrationResponse.json();
             console.log("Ответ от /registration:", registrationData);
 
             if (registrationData.status_code === 200) {
-              console.log("Регистрация успешна");
-              finalAccess = registrationData.body.access;
-              finalRefresh = registrationData.body.refresh;
+              console.log("Регистрация успешна, выполняем логин для получения токенов...");
+
+              // Шаг 4: Повторный вызов /login после регистрации
+              const retryLoginResponse = await fetch(loginUrl, { method: "POST" });
+              const retryLoginData = await retryLoginResponse.json();
+              console.log("Ответ от повторного /login:", retryLoginData);
+
+              if (retryLoginData.status_code === 200) {
+                finalAccess = retryLoginData.access;
+                finalRefresh = retryLoginData.refresh;
+              } else {
+                console.error("Ошибка при повторном логине после регистрации", retryLoginData);
+                return;
+              }
             } else {
               console.error("Ошибка при регистрации", registrationData);
               return;
             }
           }
 
+          // Шаг 5: Установка токенов
           if (finalAccess && finalRefresh) {
             const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
             console.log("Установка токенов по URL:", setTokenUrl);
-            await fetch(setTokenUrl, { method: "POST", credentials: "include" });
+            await fetch(setTokenUrl, {
+              method: "POST",
+              credentials: "include", // Добавляем куки
+            });
 
             console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
             document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
@@ -90,6 +114,8 @@ const OAuthCallback = () => {
 
             console.log("Перенаправление на /dashboard");
             navigate("/dashboard");
+          } else {
+            console.error("Токены не получены после всех шагов");
           }
         } else {
           console.error("Ошибка получения токена", tokenData);
