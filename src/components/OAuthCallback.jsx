@@ -72,6 +72,7 @@ const OAuthCallback = () => {
           return;
         }
 
+        // /get/token должен отправляться на registration-fastapi
         const tokenUrl =
           finalProvider === "vk"
             ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
@@ -84,14 +85,14 @@ const OAuthCallback = () => {
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
 
-        // Исправляем проверку: учитываем, что access_token может быть напрямую в tokenData
+        // Проверяем наличие access_token
         if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
           const accessToken = tokenData.access_token || tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
           if (action === "register") {
-            // Выполняем регистрацию
-            const registrationUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+            // Выполняем регистрацию на personal-account-fastapi
+            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
             console.log("Запрос регистрации по URL:", registrationUrl);
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
@@ -142,6 +143,7 @@ const OAuthCallback = () => {
 
     const performLogin = async (accessToken, provider) => {
       try {
+        // /login должен отправляться на registration-fastapi
         const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
         console.log("Запрос логина по URL:", loginUrl);
         const loginResponse = await fetch(loginUrl, {
@@ -155,11 +157,12 @@ const OAuthCallback = () => {
         const loginData = await loginResponse.json();
         console.log("Ответ от /login:", loginData);
 
-        // Проверяем наличие access и refresh токенов, даже если status_code отсутствует
+        // Проверяем наличие access и refresh токенов
         if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;
           const finalRefresh = loginData.refresh;
 
+          // /set/token отправляется на personal-account-fastapi
           const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
           console.log("Установка токенов по URL:", setTokenUrl);
           const setTokenResponse = await fetch(setTokenUrl, {
