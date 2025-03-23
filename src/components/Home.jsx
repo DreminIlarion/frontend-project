@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-// import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 
 const Home = () => {
   const [events, setEvents] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [registeredEvents, setRegisteredEvents] = useState(new Set());
   const [visitorData, setVisitorData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -13,13 +12,14 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingEventId, setLoadingEventId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const navigate = useNavigate();
+  const { user, loading: userLoading } = useUser();
 
-  // Загрузка событий с пагинацией
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/`, {
+        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
@@ -44,11 +44,21 @@ const Home = () => {
     loadEvents();
   }, [page]);
 
-  // Загрузка зарегистрированных событий
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_VISITORS_GET}`, { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => {
+    if (!user?.loggedIn) {
+      setRegisteredEvents(new Set());
+      setVisitorData({});
+      return;
+    }
+
+    const loadRegisteredEvents = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
+        const data = await response.json();
+
         const registeredIds = new Set(data.body.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
         const visitorMap = data.body.reduce((acc, entry) => {
@@ -56,26 +66,18 @@ const Home = () => {
           return acc;
         }, {});
         setVisitorData(visitorMap);
-      })
-      .catch((error) => console.error("Ошибка загрузки записей:", error.message));
-  }, []);
+      } catch (error) {
+        console.error("Ошибка загрузки записей:", error.message);
+      }
+    };
 
-  // Проверка авторизации
-  useEffect(() => {
-    fetch(`${process.env.REACT_APP_VISITORS_GET}`, { credentials: "include" })
-      .then((response) => {
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      })
-      .catch((error) => console.error("Ошибка авторизации:", error.message));
-  }, []);
+    loadRegisteredEvents();
+  }, [user]);
 
   const handleRegistration = async (eventId) => {
-    if (!isAuthenticated) {
+    if (!user?.loggedIn) {
       alert("Пожалуйста, войдите в систему, чтобы записаться на событие.");
+      navigate("/login");
       return;
     }
 
@@ -113,6 +115,14 @@ const Home = () => {
   const openModal = (event) => setSelectedEvent(event);
   const closeModal = () => setSelectedEvent(null);
 
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="w-12 h-12 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-100">
       {/* Header */}
@@ -148,18 +158,14 @@ const Home = () => {
               events.map((event) => (
                 <div
                   key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
                   className="bg-white/95 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-blue-200/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col"
                 >
-                  {/* Заголовок и дата */}
                   <div className="mb-4">
                     <div className="flex justify-between items-start gap-4">
                       <h3
                         onClick={() => openModal(event)}
                         className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 cursor-pointer leading-tight truncate"
-                        title={event.name_event} // Полное название в тултипе
+                        title={event.name_event}
                       >
                         {event.name_event}
                       </h3>
@@ -169,7 +175,6 @@ const Home = () => {
                     </div>
                   </div>
 
-                  {/* Информация */}
                   <div className="grid grid-cols-1 gap-4 text-gray-700 flex-grow">
                     <div className="space-y-2">
                       <p className="break-words">
@@ -184,16 +189,13 @@ const Home = () => {
                     </p>
                   </div>
 
-                  {/* Кнопка */}
                   <div className="mt-6 text-right">
-                    {isAuthenticated ? (
+                    {user?.loggedIn ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRegistration(event.id);
                         }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         className={`inline-flex py-2 px-6 text-white font-semibold rounded-full shadow-md transition-all duration-300 items-center justify-center ${
                           registeredEvents.has(event.id)
                             ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
@@ -202,11 +204,7 @@ const Home = () => {
                         disabled={loadingEventId === event.id}
                       >
                         {loadingEventId === event.id ? (
-                          <div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-5 h-5 border-2 border-t-transparent border-white rounded-full"
-                          />
+                          <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
                         ) : registeredEvents.has(event.id) ? (
                           "Отписаться ❌"
                         ) : (
@@ -239,20 +237,12 @@ const Home = () => {
         </section>
       </main>
 
-      {/* Модальное окно */}
       {selectedEvent && (
         <div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={closeModal}
         >
           <div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ duration: 0.3 }}
             className="bg-white p-8 rounded-3xl shadow-xl w-[85%] max-w-5xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -275,11 +265,9 @@ const Home = () => {
               </p>
             </div>
             <div className="flex justify-end gap-4 mt-8">
-              {isAuthenticated && (
+              {user?.loggedIn && (
                 <button
                   onClick={() => handleRegistration(selectedEvent.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                   className={`py-3 px-6 text-white font-semibold rounded-full shadow-md transition-all duration-300 flex items-center justify-center ${
                     registeredEvents.has(selectedEvent.id)
                       ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
@@ -288,11 +276,7 @@ const Home = () => {
                   disabled={loadingEventId === selectedEvent.id}
                 >
                   {loadingEventId === selectedEvent.id ? (
-                    <div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-t-transparent border-white rounded-full"
-                    />
+                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
                   ) : registeredEvents.has(selectedEvent.id) ? (
                     "Отписаться ❌"
                   ) : (

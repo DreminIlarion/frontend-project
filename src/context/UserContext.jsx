@@ -7,21 +7,20 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Функция выхода (удаляет токены, но НЕ редиректит)
+  // Функция выхода без автоматического редиректа
   const logout = useCallback(() => {
     console.log("⛔ Удаляем все куки...");
-  
-    // Удаляем все куки, включая серверные
+
     const cookies = document.cookie.split("; ");
     cookies.forEach((cookie) => {
       const [name] = cookie.split("=");
       Cookies.remove(name, { path: "/", domain: "personal-account-fastapi.onrender.com" });
-      Cookies.remove(name, { path: "/" }); // Удаление на основном домене
+      Cookies.remove(name, { path: "/" });
     });
-  
+
     setUser(null);
+    // Убрано navigate("/") — редирект будет в компонентах при необходимости
   }, []);
-  
 
   // Проверка токенов
   const fetchToken = useCallback(async () => {
@@ -32,8 +31,9 @@ export const UserProvider = ({ children }) => {
       const refreshToken = Cookies.get("refresh");
 
       if (!accessToken || !refreshToken) {
-        console.warn("❌ Токены отсутствуют или истекли.");
-        logout();
+        console.warn("❌ Токены отсутствуют.");
+        setUser(null); // Просто сбрасываем пользователя, не вызываем logout
+        setLoading(false);
         return;
       }
 
@@ -50,16 +50,16 @@ export const UserProvider = ({ children }) => {
       if (data.status_code === 200 && data.message === "Выполненно") {
         setUser({ loggedIn: true });
       } else {
-        console.warn("⚠️ Токены недействительны. Удаляем их.");
-        logout();
+        console.warn("⚠️ Токены недействительны.");
+        setUser(null); // Сбрасываем пользователя, но не перенаправляем
       }
     } catch (error) {
       console.error("❌ Ошибка при проверке токенов:", error);
-      logout();
+      setUser(null); // Сбрасываем, но не перенаправляем
     } finally {
       setLoading(false);
     }
-  }, [logout]);
+  }, []);
 
   // Проверяем токены при загрузке + каждые 10 минут
   useEffect(() => {
