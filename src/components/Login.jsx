@@ -70,19 +70,21 @@ const Login = () => {
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link`, {
         method: "GET",
       });
-  
+
       if (!response.ok) {
         throw new Error(`Ошибка ${response.status}`);
       }
-  
-      const data = await response.json(); // Парсим JSON
+
+      const data = await response.json();
       console.log(`Ответ от /${provider}/link:`, data);
-  
+
       if (data.url && data.code_verifier) {
-        localStorage.setItem(`${provider}_code_verifier`, data.code_verifier); // Сохраняем code_verifier
-        console.log(`Сохранён code_verifier для ${provider}:`, data.code_verifier);
+        const sessionId = Date.now().toString(); // Уникальный ID сессии
+        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
+        localStorage.setItem(`${provider}_session_id`, sessionId); // Сохраняем sessionId
+        console.log(`Сохранён code_verifier для ${provider} с sessionId ${sessionId}:`, data.code_verifier);
         console.log(`Перенаправление на:`, data.url);
-        window.location.href = data.url; // Перенаправляем на правильный URL
+        window.location.href = data.url;
       } else {
         toast.error("Ошибка: Неверный формат ответа от сервера.");
       }
@@ -229,4 +231,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login; 

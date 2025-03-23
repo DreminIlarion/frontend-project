@@ -5,10 +5,10 @@ const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { provider } = useParams();
-  const hasRun = useRef(false); // Флаг для предотвращения повторного вызова
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return; // Если уже выполнялось, выходим
+    if (hasRun.current) return;
     hasRun.current = true;
 
     const code = searchParams.get("code");
@@ -38,10 +38,12 @@ const OAuthCallback = () => {
     const exchangeToken = async () => {
       try {
         console.log("Запуск exchangeToken для провайдера:", finalProvider);
-        const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier`);
+        const sessionId = localStorage.getItem(`${finalProvider}_session_id`);
+        const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
+        console.log("Session ID из localStorage:", sessionId);
         console.log("Code Verifier из localStorage:", codeVerifier);
-        if (!codeVerifier) {
-          console.error("Отсутствует code_verifier для", finalProvider);
+        if (!codeVerifier || !sessionId) {
+          console.error("Отсутствует code_verifier или session_id для", finalProvider);
           return;
         }
 
@@ -61,7 +63,6 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          // Шаг 1: Регистрация
           const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
           console.log("Запрос регистрации по URL:", registrationUrl);
           const registrationResponse = await fetch(registrationUrl, {
@@ -73,8 +74,6 @@ const OAuthCallback = () => {
 
           if (registrationData.status_code === 200) {
             console.log("Регистрация успешна, выполняем логин для получения токенов...");
-
-            // Шаг 2: Логин для получения токенов
             const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
             console.log("Запрос логина по URL:", loginUrl);
             const loginResponse = await fetch(loginUrl, { method: "POST" });
@@ -85,7 +84,6 @@ const OAuthCallback = () => {
               const finalAccess = loginData.access;
               const finalRefresh = loginData.refresh;
 
-              // Шаг 3: Установка токенов
               const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
               console.log("Установка токенов по URL:", setTokenUrl);
               await fetch(setTokenUrl, {
@@ -110,6 +108,11 @@ const OAuthCallback = () => {
         }
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
+      } finally {
+        // Очищаем session-specific данные после завершения
+        const sessionId = localStorage.getItem(`${finalProvider}_session_id`);
+        localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
+        localStorage.removeItem(`${finalProvider}_session_id`);
       }
     };
 
