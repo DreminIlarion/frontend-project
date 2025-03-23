@@ -8,7 +8,7 @@ import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
 import DopRegister from './Register_dop_service';
-// import { motion, AnimatePresence } from 'framer-motion';
+
 
 const Profile = () => {
   const { user, setUser, logout } = useUser();

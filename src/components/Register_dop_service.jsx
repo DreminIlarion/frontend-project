@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaVk, FaYandex } from "react-icons/fa";
-// import { motion } from "framer-motion";
+
 
 const RegisterOAuth = () => {
   const [isChecked, setIsChecked] = useState(false);
