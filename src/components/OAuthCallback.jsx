@@ -72,7 +72,6 @@ const OAuthCallback = () => {
           return;
         }
 
-        // Исправляем URL для /get/token, чтобы использовать registration-fastapi
         const tokenUrl =
           finalProvider === "vk"
             ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
@@ -85,8 +84,9 @@ const OAuthCallback = () => {
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
 
-        if (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token) {
-          const accessToken = tokenData.body.access_token;
+        // Исправляем проверку: учитываем, что access_token может быть напрямую в tokenData
+        if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
+          const accessToken = tokenData.access_token || tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
           if (action === "register") {
@@ -114,7 +114,7 @@ const OAuthCallback = () => {
               setTimeout(() => {
                 navigate("/profile");
                 window.location.reload();
-              }, 1500);
+              }, 500);
             } else {
               console.error("Ошибка при регистрации", registrationData);
               toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
@@ -178,7 +178,7 @@ const OAuthCallback = () => {
           setTimeout(() => {
             navigate("/profile");
             window.location.reload();
-          }, 1500);
+          }, 500);
         } else {
           console.error("Ошибка при входе", loginData);
           toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
