@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaVk, FaYandex } from "react-icons/fa";
+// import { FaVk, FaYandex } from "react-icons/fa";
 
 const RegisterOAuth = () => {
   const [isChecked, setIsChecked] = useState(false);
@@ -43,7 +43,7 @@ const RegisterOAuth = () => {
               }`}
               disabled={!isChecked}
             >
-              <FaVk size={20} /> VK ID
+              {/* <FaVk size={20} /> VK ID */}
             </button>
 
             <button
@@ -53,7 +53,7 @@ const RegisterOAuth = () => {
               }`}
               disabled={!isChecked}
             >
-              <FaYandex size={18} /> Яндекс
+              {/* <FaYandex size={18} /> Яндекс */}
             </button>
           </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaBars, FaTimes, FaHome, FaChartBar, FaCalendar, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
+// import { FaUserCircle, FaBars, FaTimes, FaHome, FaChartBar, FaCalendar, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
@@ -87,7 +87,7 @@ const Profile = () => {
               setIsSidebarOpen(!isSidebarOpen);
             }}
           >
-            {isSidebarOpen ? <FaTimes /> : <FaBars />}
+            
           </button>
           <h1 className="text-2xl font-bold flex-1 text-center tracking-tight fade-in">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-6 text-sm font-medium">
@@ -104,7 +104,7 @@ const Profile = () => {
           className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         >
           <div className="flex items-center px-6 py-4 border-b border-blue-600/30">
-            <FaUserCircle className="text-3xl text-white mr-3 drop-shadow-sm" />
+            
             {user ? (
               <span className="text-lg font-semibold truncate">{user.email}</span>
             ) : (
@@ -113,14 +113,14 @@ const Profile = () => {
           </div>
           <nav className="mt-4 space-y-1 px-2">
             {[
-              { to: '/', label: 'Главная страница', icon: <FaHome /> },
+              { to: '/', label: 'Главная страница'},
               ...(user && user.loggedIn
                 ? [
-                    { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления', icon: <FaChartBar /> },
-                    { action: () => setActiveSection('events'), label: 'События', icon: <FaCalendar /> },
-                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через доп сервисы', icon: <FaUserPlus /> },
-                    { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления', icon: <FaChartBar /> },
-                    { action: handleLogout, label: 'Выход', icon: <FaSignOutAlt /> },
+                    { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления' },
+                    { action: () => setActiveSection('events'), label: 'События' },
+                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через доп сервисы'},
+                    { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления' },
+                    { action: handleLogout, label: 'Выход' },
                   ]
                 : []),
             ].map((item, index) =>
