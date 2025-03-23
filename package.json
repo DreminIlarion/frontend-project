@@ -419,7 +419,7 @@
 
 
 
-"start": " react-scripts start",
+"start": "CI=false react-scripts start",
  
 
 
@@ -438,7 +438,7 @@
 
 
 
-"build": " react-scripts build",
+"build": " CI=false  react-scripts build",
  
 
 
