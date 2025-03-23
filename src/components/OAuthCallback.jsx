@@ -8,10 +8,12 @@ const OAuthCallback = () => {
 
   useEffect(() => {
     const code = searchParams.get("code");
+    const deviceId = searchParams.get("device_id"); // Извлекаем device_id из query-параметров
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
     console.log("Code из searchParams:", code);
+    console.log("Device ID из searchParams:", deviceId);
     console.log("Полный URL:", window.location.href);
     console.log("Search Params:", Object.fromEntries(searchParams));
 
@@ -20,6 +22,10 @@ const OAuthCallback = () => {
 
     if (!code || (!provider && !inferredProvider)) {
       console.error("Отсутствует code или provider", { code, provider, inferredProvider });
+      return;
+    }
+    if (provider === "vk" && !deviceId) {
+      console.error("Отсутствует device_id для VK", { deviceId });
       return;
     }
 
@@ -39,7 +45,7 @@ const OAuthCallback = () => {
         // Шаг 1: Получение токена от провайдера
         const tokenUrl =
           finalProvider === "vk"
-            ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/randomDeviceId/${codeVerifier}`
+            ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
             : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
         console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, {
