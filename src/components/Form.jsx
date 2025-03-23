@@ -3,7 +3,7 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from "chart.js";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 const Form = () => {
@@ -371,7 +371,7 @@ const Form = () => {
             </div>
           )}
 
-          <motion.button
+          <button
             type="submit"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -383,7 +383,7 @@ const Form = () => {
             disabled={loading}
           >
             {loading ? 'Загрузка...' : 'Рассчитать'}
-          </motion.button>
+          </button>
         </form>
 
         <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50">
@@ -419,7 +419,7 @@ const Form = () => {
               </p>
 
               <div className="mt-2 flex gap-2">
-                <motion.button
+                <button
                   onClick={() => {
                     fetchDetails(rec.direction_id);
                     toggleSection(rec.direction_id, 'details');
@@ -433,9 +433,9 @@ const Form = () => {
                   }`}
                 >
                   Подробнее
-                </motion.button>
+                </button>
 
-                <motion.button
+                <button
                   onClick={() => {
                     fetchPointsHistory(rec.direction_id);
                     toggleSection(rec.direction_id, 'points');
@@ -449,9 +449,9 @@ const Form = () => {
                   }`}
                 >
                   Динамика баллов
-                </motion.button>
+                </button>
 
-                <motion.button
+                <button
                   onClick={() => {
                     fetchExamScores(rec.direction_id);
                     toggleSection(rec.direction_id, 'exams');
@@ -465,7 +465,7 @@ const Form = () => {
                   }`}
                 >
                   Показать экзамены
-                </motion.button>
+                </button>
               </div>
 
               {openSections[rec.direction_id]?.slice().reverse().map((section) => (

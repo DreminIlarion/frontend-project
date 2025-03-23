@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
@@ -248,7 +248,7 @@ const ClassifierForm = () => {
           </label>
         </fieldset>
 
-        <motion.button
+        <button
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -256,7 +256,7 @@ const ClassifierForm = () => {
           disabled={loading}
         >
           {loading ? "Загрузка..." : "Предсказать"}
-        </motion.button>
+        </button>
       </form>
 
       {/* Результат предсказания */}

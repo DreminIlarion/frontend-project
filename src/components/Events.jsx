@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -115,14 +115,14 @@ const Events = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 flex flex-col items-center p-6">
-        <motion.h2
+        <h2
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10"
         >
           Мои события
-        </motion.h2>
+        </h2>
 
         <div
           className="max-w-6xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-h-[80vh] overflow-y-auto"
@@ -132,7 +132,7 @@ const Events = () => {
             events
               .filter((event) => registeredEvents.has(event.id))
               .map((event) => (
-                <motion.div
+                <div
                   key={event.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -167,7 +167,7 @@ const Events = () => {
                   </div>
 
                   <div className="flex gap-4 mt-6">
-                    <motion.button
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRegistration(event.id);
@@ -177,9 +177,9 @@ const Events = () => {
                       className="flex-1 py-3 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300 hover:shadow-red-500/50"
                     >
                       Отписаться ❌
-                    </motion.button>
+                    </button>
 
-                    <motion.button
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         getQRCode(event.id);
@@ -189,9 +189,9 @@ const Events = () => {
                       className="py-3 px-5 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 hover:shadow-blue-500/50"
                     >
                       QR-код 📲
-                    </motion.button>
+                    </button>
                   </div>
-                </motion.div>
+                </div>
               ))
           ) : (
             <p className="text-center text-gray-600 col-span-full bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-md">
@@ -209,14 +209,14 @@ const Events = () => {
 
       {/* Модальное окно на уровне корня компонента */}
       {selectedEvent && (
-        <motion.div
+        <div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto"
           onClick={closeModal}
         >
-          <motion.div
+          <div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -243,22 +243,22 @@ const Events = () => {
               </p>
             </div>
             <div className="flex flex-col gap-3 mt-4 sm:flex-row sm:gap-4 sm:justify-end">
-              <motion.button
+              <button
                 onClick={() => handleRegistration(selectedEvent.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300 hover:shadow-red-500/50"
               >
                 Отписаться ❌
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 onClick={() => getQRCode(selectedEvent.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 hover:shadow-blue-500/50"
               >
                 QR-код 📲
-              </motion.button>
+              </button>
               <button
                 onClick={closeModal}
                 className="w-full sm:w-auto py-2 px-4 text-gray-700 font-semibold rounded-full border border-gray-300 hover:bg-gray-100 transition-all duration-300"
@@ -266,8 +266,8 @@ const Events = () => {
                 Закрыть
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </>
   );

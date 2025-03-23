@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaVk, FaYandex } from "react-icons/fa";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 const RegisterOAuth = () => {
   const [isChecked, setIsChecked] = useState(false);
@@ -27,7 +27,7 @@ const RegisterOAuth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
       <div className="flex flex-col items-center gap-6 max-w-xl w-full mx-auto p-6">
         {/* Основной контейнер */}
-        <motion.div
+        <div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -40,7 +40,7 @@ const RegisterOAuth = () => {
 
           {/* Кнопки */}
           <div className="grid grid-cols-2 gap-4 w-full">
-            <motion.button
+            <button
               onClick={() => handleOAuth("vk")}
               whileHover={isChecked ? { scale: 1.05 } : {}}
               whileTap={isChecked ? { scale: 0.95 } : {}}
@@ -50,9 +50,9 @@ const RegisterOAuth = () => {
               disabled={!isChecked}
             >
               <FaVk size={20} /> VK ID
-            </motion.button>
+            </button>
 
-            <motion.button
+            <button
               onClick={() => handleOAuth("yandex")}
               whileHover={isChecked ? { scale: 1.05 } : {}}
               whileTap={isChecked ? { scale: 0.95 } : {}}
@@ -62,7 +62,7 @@ const RegisterOAuth = () => {
               disabled={!isChecked}
             >
               <FaYandex size={18} /> Яндекс
-            </motion.button>
+            </button>
           </div>
 
           {/* Чекбокс */}
@@ -83,10 +83,10 @@ const RegisterOAuth = () => {
               </a>
             </span>
           </label>
-        </motion.div>
+        </div>
 
         {/* Описание */}
-        <motion.div
+        <div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -97,7 +97,7 @@ const RegisterOAuth = () => {
             Используйте VK ID или Яндекс, чтобы мгновенно создать аккаунт и начать пользоваться всеми возможностями
             нашего портала. Просто, удобно и безопасно!
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

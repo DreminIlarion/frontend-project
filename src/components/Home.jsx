@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 const Home = () => {
   const [events, setEvents] = useState([]);
@@ -146,7 +146,7 @@ const Home = () => {
           >
             {events.length > 0 ? (
               events.map((event) => (
-                <motion.div
+                <div
                   key={event.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -187,7 +187,7 @@ const Home = () => {
                   {/* Кнопка */}
                   <div className="mt-6 text-right">
                     {isAuthenticated ? (
-                      <motion.button
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRegistration(event.id);
@@ -202,7 +202,7 @@ const Home = () => {
                         disabled={loadingEventId === event.id}
                       >
                         {loadingEventId === event.id ? (
-                          <motion.div
+                          <div
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             className="w-5 h-5 border-2 border-t-transparent border-white rounded-full"
@@ -212,7 +212,7 @@ const Home = () => {
                         ) : (
                           "Записаться ✅"
                         )}
-                      </motion.button>
+                      </button>
                     ) : (
                       <Link
                         to="/login"
@@ -222,7 +222,7 @@ const Home = () => {
                       </Link>
                     )}
                   </div>
-                </motion.div>
+                </div>
               ))
             ) : (
               <p className="text-center text-gray-500 col-span-full">
@@ -241,14 +241,14 @@ const Home = () => {
 
       {/* Модальное окно */}
       {selectedEvent && (
-        <motion.div
+        <div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={closeModal}
         >
-          <motion.div
+          <div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -276,7 +276,7 @@ const Home = () => {
             </div>
             <div className="flex justify-end gap-4 mt-8">
               {isAuthenticated && (
-                <motion.button
+                <button
                   onClick={() => handleRegistration(selectedEvent.id)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -288,7 +288,7 @@ const Home = () => {
                   disabled={loadingEventId === selectedEvent.id}
                 >
                   {loadingEventId === selectedEvent.id ? (
-                    <motion.div
+                    <div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       className="w-5 h-5 border-2 border-t-transparent border-white rounded-full"
@@ -298,7 +298,7 @@ const Home = () => {
                   ) : (
                     "Записаться ✅"
                   )}
-                </motion.button>
+                </button>
               )}
               <button
                 onClick={closeModal}
@@ -307,8 +307,8 @@ const Home = () => {
                 Закрыть
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </div>
   );

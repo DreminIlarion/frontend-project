@@ -8,7 +8,7 @@ import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
 import Dop_register from './Register_dop_service';
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 
 const Profile = () => {
   const { user, setUser, logout } = useUser();
@@ -100,7 +100,7 @@ const Profile = () => {
 
       <div className="flex flex-grow mt-16">
         {/* Sidebar */}
-        <motion.aside
+        <aside
           ref={sidebarRef}
           initial={{ x: -300 }}
           animate={{ x: isSidebarOpen ? 0 : -300 }}
@@ -153,11 +153,11 @@ const Profile = () => {
               )
             )}
           </nav>
-        </motion.aside>
+        </aside>
 
         {/* Main Content */}
         <main className="flex-1 p-6  min-h-screen flex justify-center ">
-          <motion.div
+          <div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -168,16 +168,17 @@ const Profile = () => {
             {activeSection === 'events' && <Events />}
             {activeSection === 'dop_register' && <Dop_register />}
             {!activeSection && <ClassifierForm />}
-          </motion.div>
+          </div>
         </main>
       </div>
 
       {/* Chat */}
       {user && (
         <div className="fixed bottom-6 right-6 z-50">
-          <AnimatePresence>
+          
+    
             {!isChatVisible ? (
-              <motion.button
+              <button
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
@@ -187,9 +188,9 @@ const Profile = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 <span className="text-2xl">💬</span>
-              </motion.button>
+              </button>
             ) : (
-              <motion.div
+              <div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
@@ -207,9 +208,9 @@ const Profile = () => {
                 <div className="p-4 h-[calc(100%-3.5rem)]">
                   <Chat />
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </div>
       )}
     </div>

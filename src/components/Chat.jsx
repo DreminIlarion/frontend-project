@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -83,9 +83,9 @@ const Chat = () => {
       {/* Блок с сообщениями */}
       <div className="flex-1 max-h-[45vh] overflow-y-auto space-y-3 p-4">
 
-        <AnimatePresence>
+        
           {messages.map((msg, index) => (
-            <motion.div
+            <div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -102,10 +102,10 @@ const Chat = () => {
               >
                 {msg.text}
               </div>
-            </motion.div>
+            </div>
           ))}
           {isTyping && (
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -115,9 +115,9 @@ const Chat = () => {
               <div className="max-w-[70%] p-3 rounded-xl text-sm shadow-md bg-gray-100/80 backdrop-blur-sm text-gray-900 animate-pulse">
                 Чат-бот печатает...
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
         <div ref={messagesEndRef} />
       </div>
 
@@ -131,14 +131,14 @@ const Chat = () => {
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <motion.button
+        <button
           onClick={sendMessage}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-md hover:shadow-blue-500/50 transition-all whitespace-nowrap"
         >
           Отправить
-        </motion.button>
+        </button>
       </div>
     </div>
   );
