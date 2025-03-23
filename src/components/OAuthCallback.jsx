@@ -72,10 +72,11 @@ const OAuthCallback = () => {
           return;
         }
 
+        // Исправляем URL для /get/token, чтобы использовать registration-fastapi
         const tokenUrl =
           finalProvider === "vk"
-            ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
-            : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+            ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
+            : `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
         console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
@@ -90,7 +91,7 @@ const OAuthCallback = () => {
 
           if (action === "register") {
             // Выполняем регистрацию
-            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+            const registrationUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
             console.log("Запрос регистрации по URL:", registrationUrl);
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
@@ -108,11 +109,11 @@ const OAuthCallback = () => {
               console.log("Регистрация успешна, выполняем логин для получения токенов...");
               await performLogin(accessToken, finalProvider);
             } else if (registrationData.status_code === 401) {
-              console.log("Пользователь уже зарегистрирован, перенаправляем на dashboard...");
+              console.log("Пользователь уже зарегистрирован, перенаправляем на profile...");
               toast.success(`ТЫ ЗАРЕГИСТРИРОВАН В ${finalProvider.toUpperCase()}`);
               setTimeout(() => {
-                navigate("/dashboard");
-                window.location.reload(); // Обновляем страницу после перехода на /dashboard
+                navigate("/profile");
+                window.location.reload();
               }, 1500);
             } else {
               console.error("Ошибка при регистрации", registrationData);
@@ -172,11 +173,11 @@ const OAuthCallback = () => {
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
-          console.log("Перенаправление на /dashboard");
-          toast.success("Вход выполнен успешно! Вы будете перенаправлены на dashboard...");
+          console.log("Перенаправление на /profile");
+          toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
-            navigate("/dashboard");
-            window.location.reload(); // Обновляем страницу после перехода на /dashboard
+            navigate("/profile");
+            window.location.reload();
           }, 1500);
         } else {
           console.error("Ошибка при входе", loginData);
