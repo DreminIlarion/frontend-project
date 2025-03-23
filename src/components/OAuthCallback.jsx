@@ -13,7 +13,7 @@ const OAuthCallback = () => {
 
     const code = searchParams.get("code");
     const deviceId = searchParams.get("device_id");
-    const sessionId = searchParams.get("state"); // Извлекаем sessionId из state
+    const sessionId = searchParams.get("state");
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
@@ -63,20 +63,32 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration`;
           console.log("Запрос регистрации по URL:", registrationUrl);
           const registrationResponse = await fetch(registrationUrl, {
             method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`, // Передаем access_token в заголовке
+            },
             credentials: "include",
+            body: JSON.stringify({ access_token: accessToken }), // На всякий случай передаем в теле тоже
           });
           const registrationData = await registrationResponse.json();
           console.log("Ответ от /registration:", registrationData);
 
           if (registrationData.status_code === 200) {
             console.log("Регистрация успешна, выполняем логин для получения токенов...");
-            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
+            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login`;
             console.log("Запрос логина по URL:", loginUrl);
-            const loginResponse = await fetch(loginUrl, { method: "POST" });
+            const loginResponse = await fetch(loginUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ access_token: accessToken }),
+            });
             const loginData = await loginResponse.json();
             console.log("Ответ от /login:", loginData);
 
@@ -109,7 +121,6 @@ const OAuthCallback = () => {
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
       } finally {
-        // Очищаем session-specific данные после завершения
         localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
       }
     };
