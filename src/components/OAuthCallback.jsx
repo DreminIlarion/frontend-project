@@ -4,38 +4,52 @@ import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { provider } = useParams(); // "vk" или "yandex" из URL (/oauth/vk/callback или /oauth/yandex/callback)
-  const code = searchParams.get("code");
+  const { provider } = useParams(); // "vk" или "yandex"
 
   useEffect(() => {
+    const code = searchParams.get("code"); // Перемещаем внутрь useEffect
+
+    console.log("OAuthCallback: Начало выполнения");
+    console.log("Provider из useParams:", provider);
+    console.log("Code из searchParams:", code);
+    console.log("Полный URL:", window.location.href);
+    console.log("Search Params:", Object.fromEntries(searchParams));
+
     if (!code || !provider) {
-      console.error("Отсутствует code или provider");
+      console.error("Отсутствует code или provider", { code, provider });
       return;
     }
 
     const exchangeToken = async () => {
       try {
+        console.log("Запуск exchangeToken для провайдера:", provider);
         const codeVerifier = localStorage.getItem(`${provider}_code_verifier`);
+        console.log("Code Verifier из localStorage:", codeVerifier);
         if (!codeVerifier) {
-          console.error("Отсутствует code_verifier");
+          console.error("Отсутствует code_verifier для", provider);
           return;
         }
 
-        // Шаг 1: Получение токена от провайдера (на personal-account-fastapi)
+        // Шаг 1: Получение токена от провайдера
         const tokenUrl =
           provider === "vk"
             ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/randomDeviceId/${codeVerifier}`
             : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+        console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, { method: "GET" });
         const tokenData = await tokenResponse.json();
+        console.log("Ответ от /get/token:", tokenData);
 
         if (tokenData.status_code === 200) {
           const accessToken = tokenData.body.access;
+          console.log("Access Token получен:", accessToken);
 
-          // Шаг 2: Попытка логина (на registration-fastapi)
+          // Шаг 2: Попытка логина
           const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
+          console.log("Запрос логина по URL:", loginUrl);
           const loginResponse = await fetch(loginUrl, { method: "POST" });
           const loginData = await loginResponse.json();
+          console.log("Ответ от /login:", loginData);
           let finalAccess, finalRefresh;
 
           if (loginData.status_code === 200) {
@@ -45,10 +59,12 @@ const OAuthCallback = () => {
           } else {
             console.warn("Пользователь не найден, пробуем регистрацию...");
 
-            // Шаг 3: Регистрация, если логин не удался (на personal-account-fastapi)
+            // Шаг 3: Регистрация
             const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${provider}/registration/${accessToken}`;
+            console.log("Запрос регистрации по URL:", registrationUrl);
             const registrationResponse = await fetch(registrationUrl, { method: "POST" });
             const registrationData = await registrationResponse.json();
+            console.log("Ответ от /registration:", registrationData);
 
             if (registrationData.status_code === 200) {
               console.log("Регистрация успешна");
@@ -60,15 +76,17 @@ const OAuthCallback = () => {
             }
           }
 
-          // Шаг 4: Установка токенов и сохранение в куки
+          // Шаг 4: Установка токенов
           if (finalAccess && finalRefresh) {
             const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+            console.log("Установка токенов по URL:", setTokenUrl);
             await fetch(setTokenUrl, { method: "POST", credentials: "include" });
 
-            // Сохранение токенов в куки
+            console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
             document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
             document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
+            console.log("Перенаправление на /dashboard");
             navigate("/dashboard");
           }
         } else {
@@ -80,7 +98,7 @@ const OAuthCallback = () => {
     };
 
     exchangeToken();
-  }, [code, provider, navigate]);
+  }, [provider, navigate]); // Убрали code и searchParams, так как code теперь внутри
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-indigo-100">
@@ -109,9 +127,7 @@ const OAuthCallback = () => {
           Пожалуйста, подождите, пока мы проверяем ваши данные...
         </p>
         <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load"
-          />
+          <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load" />
         </div>
         <div className="flex justify-center gap-2 mt-6">
           {[0, 1, 2].map((index) => (
