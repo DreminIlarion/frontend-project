@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 const OAuthCallback = ({ provider }) => {
   const [searchParams] = useSearchParams();
@@ -81,14 +81,14 @@ const OAuthCallback = ({ provider }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-indigo-100">
-      <motion.div
+      <div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="bg-white/90 backdrop-blur-lg p-8 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-blue-200/50"
       >
         {/* Логотип или иконка */}
-        <motion.div
+        <div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="flex justify-center mb-6"
@@ -107,7 +107,7 @@ const OAuthCallback = ({ provider }) => {
               d="M12 11c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4m-8 0c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4m-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4"
             />
           </svg>
-        </motion.div>
+        </div>
 
         {/* Заголовок */}
         <h2 className="text-2xl font-semibold text-gray-800 text-center mb-4">
@@ -121,7 +121,7 @@ const OAuthCallback = ({ provider }) => {
 
         {/* Полоса загрузки */}
         <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <motion.div
+          <div
             className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
@@ -130,14 +130,14 @@ const OAuthCallback = ({ provider }) => {
         </div>
 
         {/* Дополнительная анимация точек */}
-        <motion.div
+        <div
           className="flex justify-center gap-2 mt-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
           {[0, 1, 2].map((index) => (
-            <motion.div
+            <div
               key={index}
               className="w-3 h-3 bg-blue-500 rounded-full"
               animate={{ y: [0, -10, 0] }}
@@ -149,8 +149,8 @@ const OAuthCallback = ({ provider }) => {
               }}
             />
           ))}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 };
