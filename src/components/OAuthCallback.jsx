@@ -41,17 +41,14 @@ const OAuthCallback = () => {
           return;
         }
 
-        const tokenUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/get/token`;
+        const tokenUrl =
+          finalProvider === "vk"
+            ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
+            : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
         console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "GET",
           credentials: "include",
-          body: JSON.stringify({
-            code,
-            device_id: finalProvider === "vk" ? deviceId : undefined,
-            code_verifier: codeVerifier,
-          }),
         });
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
