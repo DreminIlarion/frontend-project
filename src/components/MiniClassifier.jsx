@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { motion } from "framer-motion";
+
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
-    year: '', 
-    gender: '',
-    gpa: '',
-    points: '',
-    direction: ''
+    year: "",
+    gender: "",
+    gpa: "",
+    points: "",
+    direction: "",
   });
 
   const [prediction, setPrediction] = useState(null);
@@ -18,7 +19,7 @@ const ClassifierForm = () => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -26,7 +27,7 @@ const ClassifierForm = () => {
     const { value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      points: value
+      points: value,
     }));
   };
 
@@ -34,48 +35,66 @@ const ClassifierForm = () => {
     const { value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      direction: value
+      direction: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+    setPrediction(null); // Сбрасываем предыдущее предсказание
+
     const dataToSend = {
       ...formData,
       gpa: parseFloat(formData.gpa),
       year: parseInt(formData.year, 10),
-      points: parseInt(formData.points, 10)
+      points: parseInt(formData.points, 10),
     };
-  
+
+    // Проверка данных перед отправкой
+    if (!dataToSend.gender || !dataToSend.gpa || !dataToSend.points || !dataToSend.year || !dataToSend.direction) {
+      toast.error("Пожалуйста, заполните все поля формы.");
+      setLoading(false);
+      return;
+    }
+
+    if (isNaN(dataToSend.gpa) || isNaN(dataToSend.year) || isNaN(dataToSend.points)) {
+      toast.error("Проверьте правильность введённых числовых данных.");
+      setLoading(false);
+      return;
+    }
+
     try {
+      
       const response = await fetch(`${process.env.REACT_APP_PREDICT_FREE}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(dataToSend),
       });
-  
+
+      if (!response.ok) {
+        throw new Error(`Сервер вернул ошибку: ${response.status} ${response.statusText}`);
+      }
+
       const result = await response.json();
       
-  
-      if (result.body && typeof result.body === 'number') {
+
+      if (result.body && typeof result.body === "number") {
         setPrediction(result.body);
+        
       } else {
         setPrediction(null);
-        toast.error("Ошибка: сервер не вернул предсказание.");
+        toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
       }
     } catch (error) {
-      console.error('Ошибка запроса:', error);
-      toast.error('Произошла ошибка при отправке данных.');
+      console.error("Ошибка запроса:", error.message);
+      toast.error(`Произошла ошибка: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
-  
-  
 
   return (
     <div className="container mx-auto p-6 text-center">
@@ -236,9 +255,40 @@ const ClassifierForm = () => {
           className="w-[175px] mx-auto mt-6 p-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl shadow-md hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center transition-all"
           disabled={loading}
         >
-          {loading ? 'Загрузка...' : 'Предсказать'}
+          {loading ? "Загрузка..." : "Предсказать"}
         </motion.button>
       </form>
+
+      {/* Результат предсказания */}
+      {prediction !== null && (
+        <div className="mt-6 p-6 bg-gray-100/90 backdrop-blur-sm rounded-3xl shadow-md max-w-lg mx-auto">
+          <h2 className="text-xl font-semibold text-blue-900 mb-4">Результат</h2>
+          <p className="text-lg">
+            Шанс на поступление:{" "}
+            <span
+              className={
+                prediction <= 0.25
+                  ? "text-red-700"
+                  : prediction > 0.25 && prediction <= 0.4
+                  ? "text-red-400"
+                  : prediction > 0.4 && prediction <= 0.6
+                  ? "text-blue-400"
+                  : prediction > 0.6 && prediction <= 0.75
+                  ? "text-teal-500"
+                  : "text-green-500"
+              }
+            >
+              {(() => {
+                if (prediction <= 0.25) return "Очень низкий (менее 25%)";
+                if (prediction > 0.25 && prediction <= 0.4) return "Низкий (менее 40%)";
+                if (prediction > 0.4 && prediction <= 0.6) return "Средний (более 50%)";
+                if (prediction > 0.6 && prediction <= 0.75) return "Повышенный (более 60%)";
+                return "Высокий (более 75%)";
+              })()}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Описание */}
       <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 max-w-lg mx-auto">
@@ -247,41 +297,10 @@ const ClassifierForm = () => {
         </p>
       </div>
 
-      {/* Результат предсказания */}
-      {prediction !== null && (
-        <div className="mt-6 p-6 bg-gray-100/90 backdrop-blur-sm rounded-3xl shadow-md max-w-lg mx-auto">
-          <h2 className="text-xl font-semibold text-blue-900 mb-4">Результат</h2>
-          <p className="text-lg">
-            Шанс на поступление:{' '}
-            <span
-              className={
-                prediction <= 0.25
-                  ? 'text-red-700'
-                  : prediction > 0.25 && prediction <= 0.4
-                  ? 'text-red-400'
-                  : prediction > 0.4 && prediction <= 0.6
-                  ? 'text-blue-400'
-                  : prediction > 0.6 && prediction <= 0.75
-                  ? 'text-teal-500'
-                  : 'text-green-500'
-              }
-            >
-              {(() => {
-                if (prediction <= 0.25) return 'Очень низкий (менее 25%)';
-                if (prediction > 0.25 && prediction <= 0.4) return 'Низкий (менее 40%)';
-                if (prediction > 0.4 && prediction <= 0.6) return 'Средний (более 50%)';
-                if (prediction > 0.6 && prediction <= 0.75) return 'Повышенный (более 60%)';
-                return 'Высокий (более 75%)';
-              })()}
-            </span>
-          </p>
-        </div>
-      )}
-
       {/* Контейнер для Toast */}
       <ToastContainer />
     </div>
   );
 };
 
-export default ClassifierForm;
+export default ClassifierForm;  
