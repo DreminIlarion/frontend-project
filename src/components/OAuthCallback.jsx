@@ -13,11 +13,13 @@ const OAuthCallback = () => {
 
     const code = searchParams.get("code");
     const deviceId = searchParams.get("device_id");
+    const sessionId = searchParams.get("state"); // Извлекаем sessionId из state
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
     console.log("Code из searchParams:", code);
     console.log("Device ID из searchParams:", deviceId);
+    console.log("Session ID из searchParams (state):", sessionId);
     console.log("Полный URL:", window.location.href);
     console.log("Search Params:", Object.fromEntries(searchParams));
 
@@ -38,9 +40,7 @@ const OAuthCallback = () => {
     const exchangeToken = async () => {
       try {
         console.log("Запуск exchangeToken для провайдера:", finalProvider);
-        const sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
-        console.log("Session ID из localStorage:", sessionId);
         console.log("Code Verifier из localStorage:", codeVerifier);
         if (!codeVerifier || !sessionId) {
           console.error("Отсутствует code_verifier или session_id для", finalProvider);
@@ -110,9 +110,7 @@ const OAuthCallback = () => {
         console.error("Ошибка обмена токена:", error);
       } finally {
         // Очищаем session-specific данные после завершения
-        const sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
-        localStorage.removeItem(`${finalProvider}_session_id`);
       }
     };
 

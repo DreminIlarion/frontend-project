@@ -7,13 +7,12 @@ const RegisterOAuth = () => {
     if (!isChecked) return;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link`);
+      const sessionId = Date.now().toString(); // Уникальный ID сессии
+      const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${sessionId}`);
       const data = await response.json();
       console.log(`Ответ от /${provider}/link:`, data);
       if (data.url && data.code_verifier) {
-        const sessionId = Date.now().toString(); // Уникальный ID сессии
         localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
-        localStorage.setItem(`${provider}_session_id`, sessionId); // Сохраняем sessionId
         console.log(`Сохранён code_verifier для ${provider} с sessionId ${sessionId}:`, data.code_verifier);
         window.location.href = data.url;
       } else {
