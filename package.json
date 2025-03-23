@@ -419,7 +419,7 @@
 
 
 
-"start": "cross-env CI=false NODE_OPTIONS=--max-old-space-size=4096 react-scripts start",
+"start": " react-scripts start",
  
 
 
@@ -438,7 +438,7 @@
 
 
 
-"build": "cross-env CI=false NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
+"build": " react-scripts build",
  
 
 
