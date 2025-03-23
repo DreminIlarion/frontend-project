@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast"; // Исправляем импорт
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -49,7 +49,6 @@ const OAuthCallback = () => {
         action = parsedState.action || "register";
       } catch (error) {
         console.warn("State не является валидным JSON, используем localStorage:", error);
-        // Если state не валиден, берем sessionId и action из localStorage
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         action = localStorage.getItem(`${finalProvider}_action`) || "register";
         console.log("Session ID из localStorage:", sessionId);
@@ -175,7 +174,7 @@ const OAuthCallback = () => {
           setTimeout(() => {
             navigate("/profile");
             window.location.reload(); // Обновляем страницу после перехода на /profile
-          }, 1500);
+          }, 500);
         } else {
           console.error("Ошибка при входе", loginData);
           toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
