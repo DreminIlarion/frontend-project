@@ -63,23 +63,26 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access_token;
           console.log("Access Token получен:", accessToken);
 
-          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration`;
+          // Отправляем access_token в URL
+          const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
           console.log("Запрос регистрации по URL:", registrationUrl);
           const registrationResponse = await fetch(registrationUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`, // Передаем access_token в заголовке
+              // Добавляем access_token в заголовок на всякий случай
+              "Authorization": `Bearer ${accessToken}`,
             },
             credentials: "include",
-            body: JSON.stringify({ access_token: accessToken }), // На всякий случай передаем в теле тоже
+            // Добавляем тело запроса
+            body: JSON.stringify({ access_token: accessToken }),
           });
           const registrationData = await registrationResponse.json();
           console.log("Ответ от /registration:", registrationData);
 
           if (registrationData.status_code === 200) {
             console.log("Регистрация успешна, выполняем логин для получения токенов...");
-            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login`;
+            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
             console.log("Запрос логина по URL:", loginUrl);
             const loginResponse = await fetch(loginUrl, {
               method: "POST",
