@@ -1,9 +1,9 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
 import { useUser } from '../context/UserContext';  // Импортируем контекст
-import { FaVk, FaYandex, FaEnvelope } from 'react-icons/fa';
+import { FaVk, FaYandex } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 
 const Login = () => {
@@ -15,11 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useUser();  // Получаем метод login из контекста
 
-  const API_URL = process.env.REACT_APP1_GET_TOKEN;
-
-  const getTokenFromCookies = (tokenName) => {
-    return Cookies.get(tokenName);
-  };
+  
 
   
 

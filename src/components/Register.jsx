@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import { FaVk, FaYandex, FaEnvelope } from 'react-icons/fa';
+
 
 const Register = () => {
     const [firstName, setFirstName] = useState('');

@@ -7,7 +7,7 @@ import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
-import Dop_register from './Register_dop_service';
+import DopRegister from './Register_dop_service';
 // import { motion, AnimatePresence } from 'framer-motion';
 
 const Profile = () => {
@@ -122,7 +122,7 @@ const Profile = () => {
                 ? [
                     { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления', icon: <FaChartBar /> },
                     { action: () => setActiveSection('events'), label: 'События', icon: <FaCalendar /> },
-                    { action: () => setActiveSection('dop_register'), label: 'Регистрация через доп сервисы', icon: <FaUserPlus /> },
+                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через доп сервисы', icon: <FaUserPlus /> },
                     { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления', icon: <FaChartBar /> },
                     { action: handleLogout, label: 'Выход', icon: <FaSignOutAlt /> },
                   ]
@@ -166,7 +166,7 @@ const Profile = () => {
             {activeSection === 'form' && <Form />}
             {activeSection === 'classifier' && <ClassifierForm />}
             {activeSection === 'events' && <Events />}
-            {activeSection === 'dop_register' && <Dop_register />}
+            {activeSection === 'dopregister' && <DopRegister />}
             {!activeSection && <ClassifierForm />}
           </div>
         </main>
