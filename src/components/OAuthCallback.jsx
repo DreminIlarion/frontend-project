@@ -147,25 +147,28 @@ const OAuthCallback = () => {
         const loginData = await loginResponse.json();
         console.log("Ответ от /login:", loginData);
 
-        if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
+        // Проверяем наличие access и refresh токенов, даже если status_code отсутствует
+        if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;
           const finalRefresh = loginData.refresh;
 
           const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
           console.log("Установка токенов по URL:", setTokenUrl);
-          await fetch(setTokenUrl, {
+          const setTokenResponse = await fetch(setTokenUrl, {
             method: "POST",
             credentials: "include",
           });
+          const setTokenData = await setTokenResponse.json();
+          console.log("Ответ от /set/token:", setTokenData);
 
           console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
-          console.log("Перенаправление на /dashboard");
-          toast.success("Вход выполнен успешно! Вы будете перенаправлены на dashboard...");
+          console.log("Перенаправление на /profile");
+          toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
-            navigate("/dashboard");
+            navigate("/profile");
           }, 1500);
         } else {
           console.error("Ошибка при входе", loginData);
