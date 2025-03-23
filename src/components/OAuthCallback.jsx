@@ -40,7 +40,7 @@ const OAuthCallback = () => {
     const finalProvider = provider || inferredProvider;
     console.log("Используемый provider:", finalProvider);
 
-    // Парсим state, чтобы извлечь sessionId и action
+    // Парсим state, если он есть и является валидным JSON
     let action = "register"; // По умолчанию считаем, что это регистрация
     if (sessionId) {
       try {
@@ -48,7 +48,12 @@ const OAuthCallback = () => {
         sessionId = parsedState.sessionId;
         action = parsedState.action || "register";
       } catch (error) {
-        console.error("Ошибка парсинга state:", error);
+        console.warn("State не является валидным JSON, используем localStorage:", error);
+        // Если state не валиден, берем sessionId и action из localStorage
+        sessionId = localStorage.getItem(`${finalProvider}_session_id`);
+        action = localStorage.getItem(`${finalProvider}_action`) || "register";
+        console.log("Session ID из localStorage:", sessionId);
+        console.log("Action из localStorage:", action);
       }
     } else {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
@@ -169,6 +174,7 @@ const OAuthCallback = () => {
           toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
             navigate("/profile");
+            window.location.reload(); // Обновляем страницу после перехода на /profile
           }, 1500);
         } else {
           console.error("Ошибка при входе", loginData);
