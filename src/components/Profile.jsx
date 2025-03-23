@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
 import { Link, useNavigate } from 'react-router-dom';
 import Form from './Form';
@@ -12,8 +12,7 @@ const Profile = () => {
   const { user, setUser, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const sidebarRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Используется только на мобильных
   const navigate = useNavigate();
 
   const deleteAllCookies = () => {
@@ -63,36 +62,26 @@ const Profile = () => {
     }
   }, [setUser]);
 
-  const handleClickOutside = (e) => {
-    if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-      setIsSidebarOpen(false);
-    }
+  const toggleSidebar = () => {
+    const newState = !isSidebarOpen;
+    console.log("toggleSidebar: Новое состояние боковой панели:", newState);
+    setIsSidebarOpen(newState);
   };
-
-  useEffect(() => {
-    // Используем mousedown и touchstart для лучшей совместимости с мобильными устройствами
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, []);
 
   return (
     <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100">
       {/* Header */}
       <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          {/* Кнопка видна только на мобильных устройствах */}
           <button
-            className="text-white text-xl font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsSidebarOpen(!isSidebarOpen);
-            }}
+            className="lg:hidden text-white text-xl font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1 shadow-md"
+            onClick={toggleSidebar}
           >
-            {isSidebarOpen ? '✕ Закрыть' : '≡ Меню'} {/* Текстовая кнопка с символами */}
+            {isSidebarOpen ? '✕ Закрыть' : '≡ Меню'}
           </button>
+          {/* На ПК кнопка не отображается, поэтому добавим пустой div для выравнивания */}
+          <div className="hidden lg:block w-16"></div>
           <h1 className="text-2xl font-bold flex-1 text-center tracking-tight fade-in">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-6 text-sm font-medium">
             <Link to="/help" className="hover:text-blue-300 transition-colors duration-200">Помощь</Link>
@@ -104,8 +93,9 @@ const Profile = () => {
       <div className="flex flex-grow mt-16">
         {/* Sidebar */}
         <aside
-          ref={sidebarRef}
-          className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+          className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl 
+            ${isSidebarOpen ? 'block' : 'hidden'} 
+            lg:block`} // На мобильных используем display, на ПК всегда видна
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-blue-600/30">
             <div className="flex items-center">
@@ -113,13 +103,6 @@ const Profile = () => {
                 {user ? user.email : <Link to="/login" className="text-white hover:underline">Войти</Link>}
               </span>
             </div>
-            {/* Кнопка закрытия для мобильных устройств */}
-            <button
-              className="lg:hidden text-white text-base font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              ✕ Закрыть
-            </button>
           </div>
           <nav className="mt-4 space-y-1 px-2">
             {[
@@ -139,7 +122,7 @@ const Profile = () => {
                   key={index}
                   to={item.to}
                   className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
-                  onClick={() => setIsSidebarOpen(false)}
+                  onClick={() => setIsSidebarOpen(false)} // Закрываем панель на мобильных при клике на ссылку
                 >
                   <span>{item.label}</span>
                 </Link>
@@ -148,7 +131,7 @@ const Profile = () => {
                   key={index}
                   onClick={() => {
                     item.action();
-                    setIsSidebarOpen(false);
+                    setIsSidebarOpen(false); // Закрываем панель на мобильных при клике на кнопку
                   }}
                   className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
                 >
