@@ -118,7 +118,7 @@ const Profile = () => {
                 ? [
                     { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления' },
                     { action: () => setActiveSection('events'), label: 'События' },
-                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через доп сервисы'},
+                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через дополнительные сервисы'},
                     { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления' },
                     { action: handleLogout, label: 'Выход' },
                   ]
