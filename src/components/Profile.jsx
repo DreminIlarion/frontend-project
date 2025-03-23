@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useUser } from '../context/UserContext'; // Импортируем контекст
+import { useUser } from '../context/UserContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
+import { FaUserCircle, FaBars, FaTimes, FaHome, FaChartBar, FaCalendar, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
 import Cookies from "js-cookie";
 import Events from './Events';
 import Dop_register from './Register_dop_service';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Profile = () => {
-  const { user, setUser, logout } = useUser(); // Доступ к setUser через контекст
+  const { user, setUser, logout } = useUser();
   const [activeSection, setActiveSection] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
   const navigate = useNavigate();
-
-
 
   const deleteAllCookies = () => {
     document.cookie.split(";").forEach((cookie) => {
@@ -26,26 +25,16 @@ const Profile = () => {
       document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
     });
   };
-  
 
   const handleLogout = useCallback(async () => {
     try {
-      // Запрос на сервер для выхода (если сервер чистит сессию)
       await fetch(`${process.env.REACT_APP_LOGOUT}`, {
         method: "GET",
         credentials: "include",
       });
-  
-      // Удаляем все куки
       localStorage.clear();
       sessionStorage.clear();
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-
-      // Завершаем сессию на клиенте
+      deleteAllCookies();
       logout();
       navigate("/login");
       window.location.reload();
@@ -53,45 +42,29 @@ const Profile = () => {
       console.error("Ошибка при выходе:", error);
     }
   }, [logout, navigate]);
-  
-  
-  
 
   useEffect(() => {
     const accessToken = Cookies.get("access");
     const refreshToken = Cookies.get("refresh");
-  
     if (accessToken && refreshToken) {
-      console.log("✅ Токены найдены, пытаемся получить пользователя...");
       const fetchToken = async () => {
         try {
-          const response = await fetch(`${process.env.REACT_APP_GET_TOKEN}${accessToken}/${refreshToken}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
+          const response = await fetch(`${process.env.REACT_APP_GET_TOKEN}${accessToken}/${refreshToken}`, {
+            method: "GET",
+            credentials: "include",
+          });
           const data = await response.json();
-          
-          
-  
           if (data.token) {
-             // Устанавливаем пользователя в контекст
-          } else {
-             // Если нет токена, разлогиниваем
+            // Устанавливаем пользователя в контекст
           }
         } catch (error) {
           console.error("Ошибка при получении нового токена:", error);
         }
       };
-  
       fetchToken();
-    } else {
-      console.log("⚠ Токены не найдены.");
     }
   }, [setUser]);
 
-  // Обработчик клика вне шторки
   const handleClickOutside = (e) => {
     if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
       setIsSidebarOpen(false);
@@ -99,20 +72,17 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    // Добавляем событие для клика вне шторки
     document.addEventListener('click', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   return (
-    <div className="flex flex-col font-sans min-h-screen">
-      <header className="w-full bg-blue-800 text-white shadow-md fixed top-0 z-50">
+    <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100">
+      {/* Header */}
+      <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <button
-            className="lg:hidden text-white text-2xl"
+            className="text-white text-2xl hover:text-blue-300 transition-colors duration-200"
             onClick={(e) => {
               e.stopPropagation();
               setIsSidebarOpen(!isSidebarOpen);
@@ -120,90 +90,126 @@ const Profile = () => {
           >
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
-          <h1 className="text-2xl font-bold flex-1 text-center lg:flex-none">Личный кабинет</h1>
-          <div className="hidden lg:flex space-x-4">
-            <Link to="/help" className="hover:underline">
-              Помощь
-            </Link>
-            <Link to="/contact" className="hover:underline">
-              Контакты
-            </Link>
+          <h1 className="text-2xl font-bold flex-1 text-center tracking-tight">Личный кабинет</h1>
+          <div className="hidden lg:flex space-x-6 text-sm font-medium">
+            <Link to="/help" className="hover:text-blue-300 transition-colors duration-200">Помощь</Link>
+            <Link to="/contact" className="hover:text-blue-300 transition-colors duration-200">Контакты</Link>
           </div>
         </div>
       </header>
 
       <div className="flex flex-grow mt-16">
-        <div
+        {/* Sidebar */}
+        <motion.aside
           ref={sidebarRef}
-          className={`fixed top-0 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-lg transition-transform duration-300 ease-in-out
-          ${isSidebarOpen ? "translate-x-0 h-full" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50`}
+          initial={{ x: -300 }}
+          animate={{ x: isSidebarOpen ? 0 : -300 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl"
         >
-          <div className="flex items-center px-6 py-4 border-b border-blue-600">
-            <FaUserCircle className="text-3xl text-white mr-3" />
-            {user ? <span className="text-xl font-semibold">{user.email}</span> : <Link to="/login" className="text-white hover:underline">Войти</Link>}
-          </div>
-          <ul className="mt-4">
-            <li className="mb-2">
-              <Link to="/" className="w-full text-left px-6 py-3 block hover:text-white">
-                Главная страница
-              </Link>
-            </li>
-            {user && user.loggedIn && (
-              <>
-                <li className="mb-2">
-                  <button onClick={() => { setActiveSection("form"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
-                    Расширенный шанс поступления
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => { setActiveSection("events"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
-                    События
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => { setActiveSection("dop_register"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
-                    Регистрация через доп сервисы
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => { setActiveSection("classifier"); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
-                    Базовый шанс поступления
-                  </button>
-                </li>
-                <li className="mb-2">
-                  <button onClick={() => { handleLogout(); setIsSidebarOpen(false); }} className="w-full text-left px-6 py-3 hover:text-white">
-                    Выход
-                  </button>
-                </li>
-
-              </>
+          <div className="flex items-center px-6 py-4 border-b border-blue-600/30">
+            <FaUserCircle className="text-3xl text-white mr-3 drop-shadow-sm" />
+            {user ? (
+              <span className="text-lg font-semibold truncate">{user.email}</span>
+            ) : (
+              <Link to="/login" className="text-white hover:underline">Войти</Link>
             )}
-          </ul>
-        </div>
+          </div>
+          <nav className="mt-4 space-y-1 px-2">
+            {[
+              { to: '/', label: 'Главная страница', icon: <FaHome /> },
+              ...(user && user.loggedIn
+                ? [
+                    { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления', icon: <FaChartBar /> },
+                    { action: () => setActiveSection('events'), label: 'События', icon: <FaCalendar /> },
+                    { action: () => setActiveSection('dop_register'), label: 'Регистрация через доп сервисы', icon: <FaUserPlus /> },
+                    { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления', icon: <FaChartBar /> },
+                    { action: handleLogout, label: 'Выход', icon: <FaSignOutAlt /> },
+                  ]
+                : []),
+            ].map((item, index) =>
+              item.to ? (
+                <Link
+                  key={index}
+                  to={item.to}
+                  className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-800"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <span className="text-lg mr-3">{item.icon}</span>
+                  <span>{item.label}</span>
+                </Link>
+              ) : (
+                <button
+                  key={index}
+                  onClick={() => {
+                    item.action();
+                    setIsSidebarOpen(false);
+                  }}
+                  className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-800"
+                >
+                  <span className="text-lg mr-3">{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              )
+            )}
+          </nav>
+        </motion.aside>
 
-        <div className="flex-1 p-4 lg:ml-64 bg-white min-h-screen overflow-y-auto">
-          {activeSection === "form" && <Form />}
-          {activeSection === "classifier" && <ClassifierForm />}
-          {activeSection === "events" && <Events />}
-          {activeSection === "dop_register" && <Dop_register />}
-          {!activeSection && <ClassifierForm />}
-        </div>
+        {/* Main Content */}
+        <main className="flex-1 p-6  min-h-screen flex justify-center ">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-blue-100/50 w-full max-w-7xl"
+          >
+            {activeSection === 'form' && <Form />}
+            {activeSection === 'classifier' && <ClassifierForm />}
+            {activeSection === 'events' && <Events />}
+            {activeSection === 'dop_register' && <Dop_register />}
+            {!activeSection && <ClassifierForm />}
+          </motion.div>
+        </main>
       </div>
 
+      {/* Chat */}
       {user && (
-        <div className="fixed bottom-4 right-4">
-          {!isChatVisible ? (
-            <button onClick={() => setIsChatVisible(true)} className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition duration-200 text-lg">
-              Чат
-            </button>
-          ) : (
-            <div className="fixed bottom-16 right-4 bg-white shadow-lg rounded-lg w-[90%] max-w-sm h-96 relative">
-              <button onClick={() => setIsChatVisible(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg">
-                ✕
-              </button>
-              <Chat />
-            </div>
-          )}
+        <div className="fixed bottom-6 right-6 z-50">
+          <AnimatePresence>
+            {!isChatVisible ? (
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                onClick={() => setIsChatVisible(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-blue-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-2xl">💬</span>
+              </motion.button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="w-[90vw] max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-blue-100/50 overflow-hidden"
+              >
+                <div className="p-4 border-b border-blue-100/50 flex justify-between items-center bg-blue-500/50">
+                  <span className="text-sm font-medium text-gray-900">Чат</span>
+                  <button
+                    onClick={() => setIsChatVisible(false)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="p-4 h-[calc(100%-3.5rem)]">
+                  <Chat />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

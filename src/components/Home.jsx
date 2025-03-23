@@ -1,38 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Home = () => {
   const [events, setEvents] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Статус авторизации
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [registeredEvents, setRegisteredEvents] = useState(new Set());
   const [visitorData, setVisitorData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1); // Страница для пагинации
-  const [hasMore, setHasMore] = useState(true); // Есть ли еще события для загрузки
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Загрузка событий с пагинацией
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `https://events-fastapi.onrender.com/api/v1/events/get/`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/`, {
+          credentials: "include",
+        });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
         const data = await response.json();
 
-        // Добавляем новые события только если их еще нет в списке
         setEvents((prevEvents) => {
-          const newEventsSet = new Set(prevEvents.map((event) => event.id)); // Множество с id уже загруженных событий
-          const newEvents = data.filter((event) => !newEventsSet.has(event.id)); // Фильтруем уже загруженные события
+          const newEventsSet = new Set(prevEvents.map((event) => event.id));
+          const newEvents = data.filter((event) => !newEventsSet.has(event.id));
           return [...prevEvents, ...newEvents];
         });
 
-        // Если загружено меньше 10 событий, это последняя страница
         if (data.length < 10) {
           setHasMore(false);
         }
@@ -46,19 +42,12 @@ const Home = () => {
     loadEvents();
   }, [page]);
 
-  // Загрузка зарегистрированных событий для текущего пользователя
+  // Загрузка зарегистрированных событий
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
-      credentials: "include",
-    })  
-    
+    fetch(`${process.env.REACT_APP_VISITORS_GET}`, { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
         const registeredIds = new Set(data.body.map((entry) => entry.event_id));
-
-
-
-
         setRegisteredEvents(registeredIds);
         const visitorMap = data.body.reduce((acc, entry) => {
           acc[entry.event_id] = entry.unique_string;
@@ -71,14 +60,9 @@ const Home = () => {
 
   // Проверка авторизации
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
-      credentials: "include",
-    })
+    fetch(`${process.env.REACT_APP_VISITORS_GET}`, { credentials: "include" })
       .then((response) => {
         if (response.ok) {
-
-
-
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -101,9 +85,7 @@ const Home = () => {
       const response = await fetch(url, {
         method,
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error(`Ошибка ${response.status}`);
       setRegisteredEvents((prev) => {
@@ -116,30 +98,22 @@ const Home = () => {
     }
   };
 
-  // Генерация QR-кода
-  const getQRCode = async (eventId) => {
-    const uniqueString = visitorData[eventId];
-    if (!uniqueString) return;
-    const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
-    window.open(qrUrl, "_blank");
-  };
-
   const handleScroll = (e) => {
     const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
     if (bottom && !loading && hasMore) {
-      setPage((prevPage) => prevPage + 1); // Загружаем следующую страницу
+      setPage((prevPage) => prevPage + 1);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-50">
       {/* Header */}
-      <header className="bg-blue-600 text-white py-6 px-8 flex justify-between items-center shadow-md">
+      <header className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-6 px-8 flex justify-between items-center shadow-lg backdrop-blur-md bg-opacity-90 sticky top-0 z-10">
         <h1 className="text-3xl font-bold">Главная страница</h1>
         <nav>
           <Link
             to="/profile"
-            className="bg-white text-blue-600 px-6 py-3 rounded-lg shadow-md hover:bg-gray-100 transition duration-200"
+            className="bg-white text-blue-700 px-6 py-3 rounded-full shadow-md hover:bg-blue-100 transition-all duration-300 transform hover:scale-105"
           >
             Личный кабинет
           </Link>
@@ -148,81 +122,90 @@ const Home = () => {
 
       {/* Main Section */}
       <main className="flex flex-col items-center justify-center text-center py-12 px-6">
-        <h2 className="text-5xl font-extrabold text-blue-600 mb-6">Добро пожаловать!</h2>
-        <p className="text-lg text-gray-600 mb-8">
-          Войдите, чтобы записаться на события и управлять своим аккаунтом.
+        <h2 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+          Добро пожаловать!
+        </h2>
+        <p className="text-lg text-gray-700 mb-8 max-w-2xl">
+          Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные события и управлять своим аккаунтом.
         </p>
 
         {/* Events Section */}
         <section
-          className="container mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="container mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-h-[70vh] overflow-y-auto"
           onScroll={handleScroll}
         >
-                      {events.length > 0 ? (
-                        events.map((event) => (
-                          <div
-                            key={event.id}
-                            className="bg-white shadow-lg rounded-lg p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:bg-gray-100 group"
-                            style={{ cursor: "pointer", wordBreak: "break-word" }} // Предотвращаем разрыв макета
-                          >
-                    <div className="flex flex-col">
-                      {/* Название и дата */}
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 
-                      className="text-xl font-semibold text-gray-900 hover:text-blue-500 max-w-full truncate group-hover:whitespace-normal"
-                    >
+          {events.length > 0 ? (
+            events.map((event) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-blue-100/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+              >
+                <div className="flex flex-col">
+                  {/* Название и дата */}
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 max-w-[70%] truncate">
                       {event.name_event}
                     </h3>
+                    <span className="text-sm text-gray-500">
+                      {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
+                    </span>
+                  </div>
 
+                  {/* Дополнительная информация */}
+                  <div className="mt-4 space-y-2 text-gray-700">
+                    <p>
+                      <strong>Место:</strong> {event.location || "Не указано"}
+                    </p>
+                    <p>
+                      <strong>Лимит:</strong> {event.limit_people || "Не ограничено"}
+                    </p>
+                    <p className="line-clamp-3 text-sm">
+                      <strong>Описание:</strong> {event.description || "Описание не доступно"}
+                    </p>
+                  </div>
+                </div>
 
-                        <span className="text-sm text-gray-500">
-                          {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
-                        </span>
-                      </div>
-
-                      {/* Дополнительная информация */}
-                      <div className="mt-4 space-y-2 text-gray-700">
-                        <p><strong>Место:</strong> {event.location || "Не указано"}</p>
-                        <p><strong>Лимит людей:</strong> {event.limit_people || "Не ограничено"}</p>
-                        <p 
-                          className="line-clamp-3 overflow-hidden group-hover:line-clamp-none transition-all duration-300 ease-in-out"
-                          title={event.description} // Полный текст при наведении
-                        >
-                          <strong>Описание:</strong> {event.description || "Описание не доступно"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4 mt-4">
-                      {isAuthenticated ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRegistration(event.id);
-                          }}
-                          className={`flex-1 py-3 text-white font-semibold rounded-lg transition-all transform hover:scale-105 ${
-                            registeredEvents.has(event.id) ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
-                          }`}
-                        >
-                          {registeredEvents.has(event.id) ? "Отписаться ❌" : "Записаться ✅"}
-                        </button>
-                      )  : (
+                <div className="flex gap-4 mt-6">
+                  {isAuthenticated ? (
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRegistration(event.id);
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex-1 py-3 text-white font-semibold rounded-full shadow-md transition-all duration-300 ${
+                        registeredEvents.has(event.id)
+                          ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
+                          : "bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-green-500/50"
+                      }`}
+                    >
+                      {registeredEvents.has(event.id) ? "Отписаться ❌" : "Записаться ✅"}
+                    </motion.button>
+                  ) : (
                     <Link
                       to="/login"
-                      className="flex-1 py-3 text-center text-white font-semibold bg-blue-500 hover:bg-blue-600 rounded-lg transition-all transform hover:scale-105"
+                      className="flex-1 py-3 text-center text-white font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-md hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105"
                     >
                       Войдите, чтобы записаться 🔑
                     </Link>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))
           ) : (
-            <p className="text-center text-gray-500 col-span-2">Загрузка...</p>
+            <p className="text-center text-gray-500 col-span-full">
+              {loading ? "Загрузка..." : "События не найдены"}
+            </p>
           )}
         </section>
-        
-        {!hasMore && !loading && <p className="text-center text-gray-500">Больше событий нет.</p>}
+
+        {!hasMore && !loading && (
+          <p className="text-center text-gray-500 mt-6">Больше событий нет.</p>
+        )}
       </main>
     </div>
   );

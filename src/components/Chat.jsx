@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -6,34 +7,35 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Загрузка сообщений из localStorage
   useEffect(() => {
     const savedMessages = JSON.parse(localStorage.getItem('chatMessages'));
     if (savedMessages) {
       setMessages(savedMessages);
-      
     }
   }, []);
 
+  // Сохранение сообщений в localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem('chatMessages', JSON.stringify(messages));
-     
     }
   }, [messages]);
 
-  // Скролл вниз при добавлении нового сообщения
+  // Скролл вниз при новом сообщении
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Отправка сообщения
   const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
-  
+
     const newMessages = [...messages, { text: inputMessage, sender: 'user' }];
     setMessages(newMessages);
     setInputMessage('');
     setIsTyping(true);
-  
+
     try {
       const encodedMessage = encodeURIComponent(inputMessage);
       const response = await fetch(
@@ -43,17 +45,16 @@ const Chat = () => {
           credentials: 'include',
         }
       );
-  
+
       if (!response.ok) {
         throw new Error('Ошибка сервера');
       }
-  
+
       const data = await response.json();
-      console.log('Ответ от сервера:', data);  // Логируем ответ от сервера
-  
-      // Обработка данных и добавление в состояние
-      if (data.answer) {
-        setMessages([...newMessages, { text: data.answer, sender: 'bot' }]);
+      console.log('Ответ от сервера:', data);
+
+      if (data.body.answer) {
+        setMessages([...newMessages, { text: data.body.answer, sender: 'bot' }]);
       } else {
         console.error("Ответ от сервера не содержит ключ 'answer'");
       }
@@ -69,7 +70,6 @@ const Chat = () => {
       setTimeout(() => setIsTyping(false), 800);
     }
   };
-  
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -79,46 +79,66 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex flex-col h-[450px] max-w-[550px] w-full bg-white shadow-lg rounded-lg p-4 border border-gray-200">
+    <div className="flex flex-col h-full w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-hidden">
       {/* Блок с сообщениями */}
-      <div className="flex-1 overflow-y-auto space-y-2 p-2">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[89%] sm:max-w-[75%] p-3 rounded-xl text-sm shadow ${
-                msg.sender === 'user' ? 'bg-blue-500 text-white animate-slideInRight' : 'bg-gray-200 text-black animate-slideInLeft'
-              }`}
+      <div className="flex-1 max-h-[45vh] overflow-y-auto space-y-3 p-4">
+
+        <AnimatePresence>
+          {messages.map((msg, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.text}
-            </div>
-          </div>
-        ))}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="max-w-[70%] p-3 rounded-xl text-sm shadow bg-gray-200 text-black animate-pulse">
-              Чат-бот печатает...
-            </div>
-          </div>
-        )}
+              <div
+                className={`max-w-[80%] p-3 rounded-xl text-sm shadow-md ${
+                  msg.sender === 'user'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
+                    : 'bg-gray-100/80 backdrop-blur-sm text-gray-900'
+                }`}
+              >
+                {msg.text}
+              </div>
+            </motion.div>
+          ))}
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex justify-start"
+            >
+              <div className="max-w-[70%] p-3 rounded-xl text-sm shadow-md bg-gray-100/80 backdrop-blur-sm text-gray-900 animate-pulse">
+                Чат-бот печатает...
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>
 
       {/* Поле ввода сообщения */}
-      <div className="flex items-center gap-2 mt-2 border-t pt-2 border-gray-300">
+      <div className="flex items-center gap-3 p-4 border-t border-blue-100/50 bg-blue-50/50">
         <input
           type="text"
           placeholder="Напишите сообщение..."
-          className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition w-full"
+          className="flex-1 px-4 py-2 rounded-full border border-blue-200 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button
+        <motion.button
           onClick={sendMessage}
-          className="px-4 py-2 bg-blue-500 text-white rounded-full shadow hover:bg-blue-600 transition whitespace-nowrap"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-md hover:shadow-blue-500/50 transition-all whitespace-nowrap"
         >
           Отправить
-        </button>
+        </motion.button>
       </div>
     </div>
   );
