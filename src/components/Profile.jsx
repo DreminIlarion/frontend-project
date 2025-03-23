@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
 import { Link, useNavigate } from 'react-router-dom';
-
 import Form from './Form';
 import ClassifierForm from './MiniClassifier';
 import Chat from './Chat';
@@ -86,13 +85,13 @@ const Profile = () => {
       <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <button
-            className="text-white text-2xl hover:text-blue-300 transition-colors duration-200"
+            className="text-white text-xl font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1"
             onClick={(e) => {
               e.stopPropagation();
               setIsSidebarOpen(!isSidebarOpen);
             }}
           >
-            
+            {isSidebarOpen ? '✕ Закрыть' : '≡ Меню'} {/* Текстовая кнопка с символами */}
           </button>
           <h1 className="text-2xl font-bold flex-1 text-center tracking-tight fade-in">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-6 text-sm font-medium">
@@ -110,19 +109,16 @@ const Profile = () => {
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-blue-600/30">
             <div className="flex items-center">
-              
-              {user ? (
-                <span className="text-lg font-semibold truncate">{user.email}</span>
-              ) : (
-                <Link to="/login" className="text-white hover:underline">Войти</Link>
-              )}
+              <span className="text-lg font-semibold truncate">
+                {user ? user.email : <Link to="/login" className="text-white hover:underline">Войти</Link>}
+              </span>
             </div>
-            {/* Добавляем кнопку закрытия для мобильных устройств */}
+            {/* Кнопка закрытия для мобильных устройств */}
             <button
-              className="lg:hidden text-white text-xl hover:text-blue-300 transition-colors duration-200"
+              className="lg:hidden text-white text-base font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1"
               onClick={() => setIsSidebarOpen(false)}
             >
-              
+              ✕ Закрыть
             </button>
           </div>
           <nav className="mt-4 space-y-1 px-2">
@@ -145,7 +141,6 @@ const Profile = () => {
                   className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
                   onClick={() => setIsSidebarOpen(false)}
                 >
-                  <span className="text-lg mr-3">{item.icon}</span>
                   <span>{item.label}</span>
                 </Link>
               ) : (
@@ -157,7 +152,6 @@ const Profile = () => {
                   }}
                   className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
                 >
-                  <span className="text-lg mr-3">{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               )
