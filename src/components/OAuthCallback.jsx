@@ -44,13 +44,13 @@ const OAuthCallback = () => {
         console.log("Запрос токена по URL:", tokenUrl);
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
-          credentials: "include", // Добавляем куки
+          credentials: "include", // Куки для personal-account-fastapi
         });
         const tokenData = await tokenResponse.json();
         console.log("Ответ от /get/token:", tokenData);
 
-        if (tokenData.status_code === 200) {
-          const accessToken = tokenData.body.access;
+        if (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token) {
+          const accessToken = tokenData.body.access_token; // Извлекаем access_token из body
           console.log("Access Token получен:", accessToken);
 
           // Шаг 2: Попытка логина
@@ -61,9 +61,9 @@ const OAuthCallback = () => {
           console.log("Ответ от /login:", loginData);
           let finalAccess, finalRefresh;
 
-          if (loginData.status_code === 200) {
+          if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
             console.log("Успешный вход");
-            finalAccess = loginData.access; // Токены напрямую в корне объекта
+            finalAccess = loginData.access;
             finalRefresh = loginData.refresh;
           } else {
             console.warn("Пользователь не найден, пробуем регистрацию...");
@@ -73,7 +73,7 @@ const OAuthCallback = () => {
             console.log("Запрос регистрации по URL:", registrationUrl);
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
-              credentials: "include", // Добавляем куки
+              credentials: "include", // Куки для personal-account-fastapi
             });
             const registrationData = await registrationResponse.json();
             console.log("Ответ от /registration:", registrationData);
@@ -86,7 +86,7 @@ const OAuthCallback = () => {
               const retryLoginData = await retryLoginResponse.json();
               console.log("Ответ от повторного /login:", retryLoginData);
 
-              if (retryLoginData.status_code === 200) {
+              if (retryLoginData.status_code === 200 && retryLoginData.access && retryLoginData.refresh) {
                 finalAccess = retryLoginData.access;
                 finalRefresh = retryLoginData.refresh;
               } else {
@@ -105,7 +105,7 @@ const OAuthCallback = () => {
             console.log("Установка токенов по URL:", setTokenUrl);
             await fetch(setTokenUrl, {
               method: "POST",
-              credentials: "include", // Добавляем куки
+              credentials: "include", // Куки для personal-account-fastapi
             });
 
             console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
@@ -118,7 +118,7 @@ const OAuthCallback = () => {
             console.error("Токены не получены после всех шагов");
           }
         } else {
-          console.error("Ошибка получения токена", tokenData);
+          console.error("Ошибка получения токена или неверный формат ответа", tokenData);
         }
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
