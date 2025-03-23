@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast"; // Добавляем react-hot-toast для уведомлений
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -40,6 +40,7 @@ const OAuthCallback = () => {
     const finalProvider = provider || inferredProvider;
     console.log("Используемый provider:", finalProvider);
 
+    // Если sessionId отсутствует, пытаемся извлечь его из localStorage
     if (!sessionId) {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
       console.log("Session ID из localStorage:", sessionId);
@@ -88,12 +89,52 @@ const OAuthCallback = () => {
 
           if (registrationData.status_code === 200) {
             console.log("Регистрация успешна, выполняем логин для получения токенов...");
-            await performLogin(accessToken, finalProvider);
+            const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
+            console.log("Запрос логина по URL:", loginUrl);
+            const loginResponse = await fetch(loginUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ access_token: accessToken }),
+            });
+            const loginData = await loginResponse.json();
+            console.log("Ответ от /login:", loginData);
+
+            if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
+              const finalAccess = loginData.access;
+              const finalRefresh = loginData.refresh;
+
+              const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+              console.log("Установка токенов по URL:", setTokenUrl);
+              await fetch(setTokenUrl, {
+                method: "POST",
+                credentials: "include",
+              });
+
+              console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
+              document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
+              document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
+
+              console.log("Перенаправление на /dashboard");
+              toast.success("Регистрация успешна! Вы будете перенаправлены на dashboard...");
+              setTimeout(() => {
+                navigate("/dashboard");
+              }, 1500);
+            } else {
+              console.error("Ошибка при логине после регистрации", loginData);
+              toast.error("Ошибка при логине после регистрации.");
+            }
           } else if (registrationData.status_code === 401) {
-            // Пользователь уже зарегистрирован, пробуем войти
-            console.log("Пользователь уже зарегистрирован, выполняем автоматический вход...");
-            toast.info("Аккаунт уже зарегистрирован. Выполняем вход...");
-            await performLogin(accessToken, finalProvider);
+            // Обрабатываем случай, когда пользователь уже зарегистрирован
+            console.log("Пользователь уже зарегистрирован, перенаправляем на страницу входа...");
+            toast.error(
+              "Этот аккаунт уже зарегистрирован. Пожалуйста, войдите в систему."
+            );
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);
           } else {
             console.error("Ошибка при регистрации", registrationData);
             toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
@@ -110,57 +151,6 @@ const OAuthCallback = () => {
           localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
         }
         localStorage.removeItem(`${finalProvider}_session_id`);
-      }
-    };
-
-    const performLogin = async (accessToken, provider) => {
-      try {
-        const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
-        console.log("Запрос логина по URL:", loginUrl);
-        const loginResponse = await fetch(loginUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ access_token: accessToken }),
-        });
-        const loginData = await loginResponse.json();
-        console.log("Ответ от /login:", loginData);
-
-        if (loginData.status_code === 200 && loginData.access && loginData.refresh) {
-          const finalAccess = loginData.access;
-          const finalRefresh = loginData.refresh;
-
-          const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
-          console.log("Установка токенов по URL:", setTokenUrl);
-          await fetch(setTokenUrl, {
-            method: "POST",
-            credentials: "include",
-          });
-
-          console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
-          document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
-          document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
-
-          console.log("Перенаправление на /dashboard");
-          toast.success("Вход выполнен успешно! Вы будете перенаправлены на dashboard...");
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 1500);
-        } else {
-          console.error("Ошибка при логине", loginData);
-          toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
-        }
-      } catch (error) {
-        console.error("Ошибка при выполнении входа:", error);
-        toast.error("Ошибка при входе: " + error.message);
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
       }
     };
 
