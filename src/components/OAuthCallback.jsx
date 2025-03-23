@@ -7,7 +7,7 @@ const OAuthCallback = () => {
   const { provider } = useParams(); // "vk" или "yandex"
 
   useEffect(() => {
-    const code = searchParams.get("code"); // Перемещаем внутрь useEffect
+    const code = searchParams.get("code");
 
     console.log("OAuthCallback: Начало выполнения");
     console.log("Provider из useParams:", provider);
@@ -15,24 +15,29 @@ const OAuthCallback = () => {
     console.log("Полный URL:", window.location.href);
     console.log("Search Params:", Object.fromEntries(searchParams));
 
-    if (!code || !provider) {
-      console.error("Отсутствует code или provider", { code, provider });
+    // Fallback: если provider не определен, можно попытаться угадать из контекста
+    const inferredProvider = window.location.href.includes("vk") ? "vk" : window.location.href.includes("yandex") ? "yandex" : null;
+
+    if (!code || (!provider && !inferredProvider)) {
+      console.error("Отсутствует code или provider", { code, provider, inferredProvider });
       return;
     }
 
+    const finalProvider = provider || inferredProvider;
+    console.log("Используемый provider:", finalProvider);
+
     const exchangeToken = async () => {
       try {
-        console.log("Запуск exchangeToken для провайдера:", provider);
-        const codeVerifier = localStorage.getItem(`${provider}_code_verifier`);
+        console.log("Запуск exchangeToken для провайдера:", finalProvider);
+        const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier`);
         console.log("Code Verifier из localStorage:", codeVerifier);
         if (!codeVerifier) {
-          console.error("Отсутствует code_verifier для", provider);
+          console.error("Отсутствует code_verifier для", finalProvider);
           return;
         }
 
-        // Шаг 1: Получение токена от провайдера
         const tokenUrl =
-          provider === "vk"
+          finalProvider === "vk"
             ? `https://personal-account-fastapi.onrender.com/api/v1/vk/get/token/${code}/randomDeviceId/${codeVerifier}`
             : `https://personal-account-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
         console.log("Запрос токена по URL:", tokenUrl);
@@ -44,8 +49,7 @@ const OAuthCallback = () => {
           const accessToken = tokenData.body.access;
           console.log("Access Token получен:", accessToken);
 
-          // Шаг 2: Попытка логина
-          const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
+          const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${finalProvider}/login/${accessToken}`;
           console.log("Запрос логина по URL:", loginUrl);
           const loginResponse = await fetch(loginUrl, { method: "POST" });
           const loginData = await loginResponse.json();
@@ -59,8 +63,7 @@ const OAuthCallback = () => {
           } else {
             console.warn("Пользователь не найден, пробуем регистрацию...");
 
-            // Шаг 3: Регистрация
-            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${provider}/registration/${accessToken}`;
+            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
             console.log("Запрос регистрации по URL:", registrationUrl);
             const registrationResponse = await fetch(registrationUrl, { method: "POST" });
             const registrationData = await registrationResponse.json();
@@ -76,7 +79,6 @@ const OAuthCallback = () => {
             }
           }
 
-          // Шаг 4: Установка токенов
           if (finalAccess && finalRefresh) {
             const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
             console.log("Установка токенов по URL:", setTokenUrl);
@@ -98,7 +100,7 @@ const OAuthCallback = () => {
     };
 
     exchangeToken();
-  }, [provider, navigate]); // Убрали code и searchParams, так как code теперь внутри
+  }, [provider, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-indigo-100">
