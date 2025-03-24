@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
     year: "",
@@ -20,6 +19,13 @@ const ClassifierForm = () => {
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
+    }));
+  };
+
+  const handleGenderChange = (gender) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      gender,
     }));
   };
 
@@ -65,7 +71,6 @@ const ClassifierForm = () => {
     }
 
     try {
-      
       const response = await fetch(`${process.env.REACT_APP_PREDICT_FREE}`, {
         method: "POST",
         headers: {
@@ -79,11 +84,10 @@ const ClassifierForm = () => {
       }
 
       const result = await response.json();
-      
 
-      if (result.body && typeof result.body === "number") {
-        setPrediction(result.body);
-        
+      // Проверяем, является ли result.body числом (включая 0)
+      if (typeof result.body === "number") {
+        setPrediction(result.body); // Устанавливаем prediction, даже если это 0
       } else {
         setPrediction(null);
         toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
@@ -96,6 +100,33 @@ const ClassifierForm = () => {
     }
   };
 
+  // Функция для получения фона в зависимости от prediction
+  const getBackground = (prediction) => {
+    if (prediction <= 0.25) return "bg-red-100/90 border-red-200";
+    if (prediction <= 0.4) return "bg-red-50/90 border-red-100";
+    if (prediction <= 0.6) return "bg-blue-50/90 border-blue-100";
+    if (prediction <= 0.75) return "bg-teal-50/90 border-teal-100";
+    return "bg-green-50/90 border-green-100";
+  };
+
+  // Функция для получения градиента прогресс-бара
+  const getGradient = (prediction) => {
+    if (prediction <= 0.25) return "from-red-500 to-red-700";
+    if (prediction <= 0.4) return "from-red-400 to-red-600";
+    if (prediction <= 0.6) return "from-blue-400 to-blue-600";
+    if (prediction <= 0.75) return "from-teal-500 to-teal-700";
+    return "from-green-500 to-green-700";
+  };
+
+  // Функция для получения дополнительного описания
+  const getDescription = (prediction) => {
+    if (prediction <= 0.25) return "К сожалению, шансы на поступление очень низкие. Попробуйте улучшить свои баллы или рассмотреть другие направления.";
+    if (prediction <= 0.4) return "Шансы на поступление невысоки. Возможно, стоит подтянуть баллы или выбрать менее конкурентное направление.";
+    if (prediction <= 0.6) return "У вас есть шансы на поступление, но конкуренция может быть высокой. Удачи!";
+    if (prediction <= 0.75) return "Хорошие шансы на поступление! Продолжайте в том же духе.";
+    return "Отличные шансы на поступление! Вы на правильном пути!";
+  };
+
   return (
     <div className="container mx-auto p-6 text-center">
       <form
@@ -106,19 +137,33 @@ const ClassifierForm = () => {
         <h1 className="text-3xl font-bold text-blue-900 mb-6">Базовый шанс поступления</h1>
 
         <fieldset className="flex-grow space-y-6">
+          {/* Выбор пола через кнопки */}
           <label className="block text-sm font-semibold text-gray-800">
             Пол:
-            <select
-              value={formData.gender}
-              name="gender"
-              onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white/70 backdrop-blur-sm text-gray-900"
-              required
-            >
-              <option value="">Выберите пол</option>
-              <option value="male">Мужской</option>
-              <option value="female">Женский</option>
-            </select>
+            <div className="flex gap-4 mt-2 justify-center">
+              <button
+                type="button"
+                onClick={() => handleGenderChange("male")}
+                className={`flex-1 py-2 px-4 rounded-lg font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-md ${
+                  formData.gender === "male"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-700 hover:shadow-blue-500/50"
+                    : "bg-gradient-to-r from-blue-500 to-blue-700 opacity-50 hover:shadow-blue-500/30"
+                }`}
+              >
+                Мужской
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenderChange("female")}
+                className={`flex-1 py-2 px-4 rounded-lg font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-md ${
+                  formData.gender === "female"
+                    ? "bg-gradient-to-r from-pink-500 to-pink-700 hover:shadow-pink-500/50"
+                    : "bg-gradient-to-r from-pink-500 to-pink-700 opacity-50 hover:shadow-pink-500/30"
+                }`}
+              >
+                Женский
+              </button>
+            </div>
           </label>
 
           <label className="block text-sm font-semibold text-gray-800">
@@ -250,8 +295,6 @@ const ClassifierForm = () => {
 
         <button
           type="submit"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
           className="w-[175px] mx-auto mt-6 p-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl shadow-md hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center transition-all"
           disabled={loading}
         >
@@ -261,32 +304,30 @@ const ClassifierForm = () => {
 
       {/* Результат предсказания */}
       {prediction !== null && (
-        <div className="mt-6 p-6 bg-gray-100/90 backdrop-blur-sm rounded-3xl shadow-md max-w-lg mx-auto">
-          <h2 className="text-xl font-semibold text-blue-900 mb-4">Результат</h2>
-          <p className="text-lg">
-            Шанс на поступление:{" "}
-            <span
-              className={
-                prediction <= 0.25
-                  ? "text-red-700"
-                  : prediction > 0.25 && prediction <= 0.4
-                  ? "text-red-400"
-                  : prediction > 0.4 && prediction <= 0.6
-                  ? "text-blue-400"
-                  : prediction > 0.6 && prediction <= 0.75
-                  ? "text-teal-500"
-                  : "text-green-500"
-              }
-            >
-              {(() => {
-                if (prediction <= 0.25) return "Очень низкий (менее 25%)";
-                if (prediction > 0.25 && prediction <= 0.4) return "Низкий (менее 40%)";
-                if (prediction > 0.4 && prediction <= 0.6) return "Средний (более 50%)";
-                if (prediction > 0.6 && prediction <= 0.75) return "Повышенный (более 60%)";
-                return "Высокий (более 75%)";
-              })()}
-            </span>
-          </p>
+        <div
+          className={`mt-6 p-6 ${
+            prediction === 0 ? "bg-gray-100/90 border-gray-200" : getBackground(prediction)
+          } border rounded-3xl shadow-xl max-w-lg mx-auto animate-fadeIn`}
+        >
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Результат</h2>
+          {prediction === 0 ? (
+            <p className="text-lg text-gray-800">
+              Извините, но для таких параметров у нас нет данных. Попробуйте изменить параметры.
+            </p>
+          ) : (
+            <>
+              <p className="text-lg text-gray-800 mb-2">
+                Ваш шанс на поступление: <span className="font-semibold">{(prediction * 100).toFixed(0)}%</span>
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden">
+                <div
+                  className={`h-4 rounded-full bg-gradient-to-r ${getGradient(prediction)} animate-progress`}
+                  style={{ width: `${prediction * 100}%` }}
+                />
+              </div>
+              <p className="text-sm italic text-gray-600">{getDescription(prediction)}</p>
+            </>
+          )}
         </div>
       )}
 
@@ -303,4 +344,4 @@ const ClassifierForm = () => {
   );
 };
 
-export default ClassifierForm;  
+export default ClassifierForm;

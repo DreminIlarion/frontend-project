@@ -40,9 +40,7 @@ button {
   transition: background 0.3s ease-in-out;
 }
 
-button:hover {
-  opacity: 0.9;
-}
+
 .loading-spinner {
   text-align: center;
   font-size: 18px;
@@ -185,9 +183,49 @@ button:hover {
   }
 }
 
-/* Анимация с задержкой для описания */
-.slide-in-delayed {
-  animation: slideIn 0.5s ease-out 0.2s;
-  animation-fill-mode: both; /* Сохраняет начальное состояние до старта анимации */
+.gender-buttons-container:hover button {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
+.gender-buttons-container button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 255, 0.2);
+}
+
+.gender-buttons-container button:hover:nth-child(1) {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 255, 0.2); /* Тень для "Мужской" */
+}
+
+.gender-buttons-container button:hover:nth-child(2) {
+  box-shadow: 0 4px 6px -1px rgba(255, 105, 180, 0.2); /* Тень для "Женский" */
+}
+/* Анимация появления блока */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Анимация заполнения прогресс-бара */
+@keyframes progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-progress {
+  animation: progress 1s ease-out forwards;
+}
