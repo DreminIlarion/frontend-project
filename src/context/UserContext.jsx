@@ -10,7 +10,6 @@ export const UserProvider = ({ children }) => {
   // Функция для обновления access токена с использованием refresh токена
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
-    const oldAccessToken = Cookies.get("access");
 
     if (!refreshToken) {
       console.warn("❌ Refresh токен отсутствует. Выход...");
@@ -48,31 +47,9 @@ export const UserProvider = ({ children }) => {
 
       // Сохраняем новый access токен в куки
       Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
-      console.log("✅ Новый access токен сохранён:", newAccessToken);
-
-      // Обновляем токены на сервере
-      const setTokenResponse = await fetch(
-        `https://personal-account-fastapi.onrender.com/set/token/${newAccessToken}/${refreshToken}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const setTokenData = await setTokenResponse.json();
-      if (setTokenData.status_code !== 200 || setTokenData.message !== "Выполненно") {
-        throw new Error("Не удалось обновить токены на сервере.");
-      }
-
-      console.log("✅ Токены успешно обновлены на сервере.");
-
-      // Проверяем, была ли уже перезагрузка после обновления токена
-      const hasReloaded = localStorage.getItem("hasReloadedAfterTokenRefresh");
-      if (!hasReloaded) {
-        console.log("🔄 Перезагружаем страницу после обновления токена...");
-        localStorage.setItem("hasReloadedAfterTokenRefresh", "true");
-        window.location.reload();
-      }
+     
+      // Обновляем состояние user
+      setUser({ loggedIn: true });
 
       return newAccessToken;
     } catch (error) {
@@ -140,12 +117,12 @@ export const UserProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        console.warn("⚠️ Ошибка при вызове эндпоинта выхода:", response.status);
+        
       } else {
         console.log("✅ Сессия завершена на сервере.");
       }
     } catch (error) {
-      console.error("❌ Ошибка при вызове эндпоинта выхода:", error);
+      
     }
 
     // Удаляем все куки
@@ -158,7 +135,6 @@ export const UserProvider = ({ children }) => {
     });
 
     setUser(null);
-    // Убрано navigate("/") — редирект будет в компонентах при необходимости
   }, []);
 
   // Проверка токенов
@@ -177,7 +153,7 @@ export const UserProvider = ({ children }) => {
       }
 
       const response = await fetch(
-        `https://personal-account-fastapi.onrender.com/set/token/${accessToken}/${refreshToken}`,
+        `https://personal-account-fastapi.onrender.com/validate/jwt/access/${accessToken}`,
         {
           method: "GET",
           credentials: "include",
@@ -186,10 +162,10 @@ export const UserProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (data.status_code === 200 && data.message === "Выполненно") {
+      if (data.status_code === 200 && data.message === "Token is valid") {
         setUser({ loggedIn: true });
       } else {
-        console.warn("⚠️ Токены недействительны. Пытаемся обновить...");
+        console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
         const newAccessToken = await refreshAccessToken();
 
         if (newAccessToken) {
@@ -199,24 +175,19 @@ export const UserProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error("❌ Ошибка при проверке токенов:", error);
+      
       setUser(null);
     } finally {
       setLoading(false);
     }
   }, [refreshAccessToken]);
 
-  // Проверяем токены при загрузке + каждые 10 минут
+  // Проверяем токены при загрузке + каждые 5 минут
   useEffect(() => {
     fetchToken();
-    const interval = setInterval(fetchToken, 10 * 60 * 1000);
+    const interval = setInterval(fetchToken, 5 * 60 * 1000); // Проверяем каждые 5 минут
     return () => clearInterval(interval);
   }, [fetchToken]);
-
-  // Очищаем флаг перезагрузки при монтировании компонента
-  useEffect(() => {
-    localStorage.removeItem("hasReloadedAfterTokenRefresh");
-  }, []);
 
   // Функция входа
   const login = (access, refresh) => {

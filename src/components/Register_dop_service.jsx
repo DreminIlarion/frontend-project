@@ -12,15 +12,13 @@ const RegisterOAuth = () => {
       const state = JSON.stringify({ sessionId, action: "register" });
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${state}`);
       const data = await response.json();
-      console.log(`Ответ от /${provider}/link:`, data);
+      
       if (data.url && data.code_verifier) {
         // Убираем парсинг stateFromUrl, так как мы еще не перенаправились
         localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
         localStorage.setItem(`${provider}_session_id`, sessionId);
         localStorage.setItem(`${provider}_action`, "register"); // Сохраняем action
-        console.log(`Сохранён code_verifier для ${provider} с sessionId ${sessionId}:`, data.code_verifier);
-        console.log(`Сохранён sessionId для ${provider}:`, sessionId);
-        console.log(`Сохранён action для ${provider}: register`);
+        
         window.location.href = data.url;
       } else {
         console.error("Ошибка при получении ссылки", data);

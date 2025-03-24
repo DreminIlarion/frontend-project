@@ -16,13 +16,7 @@ const OAuthCallback = () => {
     const deviceId = searchParams.get("device_id");
     let sessionId = searchParams.get("state");
 
-    console.log("OAuthCallback: Начало выполнения");
-    console.log("Provider из useParams:", provider);
-    console.log("Code из searchParams:", code);
-    console.log("Device ID из searchParams:", deviceId);
-    console.log("Session ID из searchParams (state):", sessionId);
-    console.log("Полный URL:", window.location.href);
-    console.log("Search Params:", Object.fromEntries(searchParams));
+    
 
     const inferredProvider = window.location.href.includes("vk") ? "vk" : window.location.href.includes("yandex") ? "yandex" : null;
 
@@ -38,7 +32,7 @@ const OAuthCallback = () => {
     }
 
     const finalProvider = provider || inferredProvider;
-    console.log("Используемый provider:", finalProvider);
+    
 
     // Парсим state, если он есть и является валидным JSON
     let action = "register"; // По умолчанию считаем, что это регистрация
@@ -51,14 +45,12 @@ const OAuthCallback = () => {
         console.warn("State не является валидным JSON, используем localStorage:", error);
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         action = localStorage.getItem(`${finalProvider}_action`) || "register";
-        console.log("Session ID из localStorage:", sessionId);
-        console.log("Action из localStorage:", action);
+        
       }
     } else {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
       action = localStorage.getItem(`${finalProvider}_action`) || "register";
-      console.log("Session ID из localStorage:", sessionId);
-      console.log("Action из localStorage:", action);
+      
     }
 
     const exchangeToken = async () => {
@@ -77,23 +69,23 @@ const OAuthCallback = () => {
           finalProvider === "vk"
             ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
             : `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
-        console.log("Запрос токена по URL:", tokenUrl);
+        
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
           credentials: "include",
         });
         const tokenData = await tokenResponse.json();
-        console.log("Ответ от /get/token:", tokenData);
+        
 
         // Проверяем наличие access_token
         if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
           const accessToken = tokenData.access_token || tokenData.body.access_token;
-          console.log("Access Token получен:", accessToken);
+          
 
           if (action === "register") {
             // Выполняем регистрацию на personal-account-fastapi
             const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
-            console.log("Запрос регистрации по URL:", registrationUrl);
+         
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
               headers: {
@@ -104,7 +96,7 @@ const OAuthCallback = () => {
               body: JSON.stringify({ access_token: accessToken }),
             });
             const registrationData = await registrationResponse.json();
-            console.log("Ответ от /registration:", registrationData);
+           
 
             if (registrationData.status_code === 200) {
               console.log("Регистрация успешна, выполняем логин для получения токенов...");
@@ -145,7 +137,7 @@ const OAuthCallback = () => {
       try {
         // /login должен отправляться на registration-fastapi
         const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
-        console.log("Запрос логина по URL:", loginUrl);
+       
         const loginResponse = await fetch(loginUrl, {
           method: "POST",
           headers: {
@@ -155,7 +147,7 @@ const OAuthCallback = () => {
           body: JSON.stringify({ access_token: accessToken }),
         });
         const loginData = await loginResponse.json();
-        console.log("Ответ от /login:", loginData);
+        
 
         // Проверяем наличие access и refresh токенов
         if (loginData.access && loginData.refresh) {
@@ -164,19 +156,19 @@ const OAuthCallback = () => {
 
           // /set/token отправляется на personal-account-fastapi
           const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
-          console.log("Установка токенов по URL:", setTokenUrl);
+          
           const setTokenResponse = await fetch(setTokenUrl, {
             method: "POST",
             credentials: "include",
           });
           const setTokenData = await setTokenResponse.json();
-          console.log("Ответ от /set/token:", setTokenData);
+          
 
-          console.log("Сохранение токенов в куки:", { finalAccess, finalRefresh });
+          
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
-          console.log("Перенаправление на /profile");
+          
           toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
             navigate("/profile");
