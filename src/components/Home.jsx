@@ -261,7 +261,10 @@ const Home = () => {
                 <strong>Место:</strong> {selectedEvent.location || "Не указано"}
               </p>
               <p>
-                <strong>Лимит:</strong> {selectedEvent.limit_people || "Не ограничено"}
+              <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
+  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+</span>
+
               </p>
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
