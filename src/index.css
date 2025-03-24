@@ -190,3 +190,4 @@ button:hover {
   animation: slideIn 0.5s ease-out 0.2s;
   animation-fill-mode: both; /* Сохраняет начальное состояние до старта анимации */
 }
+

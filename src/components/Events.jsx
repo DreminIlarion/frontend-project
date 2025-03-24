@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext"; // Убедитесь, что путь правильный
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Link для создания ссылки
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -266,9 +266,21 @@ const Events = () => {
                 </div>
               ))
           ) : (
-            <p className="text-center text-gray-600 col-span-full bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-md">
-              Вы не записаны ни на одно событие.
-            </p>
+            <div className="col-span-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-lg animate-pulse-slow">
+              <span className="text-5xl mb-4">📅</span>
+              <p className="text-center text-gray-800 text-lg font-semibold mb-4">
+                Вы не записаны ни на одно событие.
+              </p>
+              <p className="text-center text-gray-600 mb-6">
+                Хотите записаться на событие? Перейдите на главную страницу!
+              </p>
+              <Link
+                to="/"
+                className="inline-block py-3 px-6 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
+              >
+                Перейти на главную
+              </Link>
+            </div>
           )}
         </div>
 
