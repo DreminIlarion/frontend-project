@@ -36,10 +36,15 @@ const Form = () => {
       {
         label: 'Проходной балл',
         data: data.map((d) => d.points),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgb(2, 33, 170)',
+        backgroundColor: 'rgba(87, 194, 194, 0.2)',
         fill: true,
         tension: 0.4,
+      pointRadius: 6, // Размер точек
+      pointHoverRadius: 8, // Размер точек при наведении
+      pointBorderWidth: 2, // Толщина границы точки
+      pointBackgroundColor: 'rgb(2, 33, 170)', // Цвет точки
+      pointBorderColor: 'white', // Цвет границы точки
       },
     ],
   });
@@ -301,24 +306,6 @@ const Form = () => {
           </label>
   
           <label className="block mb-4 text-sm font-semibold text-gray-800">
-            Баллы ЕГЭ (сумма):
-            <input
-              type="number"
-              required
-              max="310"
-              name="points"
-              value={formData.points}
-              readOnly
-              className={`w-full p-2 mt-2 border rounded-lg bg-gray-100/70 backdrop-blur-sm text-gray-900 ${
-                formData.points > 310 ? 'border-red-500' : 'border-blue-200'
-              }`}
-            />
-            {formData.points > 310 && (
-              <p className="text-red-500 text-xs mt-1">Сумма баллов не должна превышать 310</p>
-            )}
-          </label>
-  
-          <label className="block mb-4 text-sm font-semibold text-gray-800">
             Дополнительные баллы:
             <input
               type="number"
@@ -355,6 +342,27 @@ const Form = () => {
               </div>
             ))}
           </label>
+
+          {/* Перемещённое и переработанное поле "Баллы ЕГЭ (сумма)" */}
+          <div className="mb-6">
+            <label className="block mb-2 text-sm font-semibold text-gray-800">
+              Итоговая сумма баллов ЕГЭ (включая доп. баллы):
+            </label>
+            <div
+              className={`inline-block px-4 py-2 rounded-lg border ${
+                formData.points > 310
+                  ? 'bg-red-100 border-red-300 text-red-800'
+                  : 'bg-blue-100 border-blue-300 text-blue-800'
+              } font-semibold text-lg`}
+            >
+              {formData.points} баллов
+            </div>
+            {formData.points > 310 && (
+              <p className="text-red-500 text-xs mt-1">
+                Сумма баллов не должна превышать 310
+              </p>
+            )}
+          </div>
   
           {loading && (
             <div className="flex justify-center my-4">
@@ -456,7 +464,7 @@ const Form = () => {
               {openSections[rec.direction_id]?.slice().reverse().map((section) => (
                 <div key={section} className="mt-4 p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative slide-in">
                   <button
-                    onClick={() => toggleSection(rec.direction_id, section)} // Исправлено: передаём переменную section
+                    onClick={() => toggleSection(rec.direction_id, section)}
                     className="absolute top-2 right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
                   >
                     ✕
