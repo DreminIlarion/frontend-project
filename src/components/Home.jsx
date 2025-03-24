@@ -181,7 +181,10 @@ const Home = () => {
                         <strong>Место:</strong> {event.location || "Не указано"}
                       </p>
                       <p>
-                        <strong>Лимит:</strong> {event.limit_people || "Не ограничено"}
+                      <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
+                        <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                      </span>
+
                       </p>
                     </div>
                     <p className="text-sm break-words">
