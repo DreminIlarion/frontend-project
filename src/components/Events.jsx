@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from "../context/UserContext"; // Убедитесь, что путь правильный
+import { useNavigate } from "react-router-dom";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -10,14 +12,33 @@ const Events = () => {
   const [visitorData, setVisitorData] = useState({});
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  const { user, fetchWithAuth } = useUser();
+  const navigate = useNavigate();
+
   const loadEvents = async (page) => {
+    if (!user?.loggedIn) {
+      navigate("/login");
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`, {
-        credentials: "include",
-      });
+      const response = await fetchWithAuth(
+        `https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`,
+        {
+          method: "GET",
+        }
+      );
 
-      if (!response.ok) throw new Error(`Ошибка загрузки событий: ${response.status}`);
+      if (!response) {
+        navigate("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки событий: ${response.status}`);
+      }
+
       const data = await response.json();
 
       setEvents((prevEvents) => {
@@ -37,13 +58,35 @@ const Events = () => {
   };
 
   useEffect(() => {
-    loadEvents(page);
-  }, [page]);
+    if (user?.loggedIn) {
+      loadEvents(page);
+    } else {
+      navigate("/login");
+    }
+  }, [page, user, navigate, fetchWithAuth]);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_VISITORS_GET}`, { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => {
+    if (!user?.loggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchVisitorData = async () => {
+      try {
+        const response = await fetchWithAuth(process.env.REACT_APP_VISITORS_GET, {
+          method: "GET",
+        });
+
+        if (!response) {
+          navigate("/login");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Ошибка загрузки записей: ${response.status}`);
+        }
+
+        const data = await response.json();
         const registeredIds = new Set(data.body.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
         const visitorMap = data.body.reduce((acc, entry) => {
@@ -51,9 +94,13 @@ const Events = () => {
           return acc;
         }, {});
         setVisitorData(visitorMap);
-      })
-      .catch((error) => console.error("Ошибка загрузки записей:", error.message));
-  }, []);
+      } catch (error) {
+        console.error("Ошибка загрузки записей:", error.message);
+      }
+    };
+
+    fetchVisitorData();
+  }, [user, navigate, fetchWithAuth]);
 
   const handleScroll = (e) => {
     const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
@@ -63,17 +110,30 @@ const Events = () => {
   };
 
   const handleRegistration = async (eventId) => {
+    if (!user?.loggedIn) {
+      navigate("/login");
+      return;
+    }
+
     const isRegistered = registeredEvents.has(eventId);
     const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error(`Ошибка ${response.status}`);
+
+      if (!response) {
+        navigate("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Ошибка ${response.status}`);
+      }
+
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
         isRegistered ? newSet.delete(eventId) : newSet.add(eventId);
@@ -85,10 +145,35 @@ const Events = () => {
   };
 
   const getQRCode = async (eventId) => {
+    if (!user?.loggedIn) {
+      navigate("/login");
+      return;
+    }
+
     const uniqueString = visitorData[eventId];
     if (!uniqueString) return;
-    const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
-    window.open(qrUrl, "_blank");
+
+    // Проверяем авторизацию перед открытием QR-кода
+    try {
+      const response = await fetchWithAuth(process.env.REACT_APP_VISITORS_GET, {
+        method: "GET",
+      });
+
+      if (!response) {
+        navigate("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Ошибка авторизации перед получением QR-кода");
+      }
+
+      const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
+      window.open(qrUrl, "_blank");
+    } catch (error) {
+      console.error("Ошибка при проверке авторизации для QR-кода:", error.message);
+      navigate("/login");
+    }
   };
 
   const openModal = (event) => setSelectedEvent(event);
@@ -114,9 +199,7 @@ const Events = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 flex flex-col items-center p-6">
-        <h2
-          className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in"
-        >
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in">
           Мои события
         </h2>
 

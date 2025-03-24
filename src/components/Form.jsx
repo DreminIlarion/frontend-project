@@ -221,15 +221,15 @@ const Form = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 flex space-x-10">
+    <div className="container mx-auto p-6 flex flex-col lg:flex-row lg:space-x-10">
       {/* Форма */}
-      <div className="w-1/2">
+      <div className="w-full lg:w-1/2 mb-6 lg:mb-0">
         <form
           onSubmit={handleSubmit}
           className="bg-white/90 backdrop-blur-lg p-8 shadow-xl rounded-2xl border border-blue-100/50 slide-in"
         >
           <h1 className="text-3xl font-bold text-blue-900 mb-6 text-center fade-in">Расширенный шанс поступления</h1>
-
+  
           <label className="block mb-4 text-sm font-semibold text-gray-800">Пол:</label>
           <div className="flex items-center gap-4 mb-6">
             <label className="flex items-center cursor-pointer">
@@ -267,7 +267,7 @@ const Form = () => {
               </span>
             </label>
           </div>
-
+  
           <label className="block mb-2 text-sm font-semibold text-gray-800">Год:</label>
           <div className="grid grid-cols-3 gap-2 mb-6">
             {[2019, 2020, 2021, 2022, 2023, 2024].map((year) => (
@@ -285,7 +285,7 @@ const Form = () => {
               </button>
             ))}
           </div>
-
+  
           <label className="block mb-4 text-sm font-semibold text-gray-800">
             Средний балл аттестата:
             <input
@@ -299,7 +299,7 @@ const Form = () => {
               className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
           </label>
-
+  
           <label className="block mb-4 text-sm font-semibold text-gray-800">
             Баллы ЕГЭ (сумма):
             <input
@@ -317,7 +317,7 @@ const Form = () => {
               <p className="text-red-500 text-xs mt-1">Сумма баллов не должна превышать 310</p>
             )}
           </label>
-
+  
           <label className="block mb-4 text-sm font-semibold text-gray-800">
             Дополнительные баллы:
             <input
@@ -329,7 +329,7 @@ const Form = () => {
               className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             />
           </label>
-
+  
           <label className="block mb-4 text-sm font-semibold text-gray-800">
             Экзамены и баллы:
             {[
@@ -355,13 +355,13 @@ const Form = () => {
               </div>
             ))}
           </label>
-
+  
           {loading && (
             <div className="flex justify-center my-4">
               <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-
+  
           <button
             type="submit"
             className={`w-full py-2 rounded-lg shadow-md transition-transform duration-300 ${
@@ -374,7 +374,7 @@ const Form = () => {
             {loading ? 'Загрузка...' : 'Рассчитать'}
           </button>
         </form>
-
+  
         <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in">
           <p className="text-sm text-gray-700 leading-relaxed">
             <span className="font-semibold text-blue-900">Расширенный шанс поступления</span> — это мощный инструмент
@@ -384,9 +384,9 @@ const Form = () => {
           </p>
         </div>
       </div>
-
+  
       {/* Рекомендации */}
-      <div className="w-1/2 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-y-auto slide-in" style={{ maxHeight: '95vh' }}>
+      <div className="w-full lg:w-1/2 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-y-auto slide-in" style={{ maxHeight: '95vh' }}>
         <h2 className="text-2xl font-semibold text-blue-900 mb-4 fade-in">Рекомендации</h2>
         {sortedRecommendations.length > 0 ? (
           sortedRecommendations.map((rec, index) => (
@@ -406,14 +406,14 @@ const Form = () => {
                   {Math.round(rec.probability * 100)}%
                 </span>
               </p>
-
-              <div className="mt-2 flex gap-2">
+  
+              <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   onClick={() => {
                     fetchDetails(rec.direction_id);
                     toggleSection(rec.direction_id, 'details');
                   }}
-                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
+                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
                     openSections[rec.direction_id]?.includes('details')
                       ? 'bg-green-700 text-white'
                       : 'bg-green-500 text-white hover:shadow-green-500/50'
@@ -421,40 +421,42 @@ const Form = () => {
                 >
                   Подробнее
                 </button>
-
+  
                 <button
                   onClick={() => {
                     fetchPointsHistory(rec.direction_id);
                     toggleSection(rec.direction_id, 'points');
                   }}
-                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
+                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
                     openSections[rec.direction_id]?.includes('points')
                       ? 'bg-purple-700 text-white'
                       : 'bg-purple-500 text-white hover:shadow-purple-500/50'
                   }`}
                 >
-                  Динамика баллов
+                  <span className="block lg:hidden">Баллы</span>
+                  <span className="hidden lg:block">Динамика баллов</span>
                 </button>
-
+  
                 <button
                   onClick={() => {
                     fetchExamScores(rec.direction_id);
                     toggleSection(rec.direction_id, 'exams');
                   }}
-                  className={`px-4 py-2 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 ${
+                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
                     openSections[rec.direction_id]?.includes('exams')
                       ? 'bg-blue-700 text-white'
                       : 'bg-blue-500 text-white hover:shadow-blue-500/50'
                   }`}
                 >
-                  Показать экзамены
+                  <span className="block lg:hidden">Экзамены</span>
+                  <span className="hidden lg:block">Показать экзамены</span>
                 </button>
               </div>
-
+  
               {openSections[rec.direction_id]?.slice().reverse().map((section) => (
                 <div key={section} className="mt-4 p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative slide-in">
                   <button
-                    onClick={() => toggleSection(rec.direction_id, section)}
+                    onClick={() => toggleSection(rec.direction_id, section)} // Исправлено: передаём переменную section
                     className="absolute top-2 right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
                   >
                     ✕
@@ -495,7 +497,7 @@ const Form = () => {
           <p className="text-gray-600">Рекомендации пока отсутствуют. Введите параметры.</p>
         )}
       </div>
-
+  
       <ToastContainer />
     </div>
   );
