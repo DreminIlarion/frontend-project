@@ -229,3 +229,6 @@ button {
 .animate-progress {
   animation: progress 1s ease-out forwards;
 }
+html {
+  scroll-behavior: smooth;
+}

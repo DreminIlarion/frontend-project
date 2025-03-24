@@ -74,6 +74,21 @@ const Home = () => {
     loadRegisteredEvents();
   }, [user]);
 
+  // Добавляем обработчик прокрутки для всей страницы
+  useEffect(() => {
+    const handleScroll = () => {
+      // Проверяем, достиг ли пользователь низа страницы
+      const bottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
+      if (bottom && !loading && hasMore) {
+        setPage((prevPage) => prevPage + 1);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
+
   const handleRegistration = async (eventId) => {
     if (!user?.loggedIn) {
       alert("Пожалуйста, войдите в систему, чтобы записаться на событие.");
@@ -84,7 +99,7 @@ const Home = () => {
     setLoadingEventId(eventId);
     const isRegistered = registeredEvents.has(eventId);
     const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
-      const method = isRegistered ? "DELETE" : "POST";
+    const method = isRegistered ? "DELETE" : "POST";
 
     try {
       const response = await fetch(url, {
@@ -102,13 +117,6 @@ const Home = () => {
       console.error("Ошибка при изменении записи:", error.message);
     } finally {
       setLoadingEventId(null);
-    }
-  };
-
-  const handleScroll = (e) => {
-    const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 1;
-    if (bottom && !loading && hasMore) {
-      setPage((prevPage) => prevPage + 1);
     }
   };
 
@@ -150,10 +158,7 @@ const Home = () => {
         {/* Events Section */}
         <section className="container mx-auto px-6 py-12">
           <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">События</h3>
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto"
-            onScroll={handleScroll}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {events.length > 0 ? (
               events.map((event) => (
                 <div
@@ -181,10 +186,9 @@ const Home = () => {
                         <strong>Место:</strong> {event.location || "Не указано"}
                       </p>
                       <p>
-                      <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
-                        <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
-                      </span>
-
+                        <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
+                          <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                        </span>
                       </p>
                     </div>
                     <p className="text-sm break-words">
@@ -261,10 +265,9 @@ const Home = () => {
                 <strong>Место:</strong> {selectedEvent.location || "Не указано"}
               </p>
               <p>
-              <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
-  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
-</span>
-
+                <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
+                  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+                </span>
               </p>
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
