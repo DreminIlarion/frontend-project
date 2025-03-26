@@ -24,7 +24,7 @@ const AppWrapper = () => {
   }, [isBannerVisible]);
 
   // Не показываем уведомление на странице Profile
-  const shouldShowBanner = isBannerVisible && location.pathname !== '/profile';
+  const shouldShowBanner = isBannerVisible ;
 
   return (
     <UserProvider navigate={navigate}>
