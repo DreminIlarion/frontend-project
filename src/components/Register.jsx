@@ -35,7 +35,7 @@ const Register = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Ответ сервера после регистрации:', data);
+        
 
         let access, refresh;
         if (data.access && data.refresh) {

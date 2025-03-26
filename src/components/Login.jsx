@@ -114,7 +114,7 @@ const Login = () => {
       }
 
       const data = await response.json();
-      console.log(`Ответ от /${provider}/link:`, data);
+      
 
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);

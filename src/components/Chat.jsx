@@ -50,7 +50,7 @@ const Chat = () => {
       }
 
       const data = await response.json();
-      console.log('Ответ от сервера:', data);
+      
 
       if (data.body.answer) {
         setMessages([...newMessages, { text: data.body.answer, sender: 'bot' }]);

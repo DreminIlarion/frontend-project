@@ -54,9 +54,9 @@ const OAuthCallback = () => {
 
     const exchangeToken = async () => {
       try {
-        console.log("Запуск exchangeToken для провайдера:", finalProvider);
+        
         const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
-        console.log("Code Verifier из localStorage:", codeVerifier);
+        
         if (!codeVerifier) {
           console.error("Отсутствует code_verifier для", finalProvider);
           toast.error("Ошибка: отсутствует code_verifier.");
@@ -74,12 +74,12 @@ const OAuthCallback = () => {
           credentials: "include",
         });
         const tokenData = await tokenResponse.json();
-        console.log("Ответ от /get/token:", tokenData);
+        
 
         // Проверяем наличие access_token
         if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
           const accessToken = tokenData.access_token || tokenData.body.access_token;
-          console.log("Получен access_token:", accessToken);
+         
 
           if (action === "register") {
             // Выполняем регистрацию
@@ -94,7 +94,7 @@ const OAuthCallback = () => {
               body: JSON.stringify({ access_token: accessToken }),
             });
             const registrationData = await registrationResponse.json();
-            console.log("Ответ от /registration:", registrationData);
+           
 
             if (registrationData.status_code === 200) {
               console.log("Регистрация успешна, выполняем логин для получения токенов...");
@@ -141,7 +141,7 @@ const OAuthCallback = () => {
           },
         });
         const loginData = await loginResponse.json();
-        console.log("Ответ от /login:", loginData);
+        
 
         if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;
@@ -153,7 +153,7 @@ const OAuthCallback = () => {
             credentials: "include",
           });
           const setTokenData = await setTokenResponse.json();
-          console.log("Ответ от /set/token:", setTokenData);
+         
 
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;

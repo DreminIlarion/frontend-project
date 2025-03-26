@@ -64,7 +64,7 @@ const Profile = () => {
 
   const toggleSidebar = () => {
     const newState = !isSidebarOpen;
-    console.log("toggleSidebar: Новое состояние боковой панели:", newState);
+    
     setIsSidebarOpen(newState);
   };
 
