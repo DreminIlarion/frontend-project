@@ -161,6 +161,7 @@ const OAuthCallback = () => {
           toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
             navigate("/profile");
+            window.location.reload();
           }, 500);
         } else {
           // Проверяем, если пользователь не зарегистрирован
