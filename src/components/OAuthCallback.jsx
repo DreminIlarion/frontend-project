@@ -16,23 +16,26 @@ const OAuthCallback = () => {
     const deviceId = searchParams.get("device_id");
     let sessionId = searchParams.get("state");
 
-    
-
     const inferredProvider = window.location.href.includes("vk") ? "vk" : window.location.href.includes("yandex") ? "yandex" : null;
 
     if (!code || (!provider && !inferredProvider)) {
       console.error("Отсутствует code или provider", { code, provider, inferredProvider });
       toast.error("Ошибка: отсутствует код авторизации или провайдер.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
       return;
     }
     if (provider === "vk" && !deviceId) {
       console.error("Отсутствует device_id для VK", { deviceId });
       toast.error("Ошибка: отсутствует device_id для VK.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
       return;
     }
 
     const finalProvider = provider || inferredProvider;
-    
 
     // Парсим state, если он есть и является валидным JSON
     let action = "register"; // По умолчанию считаем, что это регистрация
@@ -45,12 +48,10 @@ const OAuthCallback = () => {
         console.warn("State не является валидным JSON, используем localStorage:", error);
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         action = localStorage.getItem(`${finalProvider}_action`) || "register";
-        
       }
     } else {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
       action = localStorage.getItem(`${finalProvider}_action`) || "register";
-      
     }
 
     const exchangeToken = async () => {
@@ -61,6 +62,9 @@ const OAuthCallback = () => {
         if (!codeVerifier) {
           console.error("Отсутствует code_verifier для", finalProvider);
           toast.error("Ошибка: отсутствует code_verifier.");
+          setTimeout(() => {
+            navigate("/login");
+          }, 2000);
           return;
         }
 
@@ -69,23 +73,38 @@ const OAuthCallback = () => {
           finalProvider === "vk"
             ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
             : `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
-        
+
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
           credentials: "include",
         });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          // Проверяем, связана ли ошибка с отсутствием регистрации
+          if (
+            tokenResponse.status === 403 || // Пример: статус, указывающий на отсутствие регистрации
+            errorData.message === "User not registered" // Пример: сообщение об ошибке
+          ) {
+            toast.error("Войдите в аккаунт и зарегистрируйтесь в дополнительных сервисах.");
+            setTimeout(() => {
+              navigate("/register");
+            }, 1500);
+            return;
+          }
+          throw new Error(errorData.message || "Ошибка получения токена");
+        }
+
         const tokenData = await tokenResponse.json();
-        
 
         // Проверяем наличие access_token
         if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
           const accessToken = tokenData.access_token || tokenData.body.access_token;
-          
 
           if (action === "register") {
             // Выполняем регистрацию на personal-account-fastapi
             const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
-         
+
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
               headers: {
@@ -95,8 +114,23 @@ const OAuthCallback = () => {
               credentials: "include",
               body: JSON.stringify({ access_token: accessToken }),
             });
+
             const registrationData = await registrationResponse.json();
-           
+
+            if (!registrationResponse.ok) {
+              // Проверяем, связана ли ошибка с отсутствием регистрации
+              if (
+                registrationResponse.status === 403 || // Пример: статус, указывающий на отсутствие регистрации
+                registrationData.message === "User not registered" // Пример: сообщение об ошибке
+              ) {
+                toast.error("Войдите в аккаунт и зарегистрируйтесь в дополнительных сервисах.");
+                setTimeout(() => {
+                  navigate("/register");
+                }, 1500);
+                return;
+              }
+              throw new Error(registrationData.message || "Ошибка при регистрации");
+            }
 
             if (registrationData.status_code === 200) {
               console.log("Регистрация успешна, выполняем логин для получения токенов...");
@@ -111,6 +145,9 @@ const OAuthCallback = () => {
             } else {
               console.error("Ошибка при регистрации", registrationData);
               toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
+              setTimeout(() => {
+                navigate("/login");
+              }, 2000);
             }
           } else if (action === "login") {
             // Выполняем вход
@@ -120,10 +157,16 @@ const OAuthCallback = () => {
         } else {
           console.error("Ошибка получения токена или неверный формат ответа", tokenData);
           toast.error("Ошибка получения токена.");
+          setTimeout(() => {
+            navigate("/login");
+          }, 2000);
         }
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
         toast.error("Ошибка обмена токена: " + error.message);
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } finally {
         if (sessionId) {
           localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
@@ -137,7 +180,7 @@ const OAuthCallback = () => {
       try {
         // /login должен отправляться на registration-fastapi
         const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
-       
+
         const loginResponse = await fetch(loginUrl, {
           method: "POST",
           headers: {
@@ -146,8 +189,24 @@ const OAuthCallback = () => {
           },
           body: JSON.stringify({ access_token: accessToken }),
         });
+
+        if (!loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          // Проверяем, связана ли ошибка с отсутствием регистрации
+          if (
+            loginResponse.status === 403 || // Пример: статус, указывающий на отсутствие регистрации
+            loginData.message === "User not registered" // Пример: сообщение об ошибке
+          ) {
+            toast.error("Войдите в аккаунт и зарегистрируйтесь в дополнительных сервисах.");
+            setTimeout(() => {
+              navigate("/register");
+            }, 1500);
+            return;
+          }
+          throw new Error(loginData.message || "Ошибка при входе");
+        }
+
         const loginData = await loginResponse.json();
-        
 
         // Проверяем наличие access и refresh токенов
         if (loginData.access && loginData.refresh) {
@@ -156,19 +215,21 @@ const OAuthCallback = () => {
 
           // /set/token отправляется на personal-account-fastapi
           const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
-          
+
           const setTokenResponse = await fetch(setTokenUrl, {
             method: "POST",
             credentials: "include",
           });
-          const setTokenData = await setTokenResponse.json();
-          
 
-          
+          if (!setTokenResponse.ok) {
+            throw new Error("Ошибка установки токенов");
+          }
+
+          const setTokenData = await setTokenResponse.json();
+
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
 
-          
           toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
             navigate("/profile");
@@ -191,7 +252,7 @@ const OAuthCallback = () => {
     };
 
     exchangeToken();
-  }, [provider, navigate]);
+  }, [provider, navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-indigo-100">

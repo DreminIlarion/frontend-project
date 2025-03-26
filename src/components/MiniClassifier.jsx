@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
-    year: "",
+    year: "2024",
     gender: "",
     gpa: "",
     points: "",
@@ -13,6 +13,8 @@ const ClassifierForm = () => {
 
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const resultRef = useRef(null); // Ссылка на блок результата
+
   const directions = [
     "01.03.02 Прикладная математика и информатика",
     "02.03.01 Математика и компьютерные науки",
@@ -46,8 +48,9 @@ const ClassifierForm = () => {
     "27.03.03 Системный анализ и управление",
     "27.03.04 Управление в технических системах",
     "42.03.01 Реклама и связи с общественностью",
-    "43.03.00 Сервис и туризм"
+    "43.03.00 Сервис и туризм",
   ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -122,6 +125,10 @@ const ClassifierForm = () => {
       // Проверяем, является ли result.body числом (включая 0)
       if (typeof result.body === "number") {
         setPrediction(result.body); // Устанавливаем prediction, даже если это 0
+        // Прокручиваем к блоку результата
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
       } else {
         setPrediction(null);
         toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
@@ -162,26 +169,28 @@ const ClassifierForm = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 text-center">
+    <div className="container mx-auto p-6 sm:p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
       <form
         onSubmit={handleSubmit}
-        className="p-6 bg-white/90 backdrop-blur-lg border border-blue-100/50 rounded-2xl shadow-xl max-w-lg mx-auto"
+        className="p-6 sm:p-8 bg-white/95 backdrop-blur-lg border border-blue-100/50 rounded-3xl shadow-2xl w-full max-w-2xl mx-auto transition-all duration-300 hover:shadow-blue-200/50"
       >
         {/* Название */}
-        <h1 className="text-3xl font-bold text-blue-900 mb-6">Базовый шанс поступления</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-blue-900 mb-6 sm:mb-8 tracking-tight animate-fadeIn">
+          Вероятность поступления
+        </h1>
 
-        <fieldset className="flex-grow space-y-6">
+        <fieldset className="flex-grow space-y-6 sm:space-y-8">
           {/* Выбор пола через кнопки */}
-          <label className="block text-sm font-semibold text-gray-800">
-            Пол:
-            <div className="flex gap-4 mt-2 justify-center">
+          <label className="block text-sm sm:text-base font-semibold text-gray-800">
+            Укажите ваш пол:
+            <div className="flex gap-4 mt-2 sm:mt-3 justify-center">
               <button
                 type="button"
                 onClick={() => handleGenderChange("male")}
-                className={`flex-1 py-2 px-4 rounded-lg font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-md ${
+                className={`flex-1 py-2 px-4 sm:px-6 rounded-xl font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg ${
                   formData.gender === "male"
-                    ? "bg-gradient-to-r from-blue-500 to-blue-700 hover:shadow-blue-500/50"
-                    : "bg-gradient-to-r from-blue-500 to-blue-700 opacity-50 hover:shadow-blue-500/30"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/50"
+                    : "bg-gradient-to-r from-blue-400 to-indigo-400 opacity-70 hover:shadow-blue-400/30"
                 }`}
               >
                 Мужской
@@ -189,10 +198,10 @@ const ClassifierForm = () => {
               <button
                 type="button"
                 onClick={() => handleGenderChange("female")}
-                className={`flex-1 py-2 px-4 rounded-lg font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-md ${
+                className={`flex-1 py-2 px-4 sm:px-6 rounded-xl font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg ${
                   formData.gender === "female"
-                    ? "bg-gradient-to-r from-pink-500 to-pink-700 hover:shadow-pink-500/50"
-                    : "bg-gradient-to-r from-pink-500 to-pink-700 opacity-50 hover:shadow-pink-500/30"
+                    ? "bg-gradient-to-r from-pink-600 to-rose-600 hover:shadow-pink-500/50"
+                    : "bg-gradient-to-r from-pink-400 to-rose-400 opacity-70 hover:shadow-pink-400/30"
                 }`}
               >
                 Женский
@@ -200,117 +209,111 @@ const ClassifierForm = () => {
             </div>
           </label>
 
-          <label className="block text-sm font-semibold text-gray-800">
+          <label className="block text-sm sm:text-base font-semibold text-gray-800">
             Средний балл аттестата:
             <input
               type="number"
               step="0.01"
-              min="2.0"
+              min="3.0"
               max="5.0"
               value={formData.gpa}
               name="gpa"
               onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white/70 backdrop-blur-sm text-gray-900"
+              className="w-full p-3 sm:p-4 mt-2 border border-blue-200 rounded-xl bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 text-gray-900 transition-all duration-300 hover:shadow-md"
               required
             />
           </label>
 
-          <label className="block text-sm font-semibold text-gray-800">
+          <label className="block text-sm sm:text-base font-semibold text-gray-800">
             Общее количество баллов (ЕГЭ):
             <input
               type="range"
-              min="0"
+              min="1"
               max="310"
               step="1"
               value={formData.points}
               onChange={handleRangeChange}
-              className="w-full mt-2 accent-blue-500"
+              className="w-full mt-3 sm:mt-4 h-3 sm:h-4 rounded-full appearance-none cursor-pointer bg-gradient-to-r from-gray-200 to-gray-300 focus:outline-none"
             />
-            <span className="text-sm text-gray-600">{formData.points} баллов</span>
+            <div className="flex items-center justify-center mt-3 sm:mt-4 gap-2">
+              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text animate-pulse">
+                {formData.points}
+              </span>
+              <span className="text-sm sm:text-base text-gray-600">баллов</span>
+            </div>
           </label>
 
-          <label className="block text-sm font-semibold text-gray-800">
-            Год:
-            <input
-              type="range"
-              step="1"
-              min="2019"
-              max="2024"
-              value={formData.year}
-              name="year"
-              onChange={handleChange}
-              className="w-full mt-2 accent-blue-500"
+          <label className="block text-sm sm:text-base font-semibold text-gray-800 mb-1">
+            Направление:
+          </label>
+          <div className="relative">
+            <select
+              value={formData.direction}
+              onChange={handleDirectionChange}
+              className="w-full p-3 sm:p-4 border border-gray-300 rounded-xl shadow-md bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900 appearance-none focus:ring-4 focus:ring-blue-300 focus:outline-none hover:shadow-lg transition-all duration-300"
               required
-            />
-            <span className="text-sm text-gray-600">{formData.year} год</span>
-          </label>
-
-          <label className="block text-sm font-semibold text-gray-800 mb-1">
-      Направление:
-    </label>
-    <div className="relative">
-      <select
-        value={formData.direction}
-        onChange={handleDirectionChange}
-        className="w-full p-3 border border-gray-300 rounded-xl shadow-md bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 appearance-none focus:ring-4 focus:ring-blue-300 focus:outline-none hover:shadow-lg hover:bg-gray-100 transition-all focus:scale-105"
-        required
-      >
-        <option value="">Выберите направление</option>
-        {directions.map((direction) => (
-          <option key={direction} value={direction}>
-            {direction}
-          </option>
-        ))}
-      </select>
-      {/* Кастомная стрелочка справа */}
-      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-        ▼
-      </div>
-    </div>
+            >
+              <option value="">Выберите направление</option>
+              {directions.map((direction) => (
+                <option key={direction} value={direction}>
+                  {direction}
+                </option>
+              ))}
+            </select>
+            {/* Кастомная стрелочка справа */}
+            <div className="absolute inset-y-0 right-3 sm:right-4 flex items-center pointer-events-none text-gray-500">
+              ▼
+            </div>
+          </div>
         </fieldset>
 
         <button
           type="submit"
-          className="w-[175px] mx-auto mt-6 p-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl shadow-md hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center transition-all"
+          className="w-[200px] sm:w-[250px] mx-auto mt-6 sm:mt-8 p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-4 focus:ring-blue-400 flex justify-center transition-all duration-300 hover:scale-105 active:scale-95"
           disabled={loading}
         >
-          {loading ? "Загрузка..." : "Предсказать"}
+          {loading ? (
+            <div className="w-6 h-6 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+          ) : (
+            "Предсказать"
+          )}
         </button>
       </form>
 
       {/* Результат предсказания */}
       {prediction !== null && (
         <div
-          className={`mt-6 p-6 ${
+          ref={resultRef}
+          className={`mt-8 sm:mt-10 p-6 sm:p-8 ${
             prediction === 0 ? "bg-gray-100/90 border-gray-200" : getBackground(prediction)
-          } border rounded-3xl shadow-xl max-w-lg mx-auto animate-fadeIn`}
+          } border rounded-3xl shadow-2xl w-full max-w-2xl mx-auto animate-fadeIn transition-all duration-300 hover:shadow-lg`}
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Результат</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Результат</h2>
           {prediction === 0 ? (
-            <p className="text-lg text-gray-800">
+            <p className="text-lg sm:text-xl text-gray-800">
               Извините, но для таких параметров у нас нет данных. Попробуйте изменить параметры.
             </p>
           ) : (
             <>
-              <p className="text-lg text-gray-800 mb-2">
-                Ваш шанс на поступление: <span className="font-semibold">{(prediction * 100).toFixed(0)}%</span>
+              <p className="text-lg sm:text-xl text-gray-800 mb-3 sm:mb-4">
+                Ваш шанс на поступление: <span className="font-semibold text-blue-900">{(prediction * 100).toFixed(0)}%</span>
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden">
+              <div className="w-full bg-gray-200 rounded-full h-5 sm:h-6 mb-4 sm:mb-6 overflow-hidden shadow-inner">
                 <div
-                  className={`h-4 rounded-full bg-gradient-to-r ${getGradient(prediction)} animate-progress`}
+                  className={`h-5 sm:h-6 rounded-full bg-gradient-to-r ${getGradient(prediction)} animate-progress shadow-md`}
                   style={{ width: `${prediction * 100}%` }}
                 />
               </div>
-              <p className="text-sm italic text-gray-600">{getDescription(prediction)}</p>
+              <p className="text-sm sm:text-base italic text-gray-600 leading-relaxed">{getDescription(prediction)}</p>
             </>
           )}
         </div>
       )}
 
       {/* Описание */}
-      <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 max-w-lg mx-auto">
-        <p className="text-sm text-gray-700 leading-relaxed">
-          <span className="font-semibold text-blue-900">Базовый шанс поступления</span> — это ваш первый шаг к оценке возможностей поступления в вуз. Укажите свои данные — пол, средний балл аттестата, баллы ЕГЭ, год и направление — и получите мгновенный прогноз, основанный на статистике прошлых лет. Узнайте, насколько вы близки к своей мечте, и планируйте следующий шаг с уверенностью!
+      <div className="mt-8 sm:mt-10 p-6 sm:p-8 bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-blue-100/50 w-full max-w-2xl mx-auto transition-all duration-300 hover:shadow-blue-200/50">
+        <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+          <span className="font-semibold text-blue-900">Вероятность поступления</span> — это ваш первый шаг к оценке возможностей поступления в вуз. Укажите свои данные — пол, средний балл аттестата, баллы ЕГЭ и направление — и получите мгновенный прогноз, основанный на статистике прошлых лет. Узнайте, насколько вы близки к своей мечте, и планируйте следующий шаг с уверенностью!
         </p>
       </div>
 

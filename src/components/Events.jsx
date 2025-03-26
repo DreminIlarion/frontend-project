@@ -24,7 +24,7 @@ const Events = () => {
     setLoading(true);
     try {
       const response = await fetchWithAuth(
-        `https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`,
+        `https://events-fastapi.onrender.com/api/v1/events/get/`,
         {
           method: "GET",
         }
@@ -200,7 +200,7 @@ const Events = () => {
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 flex flex-col items-center p-6">
         <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in">
-          Мои события
+          Мои мероприятия
         </h2>
 
         <div
@@ -234,7 +234,9 @@ const Events = () => {
                         <strong>Место:</strong> {event.location || "Не указано"}
                       </p>
                       <p>
-                        <strong>Лимит:</strong> {event.limit_people || "Не ограничено"}
+                        <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
+                            <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                        </span>
                       </p>
                       <p className="line-clamp-3 text-sm">
                         <strong>Описание:</strong> {event.description || "Описание не доступно"}
@@ -269,10 +271,10 @@ const Events = () => {
             <div className="col-span-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-lg animate-pulse-slow">
               <span className="text-5xl mb-4">📅</span>
               <p className="text-center text-gray-800 text-lg font-semibold mb-4">
-                Вы не записаны ни на одно событие.
+                Вы не записаны ни на одно мероприятие.
               </p>
               <p className="text-center text-gray-600 mb-6">
-                Хотите записаться на событие? Перейдите на главную страницу!
+                Хотите записаться на мероприятие? Перейдите на главную страницу!
               </p>
               <Link
                 to="/"
@@ -313,7 +315,10 @@ const Events = () => {
                 <strong>Место:</strong> {selectedEvent.location || "Не указано"}
               </p>
               <p>
-                <strong>Лимит:</strong> {selectedEvent.limit_people || "Не ограничено"}
+                
+                <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
+                            <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+                        </span>
               </p>
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}

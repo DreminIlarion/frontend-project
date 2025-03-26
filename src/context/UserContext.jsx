@@ -7,7 +7,6 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Функция для обновления access токена с использованием refresh токена
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
 
@@ -33,7 +32,6 @@ export const UserProvider = ({ children }) => {
 
       const data = await response.json();
 
-      // Проверяем, вернул ли сервер false (истёкший или недействительный refresh токен)
       if (data === false) {
         console.warn("❌ Refresh токен недействителен (сервер вернул false). Выход...");
         throw new Error("Refresh токен недействителен.");
@@ -45,10 +43,9 @@ export const UserProvider = ({ children }) => {
         throw new Error("Новый access токен не получен.");
       }
 
-      // Сохраняем новый access токен в куки
       Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
-     
-      // Обновляем состояние user
+      console.log("✅ Новый access токен сохранён:", newAccessToken);
+
       setUser({ loggedIn: true });
 
       return newAccessToken;
@@ -59,22 +56,21 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  // Обёртка для запросов с автоматическим обновлением токена при 401
   const fetchWithAuth = useCallback(
     async (url, options = {}) => {
-      const accessToken = Cookies.get("access");
+      let accessToken = Cookies.get("access");
 
       if (!accessToken) {
-        console.warn("❌ Access токен отсутствует. Выход...");
-        await logout();
-        return null;
+        console.warn("❌ Access токен отсутствует. Пытаемся обновить...");
+        accessToken = await refreshAccessToken();
+        if (!accessToken) {
+          console.error("❌ Не удалось обновить access токен. Выход...");
+          return null;
+        }
       }
 
-      // Добавляем заголовок авторизации, если он не указан
       const headers = new Headers(options.headers || {});
-      if (!headers.has("Authorization")) {
-        headers.set("Authorization", `Bearer ${accessToken}`);
-      }
+      headers.set("Authorization", `Bearer ${accessToken}`);
 
       const response = await fetch(url, {
         ...options,
@@ -91,7 +87,6 @@ export const UserProvider = ({ children }) => {
           return null;
         }
 
-        // Повторяем запрос с новым токеном
         headers.set("Authorization", `Bearer ${newAccessToken}`);
         return fetch(url, {
           ...options,
@@ -105,27 +100,24 @@ export const UserProvider = ({ children }) => {
     [refreshAccessToken]
   );
 
-  // Функция выхода с вызовом эндпоинта logout
   const logout = useCallback(async () => {
     console.log("⛔ Выполняем выход...");
 
     try {
-      // Вызываем эндпоинт выхода
       const response = await fetch("https://personal-account-fastapi.onrender.com/logout/", {
         method: "GET",
         credentials: "include",
       });
 
       if (!response.ok) {
-        
+        console.warn("⚠️ Ошибка при вызове logout:", response.status);
       } else {
         console.log("✅ Сессия завершена на сервере.");
       }
     } catch (error) {
-      
+      console.error("❌ Ошибка при вызове logout:", error);
     }
 
-    // Удаляем все куки
     console.log("⛔ Удаляем все куки...");
     const cookies = document.cookie.split("; ");
     cookies.forEach((cookie) => {
@@ -137,35 +129,22 @@ export const UserProvider = ({ children }) => {
     setUser(null);
   }, []);
 
-  // Проверка токенов
-  const fetchToken = useCallback(async () => {
+  const checkTokens = useCallback(async () => {
     setLoading(true);
 
     try {
       const accessToken = Cookies.get("access");
       const refreshToken = Cookies.get("refresh");
 
-      if (!accessToken || !refreshToken) {
-        console.warn("❌ Токены отсутствуют.");
+      if (!refreshToken) {
+        console.warn("❌ Refresh токен отсутствует.");
         setUser(null);
         setLoading(false);
         return;
       }
 
-      const response = await fetch(
-        `https://personal-account-fastapi.onrender.com/validate/jwt/access/${accessToken}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.status_code === 200 && data.message === "Token is valid") {
-        setUser({ loggedIn: true });
-      } else {
-        console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
+      if (!accessToken) {
+        console.warn("⚠️ Access токен отсутствует. Пытаемся обновить...");
         const newAccessToken = await refreshAccessToken();
 
         if (newAccessToken) {
@@ -173,31 +152,36 @@ export const UserProvider = ({ children }) => {
         } else {
           setUser(null);
         }
+      } else {
+        setUser({ loggedIn: true });
       }
     } catch (error) {
-      
+      console.error("❌ Ошибка при проверке токенов:", error);
       setUser(null);
     } finally {
       setLoading(false);
     }
   }, [refreshAccessToken]);
 
-  // Проверяем токены при загрузке + каждые 5 минут
   useEffect(() => {
-    fetchToken();
-    const interval = setInterval(fetchToken, 5 * 60 * 1000); // Проверяем каждые 5 минут
+    checkTokens();
+    const interval = setInterval(checkTokens, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchToken]);
+  }, [checkTokens]);
 
-  // Функция входа
   const login = (access, refresh) => {
     if (typeof access !== "string" || typeof refresh !== "string") {
-      console.error("❌ Ошибка: Токены должны быть строками!");
-      return;
+      throw new Error("Токены должны быть строками!");
     }
 
     Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-    Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+    const currentRefresh = Cookies.get("refresh");
+    if (!currentRefresh || currentRefresh !== refresh) {
+      Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+      console.log("✅ Refresh токен обновлён:", refresh);
+    } else {
+      console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
+    }
 
     setUser({ loggedIn: true });
   };

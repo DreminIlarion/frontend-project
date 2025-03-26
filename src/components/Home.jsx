@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import toast, { Toaster } from 'react-hot-toast'; // Импортируем react-hot-toast
 
 const Home = () => {
   const [events, setEvents] = useState([]);
@@ -19,7 +20,7 @@ const Home = () => {
     const loadEvents = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/?page=${page}&limit=10`, {
+        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
@@ -74,10 +75,8 @@ const Home = () => {
     loadRegisteredEvents();
   }, [user]);
 
-  // Добавляем обработчик прокрутки для всей страницы
   useEffect(() => {
     const handleScroll = () => {
-      // Проверяем, достиг ли пользователь низа страницы
       const bottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
       if (bottom && !loading && hasMore) {
@@ -91,7 +90,7 @@ const Home = () => {
 
   const handleRegistration = async (eventId) => {
     if (!user?.loggedIn) {
-      alert("Пожалуйста, войдите в систему, чтобы записаться на событие.");
+      toast.error("Пожалуйста, войдите в систему, чтобы записаться на событие.");
       navigate("/login");
       return;
     }
@@ -107,14 +106,37 @@ const Home = () => {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error(`Ошибка ${response.status}`);
+
+      const data = await response.json();
+
+      // Проверяем, есть ли сообщение о том, что мест нет
+      if (
+        response.status === 200 &&
+        data.body?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
+      ) {
+        toast.error("Нельзя зарегистрироваться: мест больше нет!");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Ошибка ${response.status}: ${data.message || 'Неизвестная ошибка'}`);
+      }
+
+      // Если регистрация или отмена успешна, обновляем состояние
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
-        isRegistered ? newSet.delete(eventId) : newSet.add(eventId);
+        if (isRegistered) {
+          newSet.delete(eventId);
+          
+        } else {
+          newSet.add(eventId);
+          
+        }
         return newSet;
       });
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
+      toast.error(error.message || "Произошла ошибка при записи на мероприятие.");
     } finally {
       setLoadingEventId(null);
     }
@@ -133,6 +155,9 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-100">
+      {/* Добавляем Toaster для уведомлений */}
+      <Toaster position="top-right" />
+      
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-6 px-8 flex justify-between items-center shadow-lg backdrop-blur-md bg-opacity-90 sticky top-0 z-10">
         <h1 className="text-3xl font-bold fade-in">Главная страница</h1>
@@ -152,12 +177,12 @@ const Home = () => {
           Добро пожаловать!
         </h2>
         <p className="text-lg text-gray-700 mb-12 max-w-2xl slide-in">
-          Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные события и управлять своим аккаунтом.
+          Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные мероприятия и управлять своим аккаунтом.
         </p>
 
         {/* Events Section */}
         <section className="container mx-auto px-6 py-12">
-          <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">События</h3>
+          <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">Мероприятия</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {events.length > 0 ? (
               events.map((event) => (
@@ -236,10 +261,10 @@ const Home = () => {
             )}
           </div>
           {!hasMore && !loading && (
-            <p className="text-center text-gray-500 mt-6 slide-in">Больше событий нет.</p>
+            <p className="text-center text-gray-500 mt-6 slide-in">Больше мероприятий нет.</p>
           )}
           <p className="text-gray-600 mt-10 max-w-2xl text-center mx-auto slide-in">
-            Здесь вы найдете список актуальных событий. Нажмите на название для подробностей или войдите, чтобы записаться!
+            Здесь вы найдете список актуальных мероприятий. Нажмите на название для подробностей или войдите, чтобы записаться!
           </p>
         </section>
       </main>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from "chart.js";
 import { ToastContainer, toast } from 'react-toastify';
@@ -18,7 +18,7 @@ const Form = () => {
     history: '',
     informatics: '',
     social_science: '',
-    year: ''
+    year: '2024'
   });
 
   const [recommendations, setRecommendations] = useState([]);
@@ -26,10 +26,12 @@ const Form = () => {
   const [pointsHistory, setPointsHistory] = useState({});
   const [openSections, setOpenSections] = useState({});
   const [examScores, setExamScores] = useState({});
+  const [noDataDirections, setNoDataDirections] = useState({});
   const sortedRecommendations = [...recommendations].sort((a, b) => b.probability - a.probability);
   const [loading, setLoading] = useState(false);
 
-  // Настройка графика
+  const recommendationsRef = useRef(null);
+
   const getChartData = (data) => ({
     labels: data.map((d) => d.year),
     datasets: [
@@ -40,11 +42,11 @@ const Form = () => {
         backgroundColor: 'rgba(87, 194, 194, 0.2)',
         fill: true,
         tension: 0.4,
-      pointRadius: 6, // Размер точек
-      pointHoverRadius: 8, // Размер точек при наведении
-      pointBorderWidth: 2, // Толщина границы точки
-      pointBackgroundColor: 'rgb(2, 33, 170)', // Цвет точки
-      pointBorderColor: 'white', // Цвет границы точки
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointBorderWidth: 2,
+        pointBackgroundColor: 'rgb(2, 33, 170)',
+        pointBorderColor: 'white',
       },
     ],
   });
@@ -84,6 +86,8 @@ const Form = () => {
   };
 
   const toggleSection = (directionId, section) => {
+    if (noDataDirections[directionId]) return;
+
     setOpenSections((prev) => {
       const newState = { ...prev };
       if (!newState[directionId]) newState[directionId] = [];
@@ -95,6 +99,8 @@ const Form = () => {
   };
 
   const fetchDetails = async (directionId) => {
+    if (noDataDirections[directionId]) return;
+
     try {
       const response = await fetch(`${process.env.REACT_APP_PREDICT_DIRECTION}${directionId}`, {
         method: 'GET',
@@ -102,19 +108,19 @@ const Form = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setDetails((prev) => ({
-          ...prev,
-          [directionId]: data.body
-            .replace(/\\n/g, ' ')
-            .replace(/\s+/g, ' ')
-            .replace(/([а-яА-Я]):([А-Я])/g, '$1: $2')
-            .replace(/([а-яА-Я])([А-Я])/g, '$1 $2')
-            .replace(/-\s+/g, '- ')
-            .replace(/(\.)([^\s])/g, '. $2')
-            .trim()
-        }));
-      } else {
-        console.error('Ошибка загрузки информации:', await response.text());
+        if (data.body && data.body.trim() !== '') {
+          setDetails((prev) => ({
+            ...prev,
+            [directionId]: data.body
+              .replace(/\\n/g, ' ')
+              .replace(/\s+/g, ' ')
+              .replace(/([а-яА-Я]):([А-Я])/g, '$1: $2')
+              .replace(/([а-яА-Я])([А-Я])/g, '$1 $2')
+              .replace(/-\s+/g, '- ')
+              .replace(/(\.)([^\s])/g, '. $2')
+              .trim()
+          }));
+        }
       }
     } catch (error) {
       console.error('Ошибка загрузки информации:', error);
@@ -129,16 +135,22 @@ const Form = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setPointsHistory((prev) => ({ ...prev, [directionId]: data.body }));
+        if (data.body && Array.isArray(data.body) && data.body.length > 0) {
+          setPointsHistory((prev) => ({ ...prev, [directionId]: data.body }));
+        } else {
+          setNoDataDirections((prev) => ({ ...prev, [directionId]: "Данные отсутствуют. Это лишь бета-тестирование, возможны ошибки." }));
+        }
       } else {
-        console.error('Ошибка загрузки динамики баллов:', await response.text());
+        setNoDataDirections((prev) => ({ ...prev, [directionId]: "Данные отсутствуют. Это лишь бета-тестирование, возможны ошибки." }));
       }
     } catch (error) {
-      console.error('Ошибка загрузки динамики баллов:', error);
+      setNoDataDirections((prev) => ({ ...prev, [directionId]: "Данные отсутствуют. Это лишь бета-тестирование, возможны ошибки." }));
     }
   };
 
   const fetchExamScores = async (directionId) => {
+    if (noDataDirections[directionId]) return;
+
     try {
       const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/exams/${directionId}`, {
         method: "GET",
@@ -146,10 +158,8 @@ const Form = () => {
         credentials: "include",
       });
       const data = await response.json();
-      if (data.status_code === 200 && Array.isArray(data.body)) {
+      if (data.status_code === 200 && Array.isArray(data.body) && data.body.length > 0) {
         setExamScores((prev) => ({ ...prev, [directionId]: data.body }));
-      } else {
-        console.error("Неверный формат данных:", data);
       }
     } catch (error) {
       console.error("Ошибка загрузки баллов экзаменов:", error);
@@ -206,11 +216,19 @@ const Form = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.body.recomendate && Array.isArray(data.body.recomendate)) {
+          setOpenSections({});
+          setDetails({});
+          setPointsHistory({});
+          setExamScores({});
+          setNoDataDirections({});
           setRecommendations(data.body.recomendate.map((rec, index) => ({
             direction_id: rec.direction_id,
             name: rec.name,
             probability: data.body.classifier ? data.body.classifier[index] : 0,
           })));
+          setTimeout(() => {
+            recommendationsRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
         }
       } else {
         const errorText = await response.text();
@@ -226,99 +244,90 @@ const Form = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 flex flex-col lg:flex-row lg:space-x-10">
+    <div className="container mx-auto p-4 sm:p-6 flex flex-col space-y-6 max-w-full">
       {/* Форма */}
-      <div className="w-full lg:w-1/2 mb-6 lg:mb-0">
+      <div className="w-full sm:max-w-3xl mx-auto">
         <form
           onSubmit={handleSubmit}
-          className="bg-white/90 backdrop-blur-lg p-8 shadow-xl rounded-2xl border border-blue-100/50 slide-in"
+          className="bg-white/90 backdrop-blur-lg p-6 sm:p-8 shadow-xl rounded-2xl border border-blue-100/50 slide-in"
         >
-          <h1 className="text-3xl font-bold text-blue-900 mb-6 text-center fade-in">Расширенный шанс поступления</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 text-center fade-in">Рекомендация направлений</h1>
   
-          <label className="block mb-4 text-sm font-semibold text-gray-800">Пол:</label>
-          <div className="flex items-center gap-4 mb-6">
-            <label className="flex items-center cursor-pointer">
+          <label className="block text-sm sm:text-base font-semibold text-gray-800 mb-3 sm:mb-4">
+  Укажите ваш пол:
+  <div className="flex items-center justify-center gap-4 sm:gap-6 mt-2 sm:mt-3">
+    <label className="flex items-center cursor-pointer">
+      <input
+        type="radio"
+        name="gender"
+        value="male"
+        checked={formData.gender === 'male'}
+        onChange={handleChange}
+        className="hidden"
+      />
+      <span
+        className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
+          formData.gender === 'male'
+            ? 'bg-gradient-to-r from-blue-800 to-indigo-800 hover:shadow-blue-500/60'
+            : 'bg-gradient-to-r from-blue-300 to-indigo-300 opacity-70 hover:shadow-blue-400/10'
+        } hover:scale-105 active:scale-95`}
+      >
+        Мужской
+      </span>
+    </label>
+    <label className="flex items-center cursor-pointer">
+      <input
+        type="radio"
+        name="gender"
+        value="female"
+        checked={formData.gender === 'female'}
+        onChange={handleChange}
+        className="hidden"
+      />
+      <span
+        className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
+          formData.gender === 'female'
+            ? 'bg-gradient-to-r from-pink-800 to-rose-800 hover:shadow-pink-500/60'
+            : 'bg-gradient-to-r from-pink-300 to-rose-300 opacity-70 hover:shadow-pink-400/10'
+        } hover:scale-105 active:scale-95`}
+      >
+        Женский
+      </span>
+    </label>
+  </div>
+</label>
+  
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <label className="block text-sm sm:text-base font-semibold text-gray-800">
+              Средний балл аттестата:
               <input
-                type="radio"
-                name="gender"
-                value="male"
-                checked={formData.gender === 'male'}
+                type="number"
+                step="0.01"
+                min="3.0"
+                max="5.0"
+                name="gpa"
+                value={formData.gpa}
                 onChange={handleChange}
-                className="hidden"
+                className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm foci:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
               />
-              <span
-                className={`px-4 py-2 rounded-lg border transition-all duration-200 ${
-                  formData.gender === 'male' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Мужской
-              </span>
             </label>
-            <label className="flex items-center cursor-pointer">
+  
+            <label className="block text-sm sm:text-base font-semibold text-gray-800">
+              Дополнительные баллы:
               <input
-                type="radio"
-                name="gender"
-                value="female"
-                checked={formData.gender === 'female'}
+                type="number"
+                min="0"
+                max="10"
+                name="bonus_points"
+                value={formData.bonus_points}
                 onChange={handleChange}
-                className="hidden"
+                className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
               />
-              <span
-                className={`px-4 py-2 rounded-lg border transition-all duration-200 ${
-                  formData.gender === 'female' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Женский
-              </span>
             </label>
           </div>
   
-          <label className="block mb-2 text-sm font-semibold text-gray-800">Год:</label>
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            {[2019, 2020, 2021, 2022, 2023, 2024].map((year) => (
-              <button
-                key={year}
-                type="button"
-                onClick={() => handleChange({ target: { name: 'year', value: year } })}
-                className={`px-3 py-2 text-sm rounded-md border transition-all duration-200 ${
-                  formData.year === year
-                    ? 'bg-blue-500 text-white font-semibold shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
-              >
-                {year}
-              </button>
-            ))}
-          </div>
-  
-          <label className="block mb-4 text-sm font-semibold text-gray-800">
-            Средний балл аттестата:
-            <input
-              type="number"
-              step="0.01"
-              min="2.0"
-              max="5.0"
-              name="gpa"
-              value={formData.gpa}
-              onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-            />
-          </label>
-  
-          <label className="block mb-4 text-sm font-semibold text-gray-800">
-            Дополнительные баллы:
-            <input
-              type="number"
-              max="10"
-              name="bonus_points"
-              value={formData.bonus_points}
-              onChange={handleChange}
-              className="w-full p-2 mt-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-            />
-          </label>
-  
-          <label className="block mb-4 text-sm font-semibold text-gray-800">
-            Экзамены и баллы:
+          <label className="block mb-2 text-sm sm:text-base font-semibold text-gray-800">Экзамены и баллы:</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             {[
               { key: 'russian', label: 'Русский язык' },
               { key: 'math', label: 'Математика' },
@@ -328,8 +337,8 @@ const Form = () => {
               { key: 'informatics', label: 'Информатика' },
               { key: 'social_science', label: 'Обществознание' },
             ].map(({ key, label }) => (
-              <div key={key} className="mt-2 flex items-center">
-                <span className="w-40 text-gray-700">{label}:</span>
+              <div key={key} className="flex items-center">
+                <span className="w-28 sm:w-32 text-gray-700 text-sm sm:text-base">{label}:</span>
                 <input
                   type="number"
                   min="0"
@@ -337,42 +346,41 @@ const Form = () => {
                   name={key}
                   value={formData[key] || ''}
                   onChange={handleChange}
-                  className="ml-2 p-2 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 w-24"
+                  className="ml-2 sm:ml-3 p-2 sm:p-3 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 w-20 sm:w-24 text-sm sm:text-base"
                 />
               </div>
             ))}
-          </label>
+          </div>
 
-          {/* Перемещённое и переработанное поле "Баллы ЕГЭ (сумма)" */}
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-semibold text-gray-800">
+          <div className="mb-3 text-center">
+            <label className="block mb-1 text-sm sm:text-base font-semibold text-gray-800">
               Итоговая сумма баллов ЕГЭ (включая доп. баллы):
             </label>
             <div
-              className={`inline-block px-4 py-2 rounded-lg border ${
+              className={`inline-block px-3 sm:px-4 py-1 rounded-lg border ${
                 formData.points > 310
                   ? 'bg-red-100 border-red-300 text-red-800'
                   : 'bg-blue-100 border-blue-300 text-blue-800'
-              } font-semibold text-lg`}
+              } font-semibold text-sm sm:text-base`}
             >
               {formData.points} баллов
             </div>
-            {formData.points > 310 && (
-              <p className="text-red-500 text-xs mt-1">
+            {formData.points > 310 &&    (
+              <p className="text-red-500 text-sm mt-1">
                 Сумма баллов не должна превышать 310
               </p>
             )}
           </div>
   
           {loading && (
-            <div className="flex justify-center my-4">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex justify-center my-3">
+              <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
   
           <button
             type="submit"
-            className={`w-full py-2 rounded-lg shadow-md transition-transform duration-300 ${
+            className={`w-full py-2 sm:py-3 rounded-lg shadow-md transition-transform duration-300 text-sm sm:text-base ${
               loading
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105 active:scale-95 hover:shadow-blue-500/50'
@@ -382,128 +390,148 @@ const Form = () => {
             {loading ? 'Загрузка...' : 'Рассчитать'}
           </button>
         </form>
-  
-        <div className="mt-6 p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            <span className="font-semibold text-blue-900">Расширенный шанс поступления</span> — это мощный инструмент
-            для точной оценки ваших перспектив. Введите данные об экзаменах, баллах ЕГЭ, аттестате и дополнительных
-            достижениях, чтобы получить персонализированные рекомендации по направлениям обучения. Мы анализируем
-            статистику и динамику, чтобы помочь вам выбрать лучший путь к поступлению!
-          </p>
-        </div>
       </div>
   
       {/* Рекомендации */}
-      <div className="w-full lg:w-1/2 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 overflow-y-auto slide-in" style={{ maxHeight: '95vh' }}>
-        <h2 className="text-2xl font-semibold text-blue-900 mb-4 fade-in">Рекомендации</h2>
-        {sortedRecommendations.length > 0 ? (
-          sortedRecommendations.map((rec, index) => (
-            <div key={index} className="p-4 mb-4 bg-blue-100/70 backdrop-blur-sm rounded-md slide-in">
-              <p className="text-lg font-semibold text-blue-700">{rec.name}</p>
-              <p className="text-lg mt-1 text-gray-600">
-                <strong className="text-blue-600">Вероятность поступления:</strong>{' '}
-                <span
-                  className={`text-xl font-semibold ${
-                    rec.probability >= 0.5
-                      ? 'text-green-600'
-                      : rec.probability >= 0.3
-                      ? 'text-orange-500'
-                      : 'text-red-600'
-                  }`}
+      <div className="w-full sm:max-w-3xl mx-auto">
+        <div
+          ref={recommendationsRef}
+          className="p-6 sm:p-8 bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in"
+        >
+          <h2 className="text-xl sm:text-2xl font-semibold text-blue-900 mb-4 text-center fade-in">Рекомендации</h2>
+          {sortedRecommendations.length > 0 ? (
+            <div className="space-y-4">
+              {sortedRecommendations.slice(0, 3).map((rec, index) => (
+                <div
+                  key={index}
+                  className="p-4 sm:p-5 bg-blue-100/70 backdrop-blur-sm rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in"
                 >
-                  {Math.round(rec.probability * 100)}%
-                </span>
-              </p>
-  
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  onClick={() => {
-                    fetchDetails(rec.direction_id);
-                    toggleSection(rec.direction_id, 'details');
-                  }}
-                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
-                    openSections[rec.direction_id]?.includes('details')
-                      ? 'bg-green-700 text-white'
-                      : 'bg-green-500 text-white hover:shadow-green-500/50'
-                  }`}
-                >
-                  Подробнее
-                </button>
-  
-                <button
-                  onClick={() => {
-                    fetchPointsHistory(rec.direction_id);
-                    toggleSection(rec.direction_id, 'points');
-                  }}
-                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
-                    openSections[rec.direction_id]?.includes('points')
-                      ? 'bg-purple-700 text-white'
-                      : 'bg-purple-500 text-white hover:shadow-purple-500/50'
-                  }`}
-                >
-                  <span className="block lg:hidden">Баллы</span>
-                  <span className="hidden lg:block">Динамика баллов</span>
-                </button>
-  
-                <button
-                  onClick={() => {
-                    fetchExamScores(rec.direction_id);
-                    toggleSection(rec.direction_id, 'exams');
-                  }}
-                  className={`px-2 py-1 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm lg:text-base lg:px-4 lg:py-2 ${
-                    openSections[rec.direction_id]?.includes('exams')
-                      ? 'bg-blue-700 text-white'
-                      : 'bg-blue-500 text-white hover:shadow-blue-500/50'
-                  }`}
-                >
-                  <span className="block lg:hidden">Экзамены</span>
-                  <span className="hidden lg:block">Показать экзамены</span>
-                </button>
-              </div>
-  
-              {openSections[rec.direction_id]?.slice().reverse().map((section) => (
-                <div key={section} className="mt-4 p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative slide-in">
-                  <button
-                    onClick={() => toggleSection(rec.direction_id, section)}
-                    className="absolute top-2 right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
-                  >
-                    ✕
-                  </button>
-                  {section === 'details' && details[rec.direction_id] && (
+                  <p className="text-base sm:text-lg font-semibold text-blue-700">{rec.name}</p>
+                  <p className="text-base sm:text-lg mt-1 text-gray-600">
+                    <strong className="text-blue-600">Вероятность поступления:</strong>{' '}
+                    <span
+                      className={`text-lg sm:text-xl font-semibold ${
+                        rec.probability >= 0.5
+                          ? 'text-green-600'
+                          : rec.probability >= 0.3
+                          ? 'text-orange-500'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {Math.round(rec.probability * 100)}%
+                    </span>
+                  </p>
+
+                  {noDataDirections[rec.direction_id] ? (
+                    <p className="text-sm sm:text-base text-gray-700 italic mt-2">{noDataDirections[rec.direction_id]}</p>
+                  ) : (
                     <>
-                      <h3 className="text-md font-semibold text-gray-800">Подробности:</h3>
-                      {details[rec.direction_id].split(/[;\n]/).map((block, i) => (
-                        <p key={i} className="mt-1 text-sm text-gray-700">{block.trim()}</p>
-                      ))}
-                    </>
-                  )}
-                  {section === 'points' && pointsHistory[rec.direction_id] && (
-                    <>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Динамика баллов</h3>
-                      <div className="h-60">
-                        <Line data={getChartData(pointsHistory[rec.direction_id])} options={chartOptions} />
+                      <div className="mt-3 flex flex-wrap gap-2 sm:gap-3">
+                        <button
+                          onClick={() => {
+                            fetchDetails(rec.direction_id);
+                            toggleSection(rec.direction_id, 'details');
+                          }}
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
+                            openSections[rec.direction_id]?.includes('details')
+                              ? 'bg-green-700 text-white'
+                              : 'bg-green-500 text-white hover:shadow-green-500/50'
+                          }`}
+                          disabled={noDataDirections[rec.direction_id]}
+                        >
+                          Подробнее
+                        </button>
+  
+                        <button
+                          onClick={() => {
+                            fetchPointsHistory(rec.direction_id);
+                            toggleSection(rec.direction_id, 'points');
+                          }}
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
+                            openSections[rec.direction_id]?.includes('points')
+                              ? 'bg-purple-700 text-white'
+                              : 'bg-purple-500 text-white hover:shadow-purple-500/50'
+                          }`}
+                          disabled={noDataDirections[rec.direction_id]}
+                        >
+                          <span className="block sm:hidden">Баллы</span>
+                          <span className="hidden sm:block">Динамика баллов</span>
+                        </button>
+  
+                        <button
+                          onClick={() => {
+                            fetchExamScores(rec.direction_id);
+                            toggleSection(rec.direction_id, 'exams');
+                          }}
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
+                            openSections[rec.direction_id]?.includes('exams')
+                              ? 'bg-blue-700 text-white'
+                              : 'bg-blue-500 text-white hover:shadow-blue-500/50'
+                          }`}
+                          disabled={noDataDirections[rec.direction_id]}
+                        >
+                          <span className="block sm:hidden">Экзамены</span>
+                          <span className="hidden sm:block">Показать экзамены</span>
+                        </button>
                       </div>
-                    </>
-                  )}
-                  {section === 'exams' && examScores[rec.direction_id] && (
-                    <>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Минимальные баллы по экзаменам</h3>
-                      <ul className="list-disc pl-5">
-                        {examScores[rec.direction_id].map((exam, index) => (
-                          <li key={index} className="text-sm text-gray-700">
-                            {exam.name}: {exam.min_points}
-                          </li>
-                        ))}
-                      </ul>
+  
+                      {openSections[rec.direction_id]?.slice().reverse().map((section) => (
+                        <div key={section} className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-100/80 backdrop-blur-sm rounded-md relative slide-in">
+                          <button
+                            onClick={() => toggleSection(rec.direction_id, section)}
+                            className="absolute top-1 right-1 text-red-600 hover:text-red-800 transition-colors duration-200 text-sm"
+                          >
+                            ✕
+                          </button>
+                          {section === 'details' && details[rec.direction_id] && (
+                            <>
+                              <h3 className="text-sm sm:text-base font-semibold text-gray-800">Подробности:</h3>
+                              {details[rec.direction_id].split(/[;\n]/).map((block, i) => (
+                                <p key={i} className="mt-1 text-sm sm:text-base text-gray-700">{block.trim()}</p>
+                              ))}
+                            </>
+                          )}
+                          {section === 'points' && pointsHistory[rec.direction_id] && (
+                            <>
+                              <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-3 sm:mb-4">Динамика баллов</h3>
+                              <div className="h-56 sm:h-64">
+                                <Line data={getChartData(pointsHistory[rec.direction_id])} options={chartOptions} />
+                              </div>
+                            </>
+                          )}
+                          {section === 'exams' && examScores[rec.direction_id] && (
+                            <>
+                              <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-3 sm:mb-4">Минимальные баллы по экзаменам</h3>
+                              <ul className="list-disc pl-4 sm:pl-5">
+                                {examScores[rec.direction_id].map((exam, index) => (
+                                  <li key={index} className="text-sm sm:text-base text-gray-700">
+                                    {exam.name}: {exam.min_points}
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                        </div>
+                      ))}
                     </>
                   )}
                 </div>
               ))}
             </div>
-          ))
-        ) : (
-          <p className="text-gray-600">Рекомендации пока отсутствуют. Введите параметры.</p>
-        )}
+          ) : (
+            <p className="text-gray-600 text-center text-sm sm:text-base">Рекомендации пока отсутствуют. Введите параметры.</p>
+          )}
+        </div>
+
+        {/* Описание */}
+        <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in">
+          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+            <span className="font-semibold text-blue-900">Рекомендация направлений</span> — это мощный инструмент
+            для точной оценки ваших перспектив. Введите данные об экзаменах, баллах ЕГЭ, аттестате и дополнительных
+            достижениях, чтобы получить персонализированные рекомендации по направлениям обучения. Мы анализируем
+            статистику и динамику, чтобы помочь вам выбрать лучший путь к поступлению!
+          </p>
+        </div>
       </div>
   
       <ToastContainer />

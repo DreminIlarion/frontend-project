@@ -69,9 +69,9 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100">
+    <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100 ">
       {/* Header */}
-      <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
+      <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50 ">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           {/* Кнопка видна только на мобильных устройствах */}
           <button
@@ -82,7 +82,7 @@ const Profile = () => {
           </button>
           {/* На ПК кнопка не отображается, поэтому добавим пустой div для выравнивания */}
           <div className="hidden lg:block w-16"></div>
-          <h1 className="text-2xl font-bold flex-1 text-center tracking-tight fade-in">Личный кабинет</h1>
+          <h1 className="text-2xl font-bold flex-1  tracking-tight fade-in">Личный кабинет</h1>
           <div className="hidden lg:flex space-x-6 text-sm font-medium">
             <Link to="/help" className="hover:text-blue-300 transition-colors duration-200">Помощь</Link>
             <Link to="/contact" className="hover:text-blue-300 transition-colors duration-200">Контакты</Link>
@@ -109,10 +109,11 @@ const Profile = () => {
               { to: '/', label: 'Главная страница' },
               ...(user && user.loggedIn
                 ? [
-                    { action: () => setActiveSection('form'), label: 'Расширенный шанс поступления' },
-                    { action: () => setActiveSection('events'), label: 'События' },
-                    { action: () => setActiveSection('dopregister'), label: 'Регистрация через дополнительные сервисы' },
-                    { action: () => setActiveSection('classifier'), label: 'Базовый шанс поступления' },
+                    
+                    { action: () => setActiveSection('classifier'), label: 'Вероятность поступления' },
+                    { action: () => setActiveSection('form'), label: 'Рекомендация направлений' },
+                    { action: () => setActiveSection('events'), label: 'Мероприятия' },
+                    { action: () => setActiveSection('dopregister'), label: 'Регистрация' },
                     { action: handleLogout, label: 'Выход' },
                   ]
                 : []),
@@ -143,9 +144,9 @@ const Profile = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 min-h-screen flex justify-center">
+        <main className="flex-1  min-h-screen flex justify-center">
           <div
-            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-blue-100/50 w-full max-w-7xl slide-in"
+            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl  border border-blue-100/50 w-full max-w-7xl slide-in"
           >
             {activeSection === 'form' && <Form />}
             {activeSection === 'classifier' && <ClassifierForm />}

@@ -62,23 +62,12 @@ button {
   animation: slideIn 0.3s ease-out;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 /* Эффект пульсации для "Чат-бот печатает..." уже встроен через animate-pulse в Tailwind */
 
 /* Анимация появления элементов */
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
-}
+
 
 @keyframes fadeIn {
   from {
@@ -90,20 +79,9 @@ button {
 }
 
 /* Анимация появления карточек */
-.slide-in {
-  animation: slideIn 0.5s ease-out;
-}
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
+
 
 /* Анимация появления модального окна */
 .modal-slide-in {
@@ -124,9 +102,7 @@ button {
 /* Эффект пульсации для загрузки уже встроен через animate-pulse в Tailwind */
 
 /* Анимация появления элементов */
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
-}
+
 
 @keyframes fadeIn {
   from {
@@ -138,25 +114,14 @@ button {
 }
 
 /* Анимация появления контента */
-.slide-in {
-  animation: slideIn 0.5s ease-out;
-}
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Анимация появления элементов */
 .fade-in {
   animation: fadeIn 0.5s ease-out;
 }
+
+
+/* Анимация появления элементов */
+
 
 @keyframes fadeIn {
   from {
@@ -231,4 +196,220 @@ button {
 }
 html {
   scroll-behavior: smooth;
+}
+
+.no-data-message {
+  color: #000000;
+  font-style: italic;
+  background-color: #f8f8f8;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+/* toast.css */
+.react-hot-toast-container {
+  z-index: 9999; /* Убедимся, что уведомления поверх всех элементов */
+}
+
+/* Стили для уведомлений */
+.toast {
+  position: relative;
+  padding: 12px 40px 12px 16px; /* Добавляем отступ справа для кнопки закрытия */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* Стили для успешных уведомлений */
+.toast-success {
+  border-color: #4caf50;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Стили для уведомлений об ошибке */
+.toast-error {
+  border-color: #f44336;
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+/* Кнопка закрытия */
+.toast-close {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* Анимация появления */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Анимация исчезновения */
+@keyframes toast-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.3s ease forwards;
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.3s ease forwards;
+}
+
+@media (max-width: 400px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .container input {
+    width: 100%;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.5s ease-out forwards;
+}
+
+@keyframes progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+.animate-progress {
+  animation: progress 1s ease-out forwards;
+}
+
+/* Стили для трека ползунка */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 1rem; /* Высота трека */
+  background: linear-gradient(to right, #e5e7eb, #d1d5db); /* Градиентный фон трека */
+  border-radius: 9999px; /* Скругление */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Внутренняя тень */
+}
+
+input[type="range"]::-moz-range-track {
+  height: 1rem;
+  background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  border-radius: 9999px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для бегунка (thumb) */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.5rem; /* Высота бегунка */
+  width: 1.5rem; /* Ширина бегунка */
+  background: linear-gradient(to bottom, #3b82f6, #4f46e5); /* Градиентный фон бегунка */
+  border-radius: 50%; /* Круглая форма */
+  border: 3px solid white; /* Белая обводка */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* Тень */
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1); /* Увеличение при наведении */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95); /* Уменьшение при нажатии */
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 1.5rem;
+  width: 1.5rem;
+  background: linear-gradient(to bottom, #3b82f6, #4f46e5);
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(0.95);
+}
+
+/* Анимация для текста баллов */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 1.5s infinite ease-in-out;
 }
