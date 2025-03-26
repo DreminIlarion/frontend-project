@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
-import { toast } from "react-hot-toast"; // Импортируем toast
+import { toast } from "react-hot-toast";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const hasCheckedTokens = useRef(false); // Отслеживаем, был ли уже выполнен checkTokens
-  const hasShownCookieWarning = useRef(false); // Отслеживаем, было ли уже показано уведомление о куки
+  const hasCheckedTokens = useRef(false);
+  const hasShownCookieWarning = useRef(false);
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
@@ -257,44 +257,52 @@ export const UserProvider = ({ children }) => {
     return (
       /iPhone/i.test(userAgent) &&
       /Safari/i.test(userAgent) &&
-      !/CriOS/i.test(userAgent) && // Исключаем Chrome на iPhone
-      !/FxiOS/i.test(userAgent) // Исключаем Firefox на iPhone
+      !/CriOS/i.test(userAgent) &&
+      !/FxiOS/i.test(userAgent)
     );
   };
 
   useEffect(() => {
     if (!areCookiesEnabled() && !hasShownCookieWarning.current) {
-      hasShownCookieWarning.current = true; // Предотвращаем повторное уведомление
+      hasShownCookieWarning.current = true;
       console.warn("⚠️ Куки заблокированы браузером.");
       setUser(null);
 
       const isIPhoneSafari = isSafariOnIPhone();
-      const message = isIPhoneSafari
-        ? (
-            <div>
-              Для корректной работы сайта разрешите куки в настройках Safari.{" "}
-              <a
-                href="https://support.apple.com/ru-ru/guide/safari/sfri11471/mac"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-blue-600 hover:text-blue-800"
-              >
-                Инструкция
-              </a>
-            </div>
-          )
-        : "Для корректной работы сайта разрешите куки в настройках браузера.";
+      const message = isIPhoneSafari ? (
+        <div>
+          Для корректной работы сайта необходимо отключить настройку "Предотвращение межсайтового отслеживания" в Safari:
+          <br />
+          1. Откройте <strong>Настройки</strong> → <strong>Safari</strong>.
+          <br />
+          2. Выключите <strong>"Предотвращение межсайтового отслеживания"</strong>.
+          <br />
+          Подробная инструкция{" "}
+          <a
+            href="https://support.apple.com/ru-ru/guide/safari/sfri40596/mac"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-blue-600 hover:text-blue-800"
+          >
+            здесь
+          </a>.
+        </div>
+      ) : (
+        "Для корректной работы сайта разрешите куки в настройках браузера."
+      );
 
       toast.error(message, {
-        duration: 8000, // Увеличиваем время показа до 8 секунд
+        duration: 10000, // Увеличиваем время показа до 10 секунд
         style: {
           background: "linear-gradient(to right, #fef3c7, #fee2e2)",
           color: "#b91c1c",
           fontWeight: "bold",
           borderRadius: "12px",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          maxWidth: "90%", // Для мобильных устройств
+          maxWidth: "90%",
           padding: "12px 16px",
+          fontSize: "14px",
+          lineHeight: "1.5",
         },
       });
     }
