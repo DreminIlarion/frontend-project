@@ -44,7 +44,8 @@ export const UserProvider = ({ children }) => {
       }
 
       Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
-      console.log("✅ Новый access токен сохранён:", newAccessToken);
+      
+      
 
       setUser({ loggedIn: true });
 
@@ -178,7 +179,7 @@ export const UserProvider = ({ children }) => {
     const currentRefresh = Cookies.get("refresh");
     if (!currentRefresh || currentRefresh !== refresh) {
       Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-      console.log("✅ Refresh токен обновлён:", refresh);
+      
     } else {
       console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
     }
