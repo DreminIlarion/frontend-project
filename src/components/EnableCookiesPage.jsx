@@ -15,7 +15,7 @@ const EnableCookiesPage = () => {
         <p className="text-gray-600 text-sm sm:text-base mb-4">
           Если вы используете Safari на iPhone, следуйте этой{" "}
           <a
-            href="https://support.apple.com/ru-ru/guide/safari/sfri11471/mac"
+            href="https://support.apple.com/ru-ru/guide/safari/ibrw850f6c51/18.0/mac/15.0"
             target="_blank"
             rel="noopener noreferrer"
             className="underline text-blue-600 hover:text-blue-800"
