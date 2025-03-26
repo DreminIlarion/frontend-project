@@ -8,6 +8,7 @@ import Chat from './components/Chat';
 import OAuthCallback from "./components/OAuthCallback";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import Home from './components/Home';
+import EnableCookies from './components/EnableCookiesPage';
 import './App.css'; // Импорт стилей для анимаций
 
 const AppWrapper = () => {
@@ -37,6 +38,8 @@ const AppWrapper = () => {
         <Route path="/chat" element={<Chat />} />
         <Route path="/oauth/:provider/callback" element={<OAuthCallback />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
+        <Route path="/enable-cookies" element={<EnableCookies />} />
       </Routes>
 
       {/* Уведомление о бета-тестировании внизу страницы */}

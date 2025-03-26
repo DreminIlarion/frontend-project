@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
+import { toast } from "react-hot-toast"; // Импортируем toast
 
 const UserContext = createContext();
 
@@ -7,6 +8,7 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const hasCheckedTokens = useRef(false); // Отслеживаем, был ли уже выполнен checkTokens
+  const hasShownCookieWarning = useRef(false); // Отслеживаем, было ли уже показано уведомление о куки
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
@@ -129,7 +131,6 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const checkTokens = useCallback(async () => {
-    // Пропускаем, если checkTokens уже был вызван
     if (hasCheckedTokens.current) {
       console.log("ℹ️ checkTokens уже был вызван, пропускаем...");
       return;
@@ -154,7 +155,6 @@ export const UserProvider = ({ children }) => {
         const newAccessToken = await refreshAccessToken();
 
         if (newAccessToken) {
-          // Проверяем валидность нового токена
           const validationResponse = await fetch(
             "https://registration-fastapi.onrender.com/validate/jwt/access",
             {
@@ -177,7 +177,6 @@ export const UserProvider = ({ children }) => {
           setUser(null);
         }
       } else {
-        // Проверяем валидность существующего access токена
         const validationResponse = await fetch(
           "https://registration-fastapi.onrender.com/validate/jwt/access",
           {
@@ -252,13 +251,52 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Определение, используется ли Safari на iPhone
+  const isSafariOnIPhone = () => {
+    const userAgent = navigator.userAgent;
+    return (
+      /iPhone/i.test(userAgent) &&
+      /Safari/i.test(userAgent) &&
+      !/CriOS/i.test(userAgent) && // Исключаем Chrome на iPhone
+      !/FxiOS/i.test(userAgent) // Исключаем Firefox на iPhone
+    );
+  };
+
   useEffect(() => {
-    if (!areCookiesEnabled()) {
+    if (!areCookiesEnabled() && !hasShownCookieWarning.current) {
+      hasShownCookieWarning.current = true; // Предотвращаем повторное уведомление
       console.warn("⚠️ Куки заблокированы браузером.");
       setUser(null);
-      // Можно показать уведомление пользователю
-      // Например, с помощью toast (если вы используете react-hot-toast):
-      // toast.error("Пожалуйста, разрешите куки в настройках браузера для корректной работы сайта.");
+
+      const isIPhoneSafari = isSafariOnIPhone();
+      const message = isIPhoneSafari
+        ? (
+            <div>
+              Для корректной работы сайта разрешите куки в настройках Safari.{" "}
+              <a
+                href="https://support.apple.com/ru-ru/guide/safari/sfri11471/mac"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-blue-600 hover:text-blue-800"
+              >
+                Инструкция
+              </a>
+            </div>
+          )
+        : "Для корректной работы сайта разрешите куки в настройках браузера.";
+
+      toast.error(message, {
+        duration: 8000, // Увеличиваем время показа до 8 секунд
+        style: {
+          background: "linear-gradient(to right, #fef3c7, #fee2e2)",
+          color: "#b91c1c",
+          fontWeight: "bold",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          maxWidth: "90%", // Для мобильных устройств
+          padding: "12px 16px",
+        },
+      });
     }
   }, []);
 
