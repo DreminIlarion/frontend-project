@@ -9,7 +9,7 @@ const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
     gpa: 0,
-    points: 0,
+    points: 1,
     bonus_points: 0,
     russian: '',
     math: '',
@@ -183,7 +183,7 @@ const Form = () => {
     }
 
     const examsArray = [
-      { subject: 'russian', points: parseInt(formData.russian) || 0 },
+      { subject: 'russian', points: parseInt(formData.russian) || 1 },
       { subject: 'math', points: parseInt(formData.math) || 0 },
       { subject: 'physics', points: parseInt(formData.physics) || 0 },
       { subject: 'chemistry', points: parseInt(formData.chemistry) || 0 },
@@ -401,7 +401,7 @@ const Form = () => {
           <h2 className="text-xl sm:text-2xl font-semibold text-blue-900 mb-4 text-center fade-in">Рекомендации</h2>
           {sortedRecommendations.length > 0 ? (
             <div className="space-y-4">
-              {sortedRecommendations.slice(0, 3).map((rec, index) => (
+              {sortedRecommendations.map((rec, index) => (
                 <div
                   key={index}
                   className="p-4 sm:p-5 bg-blue-100/70 backdrop-blur-sm rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in"
