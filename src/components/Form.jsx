@@ -232,8 +232,8 @@ const Form = () => {
         }
       } else {
         const errorText = await response.text();
-        toast.error(`Ошибка сервера: ${errorText}`);
-        console.error('Ошибка при отправке данных:', errorText);
+        toast.error(`Ошибка сервера`);
+        console.error('Ошибка при отправке данных:');
       }
     } catch (error) {
       toast.error("Ошибка отправки данных. Проверьте подключение.");

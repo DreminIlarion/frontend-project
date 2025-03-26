@@ -134,8 +134,8 @@ const ClassifierForm = () => {
         toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
       }
     } catch (error) {
-      console.error("Ошибка запроса:", error.message);
-      toast.error(`Произошла ошибка: ${error.message}`);
+      console.error("Ошибка запроса:");
+      toast.error(`Произошла ошибка`);
     } finally {
       setLoading(false);
     }

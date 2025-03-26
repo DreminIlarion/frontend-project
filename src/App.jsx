@@ -50,7 +50,7 @@ const AppWrapper = () => {
               onClick={() => setIsBannerVisible(false)}
               className="text-yellow-800 hover:text-yellow-900 font-bold text-xs sm:text-sm transition-colors duration-200"
             >
-              ✕
+              ❌
             </button>
           </div>
         </div>
