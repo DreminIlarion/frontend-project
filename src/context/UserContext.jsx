@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
 
 const UserContext = createContext();
@@ -6,6 +6,7 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const hasCheckedTokens = useRef(false); // Отслеживаем, был ли уже выполнен checkTokens
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
@@ -44,9 +45,6 @@ export const UserProvider = ({ children }) => {
       }
 
       Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
-      
-      
-
       setUser({ loggedIn: true });
 
       return newAccessToken;
@@ -131,6 +129,13 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const checkTokens = useCallback(async () => {
+    // Пропускаем, если checkTokens уже был вызван
+    if (hasCheckedTokens.current) {
+      console.log("ℹ️ checkTokens уже был вызван, пропускаем...");
+      return;
+    }
+    hasCheckedTokens.current = true;
+
     setLoading(true);
 
     try {
@@ -149,12 +154,53 @@ export const UserProvider = ({ children }) => {
         const newAccessToken = await refreshAccessToken();
 
         if (newAccessToken) {
-          setUser({ loggedIn: true });
+          // Проверяем валидность нового токена
+          const validationResponse = await fetch(
+            "https://registration-fastapi.onrender.com/validate/jwt/access",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${newAccessToken}`,
+              },
+              credentials: "include",
+            }
+          );
+
+          if (validationResponse.ok) {
+            setUser({ loggedIn: true });
+          } else {
+            console.warn("❌ Новый access токен недействителен.");
+            await logout();
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
       } else {
-        setUser({ loggedIn: true });
+        // Проверяем валидность существующего access токена
+        const validationResponse = await fetch(
+          "https://registration-fastapi.onrender.com/validate/jwt/access",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: "include",
+          }
+        );
+
+        if (validationResponse.ok) {
+          setUser({ loggedIn: true });
+        } else {
+          console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
+          const newAccessToken = await refreshAccessToken();
+
+          if (newAccessToken) {
+            setUser({ loggedIn: true });
+          } else {
+            setUser(null);
+          }
+        }
       }
     } catch (error) {
       console.error("❌ Ошибка при проверке токенов:", error);
@@ -166,8 +212,16 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     checkTokens();
-    const interval = setInterval(checkTokens, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+
+    const interval = setInterval(() => {
+      console.log("🔄 Периодическая проверка токенов...");
+      checkTokens();
+    }, 5 * 60 * 1000);
+
+    return () => {
+      console.log("🛑 Очищаем интервал проверки токенов...");
+      clearInterval(interval);
+    };
   }, [checkTokens]);
 
   const login = (access, refresh) => {
@@ -179,13 +233,34 @@ export const UserProvider = ({ children }) => {
     const currentRefresh = Cookies.get("refresh");
     if (!currentRefresh || currentRefresh !== refresh) {
       Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
-      
     } else {
       console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
     }
 
     setUser({ loggedIn: true });
   };
+
+  // Проверка поддержки куки
+  const areCookiesEnabled = () => {
+    try {
+      Cookies.set("testcookie", "test", { expires: 1 });
+      const cookieEnabled = Cookies.get("testcookie") === "test";
+      Cookies.remove("testcookie");
+      return cookieEnabled;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (!areCookiesEnabled()) {
+      console.warn("⚠️ Куки заблокированы браузером.");
+      setUser(null);
+      // Можно показать уведомление пользователю
+      // Например, с помощью toast (если вы используете react-hot-toast):
+      // toast.error("Пожалуйста, разрешите куки в настройках браузера для корректной работы сайта.");
+    }
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth }}>
