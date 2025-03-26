@@ -217,7 +217,7 @@ const OAuthCallback = () => {
           const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
 
           const setTokenResponse = await fetch(setTokenUrl, {
-            method: "POST",
+            method: "GET",
             credentials: "include",
           });
 
