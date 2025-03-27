@@ -5,8 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 const ClassifierForm = () => {
   const [formData, setFormData] = useState({
     year: "2024",
-    gender: "",
-    gpa: "",
+    gender: "male",
+    gpa: "4.3",
     points: "",
     direction: "",
   });
@@ -181,48 +181,7 @@ const ClassifierForm = () => {
 
         <fieldset className="flex-grow space-y-6 sm:space-y-8">
           {/* Выбор пола через кнопки */}
-          <label className="block text-sm sm:text-base font-semibold text-gray-800">
-            Укажите ваш пол:
-            <div className="flex gap-4 mt-2 sm:mt-3 justify-center">
-              <button
-                type="button"
-                onClick={() => handleGenderChange("male")}
-                className={`flex-1 py-2 px-4 sm:px-6 rounded-xl font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg ${
-                  formData.gender === "male"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/50"
-                    : "bg-gradient-to-r from-blue-400 to-indigo-400 opacity-70 hover:shadow-blue-400/30"
-                }`}
-              >
-                Мужской
-              </button>
-              <button
-                type="button"
-                onClick={() => handleGenderChange("female")}
-                className={`flex-1 py-2 px-4 sm:px-6 rounded-xl font-semibold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-lg ${
-                  formData.gender === "female"
-                    ? "bg-gradient-to-r from-pink-600 to-rose-600 hover:shadow-pink-500/50"
-                    : "bg-gradient-to-r from-pink-400 to-rose-400 opacity-70 hover:shadow-pink-400/30"
-                }`}
-              >
-                Женский
-              </button>
-            </div>
-          </label>
-
-          <label className="block text-sm sm:text-base font-semibold text-gray-800">
-            Средний балл аттестата:
-            <input
-              type="number"
-              step="0.01"
-              min="3.0"
-              max="5.0"
-              value={formData.gpa}
-              name="gpa"
-              onChange={handleChange}
-              className="w-full p-3 sm:p-4 mt-2 border border-blue-200 rounded-xl bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 text-gray-900 transition-all duration-300 hover:shadow-md"
-              required
-            />
-          </label>
+          
 
           <label className="block text-sm sm:text-base font-semibold text-gray-800">
             Общее количество баллов (ЕГЭ):
@@ -313,7 +272,7 @@ const ClassifierForm = () => {
       {/* Описание */}
       <div className="mt-8 sm:mt-10 p-6 sm:p-8 bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-blue-100/50 w-full max-w-2xl mx-auto transition-all duration-300 hover:shadow-blue-200/50">
         <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-          <span className="font-semibold text-blue-900">Вероятность поступления</span> — это ваш первый шаг к оценке возможностей поступления в вуз. Укажите свои данные — пол, средний балл аттестата, баллы ЕГЭ и направление — и получите мгновенный прогноз, основанный на статистике прошлых лет. Узнайте, насколько вы близки к своей мечте, и планируйте следующий шаг с уверенностью!
+          <span className="font-semibold text-blue-900">Вероятность поступления</span> — это ваш первый шаг к оценке возможностей поступления в вуз. Укажите свои данные — баллы ЕГЭ и направление — и получите мгновенный прогноз, основанный на статистике прошлых лет. Узнайте, насколько вы близки к своей мечте, и планируйте следующий шаг с уверенностью!
         </p>
       </div>
 

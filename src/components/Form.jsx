@@ -254,48 +254,48 @@ const Form = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 text-center fade-in">Рекомендация направлений</h1>
   
           <label className="block text-sm sm:text-base font-semibold text-gray-800 mb-3 sm:mb-4">
-  Укажите ваш пол:
-  <div className="flex items-center justify-center gap-4 sm:gap-6 mt-2 sm:mt-3">
-    <label className="flex items-center cursor-pointer">
-      <input
-        type="radio"
-        name="gender"
-        value="male"
-        checked={formData.gender === 'male'}
-        onChange={handleChange}
-        className="hidden"
-      />
-      <span
-        className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
-          formData.gender === 'male'
-            ? 'bg-gradient-to-r from-blue-800 to-indigo-800 hover:shadow-blue-500/60'
-            : 'bg-gradient-to-r from-blue-300 to-indigo-300 opacity-70 hover:shadow-blue-400/10'
-        } hover:scale-105 active:scale-95`}
-      >
-        Мужской
-      </span>
-    </label>
-    <label className="flex items-center cursor-pointer">
-      <input
-        type="radio"
-        name="gender"
-        value="female"
-        checked={formData.gender === 'female'}
-        onChange={handleChange}
-        className="hidden"
-      />
-      <span
-        className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
-          formData.gender === 'female'
-            ? 'bg-gradient-to-r from-pink-800 to-rose-800 hover:shadow-pink-500/60'
-            : 'bg-gradient-to-r from-pink-300 to-rose-300 opacity-70 hover:shadow-pink-400/10'
-        } hover:scale-105 active:scale-95`}
-      >
-        Женский
-      </span>
-    </label>
-  </div>
-</label>
+            Укажите ваш пол:
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mt-2 sm:mt-3">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="male"
+                  checked={formData.gender === 'male'}
+                  onChange={handleChange}
+                  className="hidden"
+                />
+                <span
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
+                    formData.gender === 'male'
+                      ? 'bg-gradient-to-r from-blue-800 to-indigo-800 hover:shadow-blue-500/60'
+                      : 'bg-gradient-to-r from-blue-300 to-indigo-300 opacity-70 hover:shadow-blue-400/10'
+                  } hover:scale-105 active:scale-95`}
+                >
+                  Мужской
+                </span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="female"
+                  checked={formData.gender === 'female'}
+                  onChange={handleChange}
+                  className="hidden"
+                />
+                <span
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
+                    formData.gender === 'female'
+                      ? 'bg-gradient-to-r from-pink-800 to-rose-800 hover:shadow-pink-500/60'
+                      : 'bg-gradient-to-r from-pink-300 to-rose-300 opacity-70 hover:shadow-pink-400/10'
+                  } hover:scale-105 active:scale-95`}
+                >
+                  Женский
+                </span>
+              </label>
+            </div>
+          </label>
   
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <label className="block text-sm sm:text-base font-semibold text-gray-800">
@@ -308,7 +308,7 @@ const Form = () => {
                 name="gpa"
                 value={formData.gpa}
                 onChange={handleChange}
-                className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm foci:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
+                className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
               />
             </label>
   
@@ -365,7 +365,7 @@ const Form = () => {
             >
               {formData.points} баллов
             </div>
-            {formData.points > 310 &&    (
+            {formData.points > 310 && (
               <p className="text-red-500 text-sm mt-1">
                 Сумма баллов не должна превышать 310
               </p>
@@ -406,7 +406,18 @@ const Form = () => {
                   key={index}
                   className="p-4 sm:p-5 bg-blue-100/70 backdrop-blur-sm rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 slide-in"
                 >
-                  <p className="text-base sm:text-lg font-semibold text-blue-700">{rec.name}</p>
+                  {/* Название направления с tooltip */}
+                  <div className="relative group">
+                    <p className="text-base sm:text-lg font-semibold text-blue-700 cursor-pointer">
+                      {rec.name}
+                    </p>
+                    <div className="absolute left-0 top-full mt-2 w-64 sm:w-80 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                      <p>
+                        По нашей статистике, это направление чаще выбирают мальчики, но ваши шансы на поступление не зависят от пола. Также проходные баллы имеют тенденцию к росту с каждым годом.
+                      </p>
+                    </div>
+                  </div>
+
                   <p className="text-base sm:text-lg mt-1 text-gray-600">
                     <strong className="text-blue-600">Вероятность поступления:</strong>{' '}
                     <span
@@ -523,13 +534,10 @@ const Form = () => {
           )}
         </div>
 
-        {/* Описание */}
+        {/* Обновлённое описание */}
         <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 slide-in">
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-            <span className="font-semibold text-blue-900">Рекомендация направлений</span> — это мощный инструмент
-            для точной оценки ваших перспектив. Введите данные об экзаменах, баллах ЕГЭ, аттестате и дополнительных
-            достижениях, чтобы получить персонализированные рекомендации по направлениям обучения. Мы анализируем
-            статистику и динамику, чтобы помочь вам выбрать лучший путь к поступлению!
+            <span className="font-semibold text-blue-900">Рекомендация направлений</span> — это ваш помощник в выборе образовательного пути. Введите данные об экзаменах, баллах ЕГЭ, аттестате и дополнительных достижениях, чтобы получить персонализированные рекомендации. Мы анализируем статистику поступлений, включая динамику проходных баллов, которые, как правило, имеют тенденцию к росту с каждым годом. По нашей статистике, технические направления чаще выбирают мальчики, но ваши шансы на поступление не зависят от пола — всё определяется вашими баллами и достижениями. Делайте осознанный выбор с нашей помощью!
           </p>
         </div>
       </div>

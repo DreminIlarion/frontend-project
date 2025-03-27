@@ -1,88 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
-import { toast } from "react-hot-toast";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cookieCheckDone, setCookieCheckDone] = useState(false); // Флаг для проверки куки
-  const [cookiesBlocked, setCookiesBlocked] = useState(false); // Флаг для блокировки куки
   const hasCheckedTokens = useRef(false);
-  const hasShownCookieWarning = useRef(false);
-
-  // Проверка поддержки куки (синхронная)
-  const areCookiesEnabled = () => {
-    try {
-      Cookies.set("testcookie", "test", { expires: 1 });
-      const cookieEnabled = Cookies.get("testcookie") === "test";
-      Cookies.remove("testcookie");
-      return cookieEnabled;
-    } catch (e) {
-      return false;
-    }
-  };
-
-  // Определение, используется ли Safari на iPhone
-  const isSafariOnIPhone = () => {
-    const userAgent = navigator.userAgent;
-    return (
-      /iPhone/i.test(userAgent) &&
-      /Safari/i.test(userAgent) &&
-      !/CriOS/i.test(userAgent) &&
-      !/FxiOS/i.test(userAgent)
-    );
-  };
-
-  // Проверка куки выполняется синхронно при инициализации
-  const cookiesEnabled = areCookiesEnabled();
-  if (!cookiesEnabled && !hasShownCookieWarning.current) {
-    hasShownCookieWarning.current = true;
-    setCookiesBlocked(true);
-    setUser(null);
-    setCookieCheckDone(true);
-
-    const isIPhoneSafari = isSafariOnIPhone();
-    const message = isIPhoneSafari ? (
-      <div>
-        Для корректной работы сайта необходимо отключить настройку "Предотвращение межсайтового отслеживания" в Safari:
-        <br />
-        1. Откройте <strong>Настройки</strong> → <strong>Safari</strong>.
-        <br />
-        2. Выключите <strong>"Предотвращение межсайтового отслеживания"</strong>.
-        <br />
-        Подробная инструкция{" "}
-        <a
-          href="https://support.apple.com/ru-ru/guide/safari/sfri40596/mac"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline text-blue-600 hover:text-blue-800"
-        >
-          здесь
-        </a>.
-      </div>
-    ) : (
-      "Для корректной работы сайта разрешите куки в настройках браузера."
-    );
-
-    toast.error(message, {
-      duration: 10000,
-      style: {
-        background: "linear-gradient(to right, #fef3c7, #fee2e2)",
-        color: "#b91c1c",
-        fontWeight: "bold",
-        borderRadius: "12px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-        maxWidth: "90%",
-        padding: "12px 16px",
-        fontSize: "14px",
-        lineHeight: "1.5",
-      },
-    });
-  } else if (!cookieCheckDone) {
-    setCookieCheckDone(true);
-  }
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("refresh");
@@ -284,20 +208,18 @@ export const UserProvider = ({ children }) => {
   }, [refreshAccessToken]);
 
   useEffect(() => {
-    if (!cookiesBlocked) {
+    checkTokens();
+
+    const interval = setInterval(() => {
+      console.log("🔄 Периодическая проверка токенов...");
       checkTokens();
+    }, 5 * 60 * 1000);
 
-      const interval = setInterval(() => {
-        console.log("🔄 Периодическая проверка токенов...");
-        checkTokens();
-      }, 5 * 60 * 1000);
-
-      return () => {
-        console.log("🛑 Очищаем интервал проверки токенов...");
-        clearInterval(interval);
-      };
-    }
-  }, [checkTokens, cookiesBlocked]);
+    return () => {
+      console.log("🛑 Очищаем интервал проверки токенов...");
+      clearInterval(interval);
+    };
+  }, [checkTokens]);
 
   const login = (access, refresh) => {
     if (typeof access !== "string" || typeof refresh !== "string") {
@@ -314,80 +236,6 @@ export const UserProvider = ({ children }) => {
 
     setUser({ loggedIn: true });
   };
-
-  // Если куки заблокированы, показываем только уведомление
-  if (cookiesBlocked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="bg-white/95 backdrop-blur-lg p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-blue-100/50 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-blue-900 tracking-tight">
-            Необходимо разрешить куки
-          </h2>
-          <p className="text-gray-600 text-sm sm:text-base mb-6 sm:mb-8">
-            {isSafariOnIPhone() ? (
-              <>
-                Для корректной работы сайта необходимо отключить настройку "Предотвращение межсайтового отслеживания" в Safari:
-                <br />
-                1. Откройте <strong>Настройки</strong> → <strong>Safari</strong>.
-                <br />
-                2. Выключите <strong>"Предотвращение межсайтового отслеживания"</strong>.
-                <br />
-                Подробная инструкция{" "}
-                <a
-                  href="https://support.apple.com/ru-ru/guide/safari/sfri40596/mac"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline text-blue-600 hover:text-blue-800"
-                >
-                  здесь
-                </a>.
-              </>
-            ) : (
-              "Для корректной работы сайта разрешите куки в настройках браузера."
-            )}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-2 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md transition-all hover:bg-blue-600 hover:shadow-blue-400/50 hover:scale-105 active:scale-95"
-          >
-            Обновить страницу
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Если проверка куки ещё не завершена, показываем загрузку
-  if (!cookieCheckDone) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="bg-white/95 backdrop-blur-lg p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-blue-100/50 text-center">
-          <div className="flex justify-center mb-6 sm:mb-8">
-            <svg
-              className="w-16 h-16 sm:w-20 sm:h-20 text-blue-600 animate-spin-slow"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 text-blue-900 tracking-tight">
-            Проверка настроек...
-          </h2>
-          <div className="relative w-full h-3 sm:h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-            <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth }}>
