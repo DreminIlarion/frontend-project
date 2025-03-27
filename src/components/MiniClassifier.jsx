@@ -6,7 +6,7 @@ const ClassifierForm = () => {
   const [formData, setFormData] = useState({
     year: "2024",
     gender: "male",
-    gpa: "4",
+    gpa: "3.9",
     points: "",
     direction: "",
   });
