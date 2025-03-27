@@ -8,9 +8,9 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 const Form = () => {
   const [formData, setFormData] = useState({
     gender: '',
-    gpa: 0,
-    points: 1,
-    bonus_points: 0,
+    gpa: '', // Изменили начальное значение на пустую строку
+    points: 0, // Начальное значение 0, чтобы соответствовать логике
+    bonus_points: '', // Изменили начальное значение на пустую строку
     russian: '',
     math: '',
     physics: '',
@@ -64,13 +64,70 @@ const Form = () => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
+      // Обработка полей, которые не требуют числового ввода
       if (['gender', 'year', 'foreign_citizenship', 'military_service'].includes(name)) {
         return { ...prev, [name]: value };
       }
 
-      const parsedValue = name === 'gpa' || name === 'bonus_points' ? value : parseInt(value) || '';
-      const newFormData = { ...prev, [name]: parsedValue };
+      // Обработка числовых полей (gpa, bonus_points, экзамены)
+      let newValue;
+      if (value === "") {
+        newValue = 0; // Временно устанавливаем 0, если поле пустое
+      } else {
+        const parsedValue = name === 'gpa' ? parseFloat(value) : parseInt(value);
+        if (name === 'gpa') {
+          newValue = Math.min(Math.max(3.0, parsedValue), 5.0); // Ограничиваем gpa от 3.0 до 5.0
+        } else if (name === 'bonus_points') {
+          newValue = Math.min(Math.max(0, parsedValue), 10); // Ограничиваем bonus_points от 0 до 10
+        } else {
+          newValue = Math.min(Math.max(0, parsedValue), 100); // Ограничиваем экзамены от 0 до 100
+        }
+      }
 
+      const newFormData = { ...prev, [name]: newValue };
+
+      // Пересчитываем общую сумму баллов
+      const totalPoints =
+        (parseInt(newFormData.russian) || 0) +
+        (parseInt(newFormData.math) || 0) +
+        (parseInt(newFormData.physics) || 0) +
+        (parseInt(newFormData.chemistry) || 0) +
+        (parseInt(newFormData.history) || 0) +
+        (parseInt(newFormData.informatics) || 0) +
+        (parseInt(newFormData.social_science) || 0) +
+        (parseInt(newFormData.bonus_points) || 0);
+
+      return { ...newFormData, points: totalPoints };
+    });
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => {
+      let newValue;
+      if (value === "" || parseFloat(value) < 0) {
+        if (name === 'gpa') {
+          newValue = 3.0; // Минимальное значение для gpa
+        } else if (name === 'bonus_points') {
+          newValue = 0; // Минимальное значение для bonus_points
+        } else {
+          newValue = 0; // Минимальное значение для экзаменов
+        }
+      } else {
+        const parsedValue = name === 'gpa' ? parseFloat(value) : parseInt(value);
+        if (name === 'gpa') {
+          newValue = Math.min(Math.max(3.0, parsedValue), 5.0);
+        } else if (name === 'bonus_points') {
+          newValue = Math.min(Math.max(0, parsedValue), 10);
+        } else {
+          newValue = Math.min(Math.max(0, parsedValue), 100);
+        }
+      }
+
+      const newFormData = { ...prev, [name]: newValue };
+
+      // Пересчитываем общую сумму баллов
       const totalPoints =
         (parseInt(newFormData.russian) || 0) +
         (parseInt(newFormData.math) || 0) +
@@ -306,10 +363,16 @@ const Form = () => {
                 min="3.0"
                 max="5.0"
                 name="gpa"
-                value={formData.gpa}
+                value={formData.gpa === 0 ? "" : formData.gpa}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
               />
+              {formData.gpa > 5.0 && (
+                <p className="text-red-500 text-sm mt-1">
+                  Максимальное значение — 5.0
+                </p>
+              )}
             </label>
   
             <label className="block text-sm sm:text-base font-semibold text-gray-800">
@@ -319,10 +382,16 @@ const Form = () => {
                 min="0"
                 max="10"
                 name="bonus_points"
-                value={formData.bonus_points}
+                value={formData.bonus_points === 0 ? "" : formData.bonus_points}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 className="w-full p-2 sm:p-3 mt-1 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
               />
+              {formData.bonus_points > 10 && (
+                <p className="text-red-500 text-sm mt-1">
+                  Максимальное значение — 10
+                </p>
+              )}
             </label>
           </div>
   
@@ -344,8 +413,9 @@ const Form = () => {
                   min="0"
                   max="100"
                   name={key}
-                  value={formData[key] || ''}
+                  value={formData[key] === 0 ? "" : formData[key]}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className="ml-2 sm:ml-3 p-2 sm:p-3 border border-blue-200 rounded-lg bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 w-20 sm:w-24 text-sm sm:text-base"
                 />
               </div>
@@ -411,7 +481,6 @@ const Form = () => {
                     <p className="text-base sm:text-lg font-semibold text-blue-700 ">
                       {rec.name}
                     </p>
-                    
                   </div>
 
                   <p className="text-base sm:text-lg mt-1 text-gray-600">
