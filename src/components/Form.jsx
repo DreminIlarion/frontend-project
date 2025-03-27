@@ -269,7 +269,7 @@ const Form = () => {
                   className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
                     formData.gender === 'male'
                       ? 'bg-gradient-to-r from-blue-800 to-indigo-800 hover:shadow-blue-500/60'
-                      : 'bg-gradient-to-r from-blue-300 to-indigo-300 opacity-70 hover:shadow-blue-400/10'
+                      : 'bg-gradient-to-r from-blue-200 to-indigo-200 opacity-70 hover:shadow-blue-400/10'
                   } hover:scale-105 active:scale-95`}
                 >
                   Мужской
@@ -288,7 +288,7 @@ const Form = () => {
                   className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base text-white transition-all duration-300 shadow-lg animate-fadeIn ${
                     formData.gender === 'female'
                       ? 'bg-gradient-to-r from-pink-800 to-rose-800 hover:shadow-pink-500/60'
-                      : 'bg-gradient-to-r from-pink-300 to-rose-300 opacity-70 hover:shadow-pink-400/10'
+                      : 'bg-gradient-to-r from-pink-200 to-rose-200 opacity-70 hover:shadow-pink-400/10'
                   } hover:scale-105 active:scale-95`}
                 >
                   Женский
@@ -408,14 +408,10 @@ const Form = () => {
                 >
                   {/* Название направления с tooltip */}
                   <div className="relative group">
-                    <p className="text-base sm:text-lg font-semibold text-blue-700 cursor-pointer">
+                    <p className="text-base sm:text-lg font-semibold text-blue-700 ">
                       {rec.name}
                     </p>
-                    <div className="absolute left-0 top-full mt-2 w-64 sm:w-80 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                      <p>
-                        По нашей статистике, это направление чаще выбирают мальчики, но ваши шансы на поступление не зависят от пола. Также проходные баллы имеют тенденцию к росту с каждым годом.
-                      </p>
-                    </div>
+                    
                   </div>
 
                   <p className="text-base sm:text-lg mt-1 text-gray-600">
@@ -445,8 +441,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('details')
-                              ? 'bg-green-700 text-white'
-                              : 'bg-green-500 text-white hover:shadow-green-500/50'
+                              ? 'bg-green-900 text-white'
+                              : 'bg-green-700 text-white hover:shadow-green-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >
@@ -460,8 +456,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('points')
-                              ? 'bg-purple-700 text-white'
-                              : 'bg-purple-500 text-white hover:shadow-purple-500/50'
+                              ? 'bg-green-900 text-white'
+                              : 'bg-green-700 text-white hover:shadow-green-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >
@@ -476,8 +472,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('exams')
-                              ? 'bg-blue-700 text-white'
-                              : 'bg-blue-500 text-white hover:shadow-blue-500/50'
+                              ? 'bg-green-900 text-white'
+                              : 'bg-green-700 text-white hover:shadow-green-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >
