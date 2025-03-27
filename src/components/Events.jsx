@@ -241,6 +241,10 @@ const Events = () => {
                       <p className="line-clamp-3 text-sm">
                         <strong>Описание:</strong> {event.description || "Описание не доступно"}
                       </p>
+                      <p className="line-clamp-3 text-sm">
+                        <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
+                      
+                      </p>
                     </div>
                   </div>
 
@@ -323,6 +327,10 @@ const Events = () => {
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
               </p>
+              <p className="line-clamp-3 text-sm">
+                        <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+                      
+                      </p>
             </div>
             <div className="flex flex-col gap-3 mt-4 sm:flex-row sm:gap-4 sm:justify-end">
               <button

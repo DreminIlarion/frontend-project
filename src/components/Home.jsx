@@ -219,6 +219,10 @@ const Home = () => {
                     <p className="text-sm break-words">
                       <strong>Описание:</strong> {event.description || "Описание не доступно"}
                     </p>
+                    <p className="line-clamp-3 text-sm">
+                        <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
+                      
+                      </p>
                   </div>
 
                   <div className="mt-6 text-right">
@@ -297,6 +301,10 @@ const Home = () => {
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
               </p>
+              <p className="line-clamp-3 text-sm">
+                        <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+                      
+                      </p>
             </div>
             <div className="flex justify-end gap-4 mt-8">
               {user?.loggedIn && (
