@@ -333,69 +333,7 @@ html, body {
   animation: progress 1s ease-out forwards;
 }
 
-/* Стили для трека ползунка */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-}
 
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 1rem; /* Высота трека */
-  background: linear-gradient(to right, #e5e7eb, #d1d5db); /* Градиентный фон трека */
-  border-radius: 9999px; /* Скругление */
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Внутренняя тень */
-}
-
-input[type="range"]::-moz-range-track {
-  height: 1rem;
-  background: linear-gradient(to right, #e5e7eb, #d1d5db);
-  border-radius: 9999px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Стили для бегунка (thumb) */
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 1.5rem; /* Высота бегунка */
-  width: 1.5rem; /* Ширина бегунка */
-  background: linear-gradient(to bottom, #3b82f6, #4f46e5); /* Градиентный фон бегунка */
-  border-radius: 50%; /* Круглая форма */
-  border: 3px solid white; /* Белая обводка */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* Тень */
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.1); /* Увеличение при наведении */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(0.95); /* Уменьшение при нажатии */
-}
-
-input[type="range"]::-moz-range-thumb {
-  height: 1.5rem;
-  width: 1.5rem;
-  background: linear-gradient(to bottom, #3b82f6, #4f46e5);
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-input[type="range"]::-moz-range-thumb:active {
-  transform: scale(0.95);
-}
 
 /* Анимация для текста баллов */
 @keyframes pulse {

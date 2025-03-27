@@ -6,7 +6,7 @@ const ClassifierForm = () => {
   const [formData, setFormData] = useState({
     year: "2024",
     gender: "male",
-    gpa: "4.3",
+    gpa: "4",
     points: "",
     direction: "",
   });
@@ -143,20 +143,20 @@ const ClassifierForm = () => {
 
   // Функция для получения фона в зависимости от prediction
   const getBackground = (prediction) => {
-    if (prediction <= 0.25) return "bg-red-100/90 border-red-200";
-    if (prediction <= 0.4) return "bg-red-50/90 border-red-100";
-    if (prediction <= 0.6) return "bg-blue-50/90 border-blue-100";
-    if (prediction <= 0.75) return "bg-teal-50/90 border-teal-100";
-    return "bg-green-50/90 border-green-100";
+    if (prediction <= 0.25) return "bg-gradient-to-r from-red-100 to-orange-100 border-red-200";
+    if (prediction <= 0.4) return "bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-200";
+    if (prediction <= 0.6) return "bg-gradient-to-r from-blue-100 to-indigo-100 border-blue-200";
+    if (prediction <= 0.75) return "bg-gradient-to-r from-teal-100 to-cyan-100 border-teal-200";
+    return "bg-gradient-to-r from-green-100 to-teal-100 border-green-200";
   };
 
   // Функция для получения градиента прогресс-бара
   const getGradient = (prediction) => {
     if (prediction <= 0.25) return "from-red-500 to-red-700";
-    if (prediction <= 0.4) return "from-red-400 to-red-600";
-    if (prediction <= 0.6) return "from-blue-400 to-blue-600";
-    if (prediction <= 0.75) return "from-teal-500 to-teal-700";
-    return "from-green-500 to-green-700";
+    if (prediction <= 0.4) return "from-orange-500 to-orange-700";
+    if (prediction <= 0.6) return "from-blue-500 to-indigo-500";
+    if (prediction <= 0.75) return "from-teal-500 to-cyan-500";
+    return "from-green-500 to-teal-500";
   };
 
   // Функция для получения дополнительного описания
@@ -180,28 +180,65 @@ const ClassifierForm = () => {
         </h1>
 
         <fieldset className="flex-grow space-y-6 sm:space-y-8">
-          {/* Выбор пола через кнопки */}
-          
+          {/* Выбор баллов */}
+          <div className="block text-sm sm:text-base font-semibold text-gray-800">
+            <label className="block mb-3 sm:mb-4 text-center text-lg sm:text-xl font-bold text-blue-900 tracking-tight animate-fadeIn">
+              Общее количество баллов (ЕГЭ)
+            </label>
 
-          <label className="block text-sm sm:text-base font-semibold text-gray-800">
-            Общее количество баллов (ЕГЭ):
-            <input
-              type="range"
-              min="1"
-              max="310"
-              step="1"
-              value={formData.points}
-              onChange={handleRangeChange}
-              className="w-full mt-3 sm:mt-4 h-3 sm:h-4 rounded-full appearance-none cursor-pointer bg-gradient-to-r from-gray-200 to-gray-300 focus:outline-none"
-            />
-            <div className="flex items-center justify-center mt-3 sm:mt-4 gap-2">
-              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text animate-pulse">
-                {formData.points}
-              </span>
-              <span className="text-sm sm:text-base text-gray-600">баллов</span>
+            {/* Контейнер для поля ввода */}
+            <div className="relative flex justify-center mb-6 sm:mb-8">
+              {/* Текстовое поле для ввода */}
+              <input
+                type="number"
+                min="1"
+                max="310"
+                value={formData.points === 0 ? "" : formData.points}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setFormData((prev) => ({
+                      ...prev,
+                      points: 0,
+                    }));
+                  } else {
+                    const parsedValue = parseInt(value);
+                    setFormData((prev) => ({
+                      ...prev,
+                      points: Math.min(Math.max(1, parsedValue), 310),
+                    }));
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === "" || parseInt(e.target.value) < 1) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      points: 1,
+                    }));
+                  }
+                }}
+                className="w-28 sm:w-32 p-3 sm:p-4 text-center border border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-xl sm:text-2xl font-bold text-blue-900 shadow-md hover:shadow-lg focus:shadow-xl"
+                placeholder="0"
+              />
             </div>
-          </label>
 
+            {/* Визуальный индикатор (прогресс-бар) */}
+            <div className="relative w-full max-w-xs mx-auto h-2 sm:h-3 rounded-full bg-gray-200 overflow-hidden mb-4">
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                style={{ width: `${(formData.points / 310) * 100}%` }}
+              ></div>
+            </div>
+
+            {/* Сообщение об ошибке, если значение вне диапазона */}
+            {formData.points > 310 && (
+              <p className="text-red-500 text-sm mt-2 animate-fadeIn">
+                Максимальное значение — 310 баллов
+              </p>
+            )}
+          </div>
+
+          {/* Выбор направления */}
           <label className="block text-sm sm:text-base font-semibold text-gray-800 mb-1">
             Направление:
           </label>
@@ -243,29 +280,68 @@ const ClassifierForm = () => {
       {prediction !== null && (
         <div
           ref={resultRef}
-          className={`mt-8 sm:mt-10 p-6 sm:p-8 ${
-            prediction === 0 ? "bg-gray-100/90 border-gray-200" : getBackground(prediction)
-          } border rounded-3xl shadow-2xl w-full max-w-2xl mx-auto animate-fadeIn transition-all duration-300 hover:shadow-lg`}
+          className={`mt-8 sm:mt-10 p-6 sm:p-8 border rounded-3xl shadow-2xl w-full max-w-2xl mx-auto animate-fadeIn transition-all duration-500 hover:shadow-xl ${
+            prediction === 0
+              ? "bg-gray-100/90 border-gray-200"
+              : getBackground(prediction)
+          } relative overflow-hidden`}
         >
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Результат</h2>
+          {/* Декоративный фон */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute w-64 h-64 bg-white/30 rounded-full -top-32 -left-32 blur-3xl"></div>
+            <div className="absolute w-64 h-64 bg-white/30 rounded-full -bottom-32 -right-32 blur-3xl"></div>
+          </div>
+
+          {/* Заголовок */}
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight mb-4 sm:mb-6 text-center">
+            Результат
+          </h2>
+
           {prediction === 0 ? (
-            <p className="text-lg sm:text-xl text-gray-800">
+            <p className="text-lg sm:text-xl text-gray-800 text-center leading-relaxed">
               Извините, но для таких параметров у нас нет данных. Попробуйте изменить параметры.
             </p>
           ) : (
             <>
-              <p className="text-lg sm:text-xl text-gray-800 mb-3 sm:mb-4">
-                Ваш шанс на поступление: <span className="font-semibold text-blue-900">{(prediction * 100).toFixed(0)}%</span>
-              </p>
-              <div className="w-full bg-gray-200 rounded-full h-5 sm:h-6 mb-4 sm:mb-6 overflow-hidden shadow-inner">
-                <div
-                  className={`h-5 sm:h-6 rounded-full bg-gradient-to-r ${getGradient(prediction)} animate-progress shadow-md`}
-                  style={{ width: `${prediction * 100}%` }}
-                />
+              {/* Шанс на поступление с круговым индикатором */}
+              <div className="flex flex-col items-center mb-4 sm:mb-6">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                  <svg className="w-full h-full" viewBox="0 0 36 36">
+                    <path
+                      className="fill-none stroke-gray-200 stroke-[3]"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={`fill-none stroke-[3] transition-all duration-1000 bg-gradient-to-r ${getGradient(
+                        prediction
+                      )}`}
+                      strokeDasharray={`${prediction * 100}, 100`}
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+                      {(prediction * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-2 text-lg sm:text-xl text-gray-800">
+                  Ваш шанс на поступление
+                </p>
               </div>
-              <p className="text-sm sm:text-base italic text-gray-600 leading-relaxed">{getDescription(prediction)}</p>
+
+              {/* Описание */}
+              <p className="text-sm sm:text-base italic text-gray-600 leading-relaxed text-center animate-fadeIn delay-200">
+                {getDescription(prediction)}
+              </p>
             </>
           )}
+
+            
         </div>
       )}
 
