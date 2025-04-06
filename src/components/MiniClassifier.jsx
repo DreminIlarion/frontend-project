@@ -3,18 +3,17 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ClassifierForm = ({ tabState, setTabState }) => {
-  // Используем начальные значения из tabState или задаём дефолтные
   const formData = tabState.formData || {
     year: "2024",
     gender: "male",
-    gpa: "3.9",
+    gpa: "4.2",
     points: "",
     direction: "",
   };
   const prediction = tabState.prediction || null;
   const loading = tabState.loading || false;
 
-  const resultRef = useRef(null); // Ссылка на блок результата
+  const resultRef = useRef(null);
 
   const directions = [
     "01.03.02 Прикладная математика и информатика",
@@ -56,20 +55,14 @@ const ClassifierForm = ({ tabState, setTabState }) => {
     const { name, value } = e.target;
     setTabState({
       ...tabState,
-      formData: {
-        ...formData,
-        [name]: value,
-      },
+      formData: { ...formData, [name]: value },
     });
   };
 
   const handleGenderChange = (gender) => {
     setTabState({
       ...tabState,
-      formData: {
-        ...formData,
-        gender,
-      },
+      formData: { ...formData, gender },
     });
   };
 
@@ -77,10 +70,7 @@ const ClassifierForm = ({ tabState, setTabState }) => {
     const { value } = e.target;
     setTabState({
       ...tabState,
-      formData: {
-        ...formData,
-        points: value,
-      },
+      formData: { ...formData, points: value },
     });
   };
 
@@ -88,10 +78,7 @@ const ClassifierForm = ({ tabState, setTabState }) => {
     const { value } = e.target;
     setTabState({
       ...tabState,
-      formData: {
-        ...formData,
-        direction: value,
-      },
+      formData: { ...formData, direction: value },
     });
   };
 
@@ -106,8 +93,13 @@ const ClassifierForm = ({ tabState, setTabState }) => {
       points: parseInt(formData.points, 10),
     };
 
-    // Проверка данных перед отправкой
-    if (!dataToSend.gender || !dataToSend.gpa || !dataToSend.points || !dataToSend.year || !dataToSend.direction) {
+    if (
+      !dataToSend.gender ||
+      !dataToSend.gpa ||
+      !dataToSend.points ||
+      !dataToSend.year ||
+      !dataToSend.direction
+    ) {
       toast.error("Пожалуйста, заполните все поля формы.");
       setTabState({ ...tabState, loading: false });
       return;
@@ -122,9 +114,7 @@ const ClassifierForm = ({ tabState, setTabState }) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_PREDICT_FREE}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),
       });
 
@@ -134,32 +124,34 @@ const ClassifierForm = ({ tabState, setTabState }) => {
 
       const result = await response.json();
 
-      if (typeof result.body === "number") {
+      if (result.status_code === 200 && result.body === 0) {
+        setTabState({
+          ...tabState,
+          prediction: "no-data",
+          loading: false,
+        });
+      } else if (typeof result.body === "number") {
         setTabState({
           ...tabState,
           prediction: result.body,
           loading: false,
         });
-        setTimeout(() => {
-          resultRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
       } else {
-        setTabState({
-          ...tabState,
-          prediction: null,
-          loading: false,
-        });
-        toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
+        throw new Error("Неожиданный формат ответа от сервера");
       }
+
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     } catch (error) {
       console.error("Ошибка запроса:", error);
-      toast.error("Произошла ошибка");
+      toast.error("Произошла ошибка при обработке запроса");
       setTabState({ ...tabState, loading: false });
     }
   };
 
-  // Функции для стилей (без изменений)
   const getBackground = (prediction) => {
+    if (prediction === "no-data") return "bg-gray-100/90 border-gray-200";
     if (prediction <= 0.25) return "bg-gradient-to-r from-red-100 to-orange-100 border-red-200";
     if (prediction <= 0.4) return "bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-200";
     if (prediction <= 0.6) return "bg-gradient-to-r from-blue-100 to-indigo-100 border-blue-200";
@@ -176,10 +168,16 @@ const ClassifierForm = ({ tabState, setTabState }) => {
   };
 
   const getDescription = (prediction) => {
-    if (prediction <= 0.25) return "К сожалению, шансы на поступление очень низкие. Попробуйте улучшить свои баллы или рассмотреть другие направления.";
-    if (prediction <= 0.4) return "Шансы на поступление невысоки. Возможно, стоит подтянуть баллы или выбрать менее конкурентное направление.";
-    if (prediction <= 0.6) return "У вас есть шансы на поступление, но конкуренция может быть высокой. Удачи!";
-    if (prediction <= 0.75) return "Хорошие шансы на поступление! Продолжайте в том же духе.";
+    if (prediction === "no-data")
+      return "Извините, но для таких данных у нас информации нет. Поменяйте вводимую информацию (это всего лишь бета-версия, возможны ошибки).";
+    if (prediction <= 0.25)
+      return "К сожалению, шансы на поступление очень низкие. Попробуйте улучшить свои баллы или рассмотреть другие направления.";
+    if (prediction <= 0.4)
+      return "Шансы на поступление невысоки. Возможно, стоит подтянуть баллы или выбрать менее конкурентное направление.";
+    if (prediction <= 0.6)
+      return "У вас есть шансы на поступление, но конкуренция может быть высокой. Удачи!";
+    if (prediction <= 0.75)
+      return "Хорошие шансы на поступление! Продолжайте в том же духе.";
     return "Отличные шансы на поступление! Вы на правильном пути!";
   };
 
@@ -286,11 +284,9 @@ const ClassifierForm = ({ tabState, setTabState }) => {
       {prediction !== null && (
         <div
           ref={resultRef}
-          className={`mt-8 sm:mt-10 p-6 sm:p-8 border rounded-3xl shadow-2xl w-full max-w-2xl mx-auto animate-fadeIn transition-all duration-500 hover:shadow-xl ${
-            prediction === 0
-              ? "bg-gray-100/90 border-gray-200"
-              : getBackground(prediction)
-          } relative overflow-hidden`}
+          className={`mt-8 sm:mt-10 p-6 sm:p-8 border rounded-3xl shadow-2xl w-full max-w-2xl mx-auto animate-fadeIn transition-all duration-500 hover:shadow-xl ${getBackground(
+            prediction
+          )} relative overflow-hidden`}
         >
           <div className="absolute inset-0 opacity-20">
             <div className="absolute w-64 h-64 bg-white/30 rounded-full -top-32 -left-32 blur-3xl"></div>
@@ -301,10 +297,15 @@ const ClassifierForm = ({ tabState, setTabState }) => {
             Результат
           </h2>
 
-          {prediction === 0 ? (
-            <p className="text-lg sm:text-xl text-gray-800 text-center leading-relaxed">
-              Извините, но для таких параметров у нас нет данных. Попробуйте изменить параметры.
-            </p>
+          {prediction === "no-data" ? (
+            <div className="text-center">
+              <p className="text-lg sm:text-xl text-gray-800 leading-relaxed mb-4">
+              Информация по указанным данным не найдена. Возможно, данные введены некорректно или таких данных нет в системе. 
+              </p>
+              <p className="text-sm sm:text-base text-gray-600 italic">
+              Учтите, что это бета-версия, в работе возможны неточности.
+              </p>
+            </div>
           ) : (
             <>
               <div className="flex flex-col items-center mb-4 sm:mb-6">
@@ -312,18 +313,14 @@ const ClassifierForm = ({ tabState, setTabState }) => {
                   <svg className="w-full h-full" viewBox="0 0 36 36">
                     <path
                       className="fill-none stroke-gray-200 stroke-[3]"
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     />
                     <path
                       className={`fill-none stroke-[3] transition-all duration-1000 bg-gradient-to-r ${getGradient(
                         prediction
                       )}`}
                       strokeDasharray={`${prediction * 100}, 100`}
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
