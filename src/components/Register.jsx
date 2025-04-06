@@ -63,17 +63,17 @@ const Register = () => {
           setTimeout(() => navigate('/'), 1500);
         } else {
           const tokenError = await tokenResponse.json();
-          toast.error(`Ошибка при установке токенов: ${tokenError.message || 'Попробуйте снова.'}`);
+          toast.error(`Пользователь с таким email уже зарегистрирован`);
         }
       } else if (response.status === 500) {
         toast.error('Пользователь с таким email уже зарегистрирован.');
       } else {
         const errorData = await response.json();
-        toast.error(`Ошибка регистрации: ${errorData.message || 'Попробуйте снова.'}`);
+        toast.error(`Пользователь с таким email уже зарегистрирован'`);
       }
     } catch (error) {
       console.error('Ошибка регистрации:', error);
-      toast.error(error.message || 'Ошибка сети. Проверьте соединение.');
+      toast.error("Пользователь с таким email уже зарегистрирован");
     } finally {
       setIsLoading(false);
     }
