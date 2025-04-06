@@ -12,15 +12,21 @@ const OAuthCallback = () => {
     if (hasRun.current) return;
     hasRun.current = true;
 
+    console.log("Начало выполнения useEffect в OAuthCallback");
+
     const code = searchParams.get("code");
     const deviceId = searchParams.get("device_id");
     let sessionId = searchParams.get("state");
+
+    console.log("Полученные параметры из URL:", { code, deviceId, sessionId, provider });
 
     const inferredProvider = window.location.href.includes("vk")
       ? "vk"
       : window.location.href.includes("yandex")
       ? "yandex"
       : null;
+
+    console.log("Определенный провайдер:", { inferredProvider });
 
     if (!code || (!provider && !inferredProvider)) {
       console.error("Отсутствует code или provider", { code, provider, inferredProvider });
@@ -34,6 +40,7 @@ const OAuthCallback = () => {
     }
 
     const finalProvider = provider || inferredProvider;
+    console.log("Итоговый провайдер:", finalProvider);
 
     let action = "register";
     if (sessionId) {
@@ -41,19 +48,23 @@ const OAuthCallback = () => {
         const parsedState = JSON.parse(sessionId);
         sessionId = parsedState.sessionId;
         action = parsedState.action || "register";
+        console.log("Успешно распарсен state:", { sessionId, action });
       } catch (error) {
         console.warn("State не является валидным JSON, используем localStorage:", error);
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
         action = localStorage.getItem(`${finalProvider}_action`) || "register";
+        console.log("Данные из localStorage:", { sessionId, action });
       }
     } else {
       sessionId = localStorage.getItem(`${finalProvider}_session_id`);
       action = localStorage.getItem(`${finalProvider}_action`) || "register";
+      console.log("Данные из localStorage (без state):", { sessionId, action });
     }
 
     const exchangeToken = async () => {
       try {
         const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
+        console.log("Получен codeVerifier из localStorage:", { codeVerifier });
 
         if (!codeVerifier) {
           console.error("Отсутствует code_verifier для", finalProvider);
@@ -65,27 +76,44 @@ const OAuthCallback = () => {
           finalProvider === "vk"
             ? `https://personal-account-c98o.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
             : `https://personal-account-c98o.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+        console.log("URL для запроса токена:", tokenUrl);
 
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
           credentials: "include",
         });
+        console.log("Статус ответа на запрос токена:", tokenResponse.status);
+
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error("Ошибка в запросе токена:", { status: tokenResponse.status, errorText });
+          throw new Error(
+            `Сервер вернул ошибку ${tokenResponse.status}: ${errorText || "Нет дополнительной информации"}`
+          );
+        }
+
         const tokenDataFull = await tokenResponse.json();
-        const tokenData = tokenDataFull.body; // Берем данные из body
+        console.log("Полный ответ на запрос токена:", tokenDataFull);
+
+        const tokenData = tokenDataFull.body || tokenDataFull;
+        console.log("Извлеченные данные токена:", tokenData);
 
         if (!tokenData) {
-          throw new Error("Отсутствует поле body в ответе на запрос токена");
+          throw new Error("Ответ сервера пустой или не содержит данных");
         }
 
         const accessToken = tokenData.access_token;
+        console.log("Получен accessToken:", accessToken);
+
         if (!accessToken) {
           console.error("Ошибка получения токена или неверный формат ответа", tokenData);
-          toast.error("Ошибка получения токена.");
-          return;
+          throw new Error("Токен доступа отсутствует в ответе сервера");
         }
 
         if (action === "register") {
           const registrationUrl = `https://personal-account-c98o.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+          console.log("URL для регистрации:", registrationUrl);
+
           const registrationResponse = await fetch(registrationUrl, {
             method: "POST",
             headers: {
@@ -95,8 +123,21 @@ const OAuthCallback = () => {
             credentials: "include",
             body: JSON.stringify({ access_token: accessToken }),
           });
+          console.log("Статус ответа на запрос регистрации:", registrationResponse.status);
+
+          if (!registrationResponse.ok) {
+            const errorText = await registrationResponse.text();
+            console.error("Ошибка в запросе регистрации:", { status: registrationResponse.status, errorText });
+            throw new Error(
+              `Ошибка регистрации ${registrationResponse.status}: ${errorText || "Нет дополнительной информации"}`
+            );
+          }
+
           const registrationDataFull = await registrationResponse.json();
-          const registrationData = registrationDataFull.body || registrationDataFull; // Учитываем возможное отсутствие body
+          console.log("Полный ответ на запрос регистрации:", registrationDataFull);
+
+          const registrationData = registrationDataFull.body || registrationDataFull;
+          console.log("Извлеченные данные регистрации:", registrationData);
 
           if (registrationDataFull.status_code === 200) {
             console.log("Регистрация успешна, выполняем логин...");
@@ -107,7 +148,7 @@ const OAuthCallback = () => {
             setTimeout(() => navigate("/profile"), 500);
           } else {
             console.error("Ошибка при регистрации", registrationData);
-            toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
+            throw new Error(registrationData.message || "Неизвестная ошибка при регистрации");
           }
         } else if (action === "login") {
           console.log("Пользователь пытается войти, выполняем вход...");
@@ -115,11 +156,14 @@ const OAuthCallback = () => {
         }
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
-        toast.error("Ошибка обмена токена: " + error.message);
+        toast.error(`Ошибка обмена токена: ${error.message}`);
+        setTimeout(() => navigate("/login"), 2000);
       } finally {
         if (sessionId) {
+          console.log("Очистка localStorage для sessionId:", sessionId);
           localStorage.removeItem(`${finalProvider}_code_verifier_${sessionId}`);
         }
+        console.log("Очистка localStorage для провайдера:", finalProvider);
         localStorage.removeItem(`${finalProvider}_session_id`);
         localStorage.removeItem(`${finalProvider}_action`);
       }
@@ -128,6 +172,8 @@ const OAuthCallback = () => {
     const performLogin = async (accessToken, provider) => {
       try {
         const loginUrl = `https://personal-account-c98o.onrender.com/api/v1/${provider}/login/${accessToken}`;
+        console.log("URL для входа:", loginUrl);
+
         const loginResponse = await fetch(loginUrl, {
           method: "POST",
           headers: {
@@ -136,26 +182,57 @@ const OAuthCallback = () => {
           },
           credentials: "include",
         });
+        console.log("Статус ответа на запрос входа:", loginResponse.status);
+
+        if (!loginResponse.ok) {
+          const errorText = await loginResponse.text();
+          console.error("Ошибка в запросе входа:", { status: loginResponse.status, errorText });
+          throw new Error(
+            `Ошибка входа ${loginResponse.status}: ${errorText || "Нет дополнительной информации"}`
+          );
+        }
+
         const loginDataFull = await loginResponse.json();
-        const loginData = loginDataFull.body || loginDataFull; // Учитываем возможное отсутствие body
+        console.log("Полный ответ на запрос входа:", loginDataFull);
+
+        const loginData = loginDataFull.body || loginDataFull;
+        console.log("Извлеченные данные входа:", loginData);
 
         if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;
           const finalRefresh = loginData.refresh;
+          console.log("Получены токены:", { finalAccess, finalRefresh });
 
           const setTokenUrl = `https://personal-account-c98o.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+          console.log("URL для установки токенов:", setTokenUrl);
+
           const setTokenResponse = await fetch(setTokenUrl, {
             method: "GET",
             credentials: "include",
           });
+          console.log("Статус ответа на установку токенов:", setTokenResponse.status);
+
+          if (!setTokenResponse.ok) {
+            const errorText = await setTokenResponse.text();
+            console.error("Ошибка в запросе установки токенов:", { status: setTokenResponse.status, errorText });
+            throw new Error(
+              `Ошибка установки токена ${setTokenResponse.status}: ${errorText || "Нет дополнительной информации"}`
+            );
+          }
+
           const setTokenDataFull = await setTokenResponse.json();
+          console.log("Полный ответ на установку токенов:", setTokenDataFull);
+
           const setTokenData = setTokenDataFull.body || setTokenDataFull;
+          console.log("Извлеченные данные установки токенов:", setTokenData);
 
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
+          console.log("Токены сохранены в cookies:", { access: finalAccess, refresh: finalRefresh });
 
           toast.success("Вход выполнен успешно! Вы будете перенаправлены на profile...");
           setTimeout(() => {
+            console.log("Перенаправление на /profile");
             navigate("/profile");
             window.location.reload();
           }, 500);
@@ -165,6 +242,7 @@ const OAuthCallback = () => {
             loginData.message === "Ошибка в методе get_user_email_vk класса CRUD"
           ) {
             const providerName = provider === "vk" ? "VK" : "Яндекс";
+            console.log("Ошибка: требуется регистрация в", providerName);
             toast.error(
               `Войдите в личный кабинет и зарегистрируйтесь в ${providerName}.`,
               {
@@ -178,20 +256,26 @@ const OAuthCallback = () => {
                 },
               }
             );
-            setTimeout(() => navigate("/login"), 4000);
+            setTimeout(() => {
+              console.log("Перенаправление на /login из-за необходимости регистрации");
+              navigate("/login");
+            }, 4000);
           } else {
             console.error("Ошибка при входе", loginData);
-            toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
-            setTimeout(() => navigate("/login"), 2000);
+            throw new Error(loginData.message || "Неизвестная ошибка при входе");
           }
         }
       } catch (error) {
         console.error("Ошибка при выполнении входа:", error);
-        toast.error("Ошибка при входе: " + error.message);
-        setTimeout(() => navigate("/login"), 2000);
+        toast.error(`Ошибка при входе: ${error.message}`);
+        setTimeout(() => {
+          console.log("Перенаправление на /login из-за ошибки входа");
+          navigate("/login");
+        }, 2000);
       }
     };
 
+    console.log("Запуск exchangeToken");
     exchangeToken();
   }, [provider, navigate, searchParams]);
 
