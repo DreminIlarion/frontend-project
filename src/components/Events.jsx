@@ -11,6 +11,8 @@ const Events = () => {
   const [registeredEvents, setRegisteredEvents] = useState(new Set());
   const [visitorData, setVisitorData] = useState({});
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [removingEventId, setRemovingEventId] = useState(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState(null); // Для хранения URL QR-кода
 
   const { user, fetchWithAuth } = useUser();
   const navigate = useNavigate();
@@ -38,9 +40,8 @@ const Events = () => {
       }
 
       const data1 = await response.json();
-
       if (!data1.body || !Array.isArray(data1.body.events)) {
-        throw new Error("Неожиданная структура ответа API: events не найден или не является массивом");
+        throw new Error("Неожиданная структура ответа API");
       }
 
       const data = data1.body.events;
@@ -91,9 +92,8 @@ const Events = () => {
         }
 
         const data1 = await response.json();
-
         if (!data1.body || !Array.isArray(data1.body)) {
-          throw new Error("Неожиданная структура ответа API: body не найден или не является массивом");
+          throw new Error("Неожиданная структура ответа API");
         }
 
         const data = data1.body;
@@ -112,12 +112,21 @@ const Events = () => {
     fetchVisitorData();
   }, [user, navigate, fetchWithAuth]);
 
-  const handleScroll = (e) => {
-    const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
-    if (bottom && !loading && hasMore) {
-      setPage((prevPage) => prevPage + 1);
-    }
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+          document.documentElement.offsetHeight - 100 &&
+        !loading &&
+        hasMore
+      ) {
+        setPage((prevPage) => prevPage + 1);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
 
   const handleRegistration = async (eventId) => {
     if (!user?.loggedIn) {
@@ -130,6 +139,11 @@ const Events = () => {
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
+      if (isRegistered) {
+        setRemovingEventId(eventId);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+
       const response = await fetchWithAuth(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -142,8 +156,7 @@ const Events = () => {
 
       if (!response.ok) {
         const data1 = await response.json();
-        const data = data1.body;
-        throw new Error(`Ошибка ${response.status}: ${data.message || "Неизвестная ошибка"}`);
+        throw new Error(`Ошибка ${response.status}: ${data1.body.message || "Неизвестная ошибка"}`);
       }
 
       setRegisteredEvents((prev) => {
@@ -153,6 +166,8 @@ const Events = () => {
       });
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
+    } finally {
+      setRemovingEventId(null);
     }
   };
 
@@ -166,197 +181,237 @@ const Events = () => {
     if (!uniqueString) return;
 
     try {
-      const response = await fetchWithAuth(process.env.REACT_APP_VISITORS_GET, {
-        method: "GET",
-      });
-
-      if (!response) {
-        navigate("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        const data1 = await response.json();
-        const data = data1.body;
-        throw new Error(`Ошибка авторизации перед получением QR-кода: ${data.message || "Неизвестная ошибка"}`);
-      }
-
       const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
-      window.open(qrUrl, "_blank");
+      // Вместо открытия в новом окне сохраняем URL для отображения
+      setQrCodeUrl(qrUrl);
     } catch (error) {
-      console.error("Ошибка при проверке авторизации для QR-кода:", error.message);
-      navigate("/login");
+      console.error("Ошибка при получении QR-кода:", error.message);
     }
   };
 
   const openModal = (event) => setSelectedEvent(event);
-  const closeModal = () => setSelectedEvent(null);
+  const closeModal = () => {
+    setSelectedEvent(null);
+    setQrCodeUrl(null); // Сбрасываем QR-код при закрытии модального окна
+  };
 
-  if (loading && page === 1)
+  const getEventIcon = (name) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("лекция") || lowerName.includes("семинар")) return "🎓";
+    if (lowerName.includes("концерт") || lowerName.includes("выступление")) return "🎤";
+    if (lowerName.includes("спорт") || lowerName.includes("турнир")) return "⚽";
+    if (lowerName.includes("выставка") || lowerName.includes("экспозиция")) return "🖼️";
+    return "📅";
+  };
+
+  if (loading && page === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
-        <p className="text-lg text-gray-600 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
-          Загрузка событий...
-        </p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+        <div className="flex items-center gap-3 p-4 bg-white rounded-lg shadow-md animate-pulse">
+          <div className="w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">Загрузка событий...</p>
+        </div>
       </div>
     );
-  if (error)
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
-        <p className="text-lg text-red-600 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md">
-          Ошибка: {error}
-        </p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+        <div className="p-4 bg-white rounded-lg shadow-md border-l-4 border-red-400 animate-pulse">
+          <p className="text-red-600 font-medium">Ошибка: {error}</p>
+        </div>
       </div>
     );
+  }
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 flex flex-col items-center p-6">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in">
-          Мои мероприятия
-        </h2>
+      <div className="bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 min-h-screen py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-semibold text-gray-800 text-center mb-12">
+            Мои мероприятия
+          </h2>
 
-        <div
-          className="max-w-6xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-h-[80vh] overflow-y-auto"
-          onScroll={handleScroll}
-        >
           {events.filter((event) => registeredEvents.has(event.id)).length > 0 ? (
-            events
-              .filter((event) => registeredEvents.has(event.id))
-              .map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-blue-100/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 slide-in"
-                >
-                  <div className="flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3
-                        onClick={() => openModal(event)}
-                        className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 max-w-[70%] truncate cursor-pointer"
-                        title={event.name_event}
-                      >
-                        {event.name_event}
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
-                      </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {events
+                .filter((event) => registeredEvents.has(event.id))
+                .map((event) => (
+                  <div
+                    key={event.id}
+                    className={`bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-300 ${
+                      removingEventId === event.id ? "animate-fadeOut" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 mb-4">
+                      <span className="text-2xl flex-shrink-0">{getEventIcon(event.name_event)}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          onClick={() => openModal(event)}
+                          className="text-lg font-semibold text-gray-800 hover:text-blue-600 cursor-pointer transition-colors duration-200 break-words"
+                          title={event.name_event}
+                        >
+                          {event.name_event}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {event.date_time
+                            ? new Date(event.date_time).toLocaleDateString()
+                            : "Дата не указана"}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="mt-4 space-y-2 text-gray-700">
+                    <div className="space-y-3 text-gray-600 text-sm">
                       <p>
-                        <strong>Место:</strong> {event.location || "Не указано"}
+                        <span className="font-medium text-gray-700">Место:</span>{" "}
+                        {event.location || "Не указано"}
                       </p>
                       <p>
-                        <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
-                          <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                        <span className="font-medium text-gray-700">Лимит мест:</span>{" "}
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                            event.limit_people
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {event.limit_people ? `${event.limit_people} чел.` : "Без ограничений"}
                         </span>
                       </p>
-                      <p className="line-clamp-3 text-sm">
-                        <strong>Описание:</strong> {event.description || "Описание не доступно"}
+                      <p className="line-clamp-2">
+                        <span className="font-medium text-gray-700">Описание:</span>{" "}
+                        {event.description || "Описание отсутствует"}
                       </p>
-                      <p className="line-clamp-3 text-sm">
-                        <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
+                      <p>
+                        <span className="font-medium text-gray-700">Баллы:</span>{" "}
+                        {event.points_for_the_event || "0"}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="flex gap-4 mt-6">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRegistration(event.id);
-                      }}
-                      className="flex-1 py-3 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-red-500/50"
-                    >
-                      Отписаться ❌
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        getQRCode(event.id);
-                      }}
-                      className="py-3 px-5 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
-                    >
-                      QR-код 📲
-                    </button>
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRegistration(event.id);
+                        }}
+                        className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200 hover:scale-105"
+                      >
+                        Отписаться
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          getQRCode(event.id);
+                          openModal(event); // Открываем модалку для показа QR
+                        }}
+                        className="py-2 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 hover:scale-105"
+                      >
+                        QR-код
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+            </div>
           ) : (
-            <div className="col-span-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-lg animate-pulse-slow">
-              <span className="text-5xl mb-4">📅</span>
-              <p className="text-center text-gray-800 text-lg font-semibold mb-4">
-                Вы не записаны ни на одно мероприятие.
-              </p>
-              <p className="text-center text-gray-600 mb-6">
-                Хотите записаться на мероприятие? Перейдите на главную страницу!
-              </p>
+            <div className="text-center py-12 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 rounded-lg shadow-md animate-fadeIn">
+              <span className="text-5xl mb-4 block">📅</span>
+              <p className="text-lg font-semibold text-gray-800 mb-2">Нет мероприятий</p>
+              <p className="text-gray-600 mb-6">Запишитесь на событие на главной странице</p>
               <Link
                 to="/"
-                className="inline-block py-3 px-6 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
+                className="inline-block py-2 px-6 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 hover:scale-105"
               >
-                Перейти на главную
+                На главную
               </Link>
             </div>
           )}
-        </div>
 
-        {loading && (
-          <p className="text-center text-gray-600 mt-6 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
-            Загрузка...
-          </p>
-        )}
+          {loading && (
+            <div className="text-center mt-8 animate-fadeIn">
+              <div className="w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-gray-600 font-medium">Загрузка...</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedEvent && (
         <div
-          className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto fade-in"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-modalFadeIn"
           onClick={closeModal}
         >
           <div
-            className="bg-white w-full max-w-lg mx-4 my-8 p-6 rounded-2xl shadow-xl flex flex-col gap-4 sm:max-w-xl modal-slide-in"
+            className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl animate-modalScaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl font-semibold text-gray-900 break-words leading-tight">
-              {selectedEvent.name_event}
-            </h3>
-            <div className="space-y-3 text-gray-700 text-sm">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-2xl flex-shrink-0">{getEventIcon(selectedEvent.name_event)}</span>
+              <h3 className="text-xl font-semibold text-gray-800 break-words">
+                {selectedEvent.name_event}
+              </h3>
+            </div>
+            <div className="space-y-3 text-gray-600 text-sm">
               <p>
-                <strong>Дата:</strong>{" "}
-                {selectedEvent.date_time ? new Date(selectedEvent.date_time).toLocaleString() : "Не указано"}
+                <span className="font-medium text-gray-700">Дата:</span>{" "}
+                {selectedEvent.date_time
+                  ? new Date(selectedEvent.date_time).toLocaleString()
+                  : "Не указано"}
               </p>
               <p className="break-words">
-                <strong>Место:</strong> {selectedEvent.location || "Не указано"}
+                <span className="font-medium text-gray-700">Место:</span>{" "}
+                {selectedEvent.location || "Не указано"}
               </p>
               <p>
-                <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
-                  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+                <span className="font-medium text-gray-700">Лимит мест:</span>{" "}
+                <span
+                  className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                    selectedEvent.limit_people
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  {selectedEvent.limit_people ? `${selectedEvent.limit_people} чел.` : "Без ограничений"}
                 </span>
               </p>
               <p className="break-words">
-                <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
+                <span className="font-medium text-gray-700">Описание:</span>{" "}
+                {selectedEvent.description || "Описание отсутствует"}
               </p>
-              <p className="line-clamp-3 text-sm">
-                <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+              <p>
+                <span className="font-medium text-gray-700">Баллы:</span>{" "}
+                {selectedEvent.points_for_the_event || "0"}
               </p>
             </div>
-            <div className="flex flex-col gap-3 mt-4 sm:flex-row sm:gap-4 sm:justify-end">
+
+            {/* Отображение QR-кода */}
+            {qrCodeUrl && selectedEvent.id === events.find((e) => visitorData[e.id] === qrCodeUrl.split('/').pop())?.id && (
+              <div className="mt-6 text-center">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Ваш QR-код</h4>
+                <img
+                  src={qrCodeUrl}
+                  alt="QR-код мероприятия"
+                  className="mx-auto max-w-[200px] w-full rounded-md shadow-md"
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 mt-6 sm:flex-row sm:justify-end">
               <button
                 onClick={() => handleRegistration(selectedEvent.id)}
-                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-red-500 to-red-700 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-red-500/50"
+                className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200 hover:scale-105"
               >
-                Отписаться ❌
+                Отписаться
               </button>
               <button
                 onClick={() => getQRCode(selectedEvent.id)}
-                className="w-full sm:w-auto py-2 px-4 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
+                className="py-2 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 hover:scale-105"
               >
-                QR-код 📲
+                QR-код
               </button>
               <button
                 onClick={closeModal}
-                className="w-full sm:w-auto py-2 px-4 text-gray-700 font-semibold rounded-full border border-gray-300 transition-all duration-300 hover:bg-gray-100"
+                className="py-2 px-4 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 hover:scale-105"
               >
                 Закрыть
               </button>
@@ -364,6 +419,64 @@ const Events = () => {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes fadeOut {
+          from {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalScaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-fadeOut {
+          animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-in;
+        }
+
+        .animate-modalFadeIn {
+          animation: modalFadeIn 0.3s ease-in;
+        }
+
+        .animate-modalScaleIn {
+          animation: modalScaleIn 0.3s ease-out;
+        }
+      `}</style>
     </>
   );
 };

@@ -192,7 +192,7 @@ const Profile = () => {
 
         {/* Main Content */}
         <main className="flex-1 min-h-screen flex justify-center">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 w-full max-w-7xl slide-in ">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 w-full  slide-in ">
             {activeSection === "news" && <News />}
             {activeSection === "telegram-bot" && <TelegramBotPage />}
             {activeSection === "form" && user?.loggedIn ? (
@@ -281,7 +281,7 @@ const Profile = () => {
                   ✕
                 </button>
               </div>
-              <div className="p-4 h-[calc(100%-3.5rem)]">
+              <div className=" h-[calc(100%-3.5rem)]">
                 <Chat />
               </div>
             </div>

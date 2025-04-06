@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from "react-hot-toast";
 
 const Home = () => {
   const [events, setEvents] = useState([]);
@@ -37,9 +37,7 @@ const Home = () => {
           return [...prevEvents, ...newEvents];
         });
 
-        if (data.length < 10) {
-          setHasMore(false);
-        }
+        if (data.length < 10) setHasMore(false);
       } catch (error) {
         setError(error.message);
         console.error(error);
@@ -90,9 +88,7 @@ const Home = () => {
     const handleScroll = () => {
       const bottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
-      if (bottom && !loading && hasMore) {
-        setPage((prevPage) => prevPage + 1);
-      }
+      if (bottom && !loading && hasMore) setPage((prevPage) => prevPage + 1);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -105,23 +101,22 @@ const Home = () => {
       navigate("/login");
       return;
     }
-  
+
     setLoadingEventId(eventId);
     const isRegistered = registeredEvents.has(eventId);
     const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
-  
+
     try {
       const response = await fetch(url, {
         method,
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
-  
+
       const data1 = await response.json();
-      const data = data1?.body; // Безопасный доступ к body
-  
-      // Проверяем случай, когда мест нет
+      const data = data1?.body;
+
       if (
         response.status === 200 &&
         data?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
@@ -129,24 +124,19 @@ const Home = () => {
         toast.error("Нельзя зарегистрироваться: мест больше нет!");
         return;
       }
-  
-      // Обработка ошибок
+
       if (!response.ok) {
         const errorMessage = data?.message || "Неизвестная ошибка на сервере";
         throw new Error(`Ошибка ${response.status}: ${errorMessage}`);
       }
-  
-      // Успешная регистрация/отписка
+
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
-        if (isRegistered) {
-          newSet.delete(eventId);
-        } else {
-          newSet.add(eventId);
-        }
+        if (isRegistered) newSet.delete(eventId);
+        else newSet.add(eventId);
         return newSet;
       });
-  
+
       toast.success(isRegistered ? "Вы отписались от события!" : "Вы записались на событие!");
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
@@ -155,187 +145,204 @@ const Home = () => {
       setLoadingEventId(null);
     }
   };
+
   const openModal = (event) => setSelectedEvent(event);
   const closeModal = () => setSelectedEvent(null);
 
   if (userLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="w-12 h-12 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-100">
+        <div className="w-16 h-16 border-4 border-t-indigo-500 border-gray-200 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-100">
       <Toaster position="top-right" />
-      
-      <header className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-6 px-8 flex justify-between items-center shadow-lg backdrop-blur-md bg-opacity-90 sticky top-0 z-10">
-        <h1 className="text-3xl font-bold fade-in">Главная страница</h1>
+
+      {/* Header */}
+      <header className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-6 px-8 flex justify-between items-center shadow-lg sticky top-0 z-10">
+        <h1 className="text-3xl font-extrabold tracking-tight animate-fade-in">События</h1>
         <nav>
           <Link
             to="/profile"
-            className="bg-white text-blue-700 px-6 py-3 rounded-full shadow-md hover:bg-blue-100 transition-all duration-300 hover:scale-105"
+            className="bg-white text-indigo-600 px-6 py-2 rounded-full font-semibold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all duration-300"
           >
             Личный кабинет
           </Link>
         </nav>
       </header>
 
-      <main className="flex flex-col items-center justify-center text-center py-12 px-6">
-        <h2 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 fade-in">
-          Добро пожаловать!
-        </h2>
-        <p className="text-lg text-gray-700 mb-12 max-w-2xl slide-in">
-          Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные мероприятия и управлять своим аккаунтом.
-        </p>
+      {/* Main Content */}
+      <main className="flex-1 container mx-auto px-6 py-12">
+        <section className="text-center mb-16">
+          <h2 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4 animate-fade-in">
+            Добро пожаловать!
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed animate-slide-in">
+            Исследуйте актуальные мероприятия, записывайтесь и получайте уникальный опыт. Войдите, чтобы начать!
+          </p>
+        </section>
 
-        <section className="container mx-auto px-6 py-12">
-          <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">Мероприятия</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {events.length > 0 ? (
-              events.map((event) => (
+        {/* Events Section */}
+        <section className="mb-12">
+          <h3 className="text-3xl font-bold text-gray-800 mb-8 text-center animate-fade-in">
+            Актуальные мероприятия
+          </h3>
+          {error ? (
+            <p className="text-center text-red-500 animate-fade-in">{error}</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {events.map((event) => (
                 <div
                   key={event.id}
-                  className="bg-white/95 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-blue-200/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col slide-in"
+                  className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2 animate-slide-in"
                 >
-                  <div className="mb-4">
-                    <div className="flex justify-between items-start gap-4">
-                      <h3
-                        onClick={() => openModal(event)}
-                        className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 cursor-pointer leading-tight truncate"
-                        title={event.name_event}
-                      >
-                        {event.name_event}
-                      </h3>
-                      <p className="text-sm text-gray-600 whitespace-nowrap">
-                        {event.date_time ? new Date(event.date_time).toLocaleString() : "Не указано"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 text-gray-700 flex-grow">
-                    <div className="space-y-2">
-                      <p className="break-words">
-                        <strong>Место:</strong> {event.location || "Не указано"}
+                  <div className="p-6 flex flex-col h-full">
+                    <h4
+                      onClick={() => openModal(event)}
+                      className="text-xl font-semibold text-gray-900 mb-2 cursor-pointer hover:text-indigo-600 transition-colors duration-200 truncate"
+                    >
+                      {event.name_event}
+                    </h4>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {event.date_time ? new Date(event.date_time).toLocaleString() : "Дата не указана"}
+                    </p>
+                    <div className="flex-1 space-y-3 text-gray-600 text-sm">
+                      <p>
+                        <span className="font-medium">Место:</span>{" "}
+                        {event.location || "Не указано"}
                       </p>
                       <p>
-                        <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
-                          <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                        <span className="font-medium">Лимит:</span>{" "}
+                        <span
+                          className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                            event.limit_people ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
+                          }`}
+                        >
+                          {event.limit_people ? `${event.limit_people} чел.` : "Без ограничений"}
                         </span>
                       </p>
+                      <p className="line-clamp-2">
+                        <span className="font-medium">Описание:</span>{" "}
+                        {event.description || "Нет описания"}
+                      </p>
+                      <p className="line-clamp-2">
+                        <span className="font-medium">Баллы:</span>{" "}
+                        {event.points_for_the_event || "не предусмотрены"}
+                      </p>
                     </div>
-                    <p className="text-sm break-words">
-                      <strong>Описание:</strong> {event.description || "Описание не доступно"}
-                    </p>
-                    <p className="line-clamp-3 text-sm">
-                      <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 text-right">
-                    {user?.loggedIn ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRegistration(event.id);
-                        }}
-                        className={`inline-flex py-2 px-6 text-white font-semibold rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 ${
-                          registeredEvents.has(event.id)
-                            ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
-                            : "bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-green-500/50"
-                        }`}
-                        disabled={loadingEventId === event.id}
-                      >
-                        {loadingEventId === event.id ? (
-                          <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
-                        ) : registeredEvents.has(event.id) ? (
-                          "Отписаться ❌"
-                        ) : (
-                          "Записаться ✅"
-                        )}
-                      </button>
-                    ) : (
-                      <Link
-                        to="/login"
-                        className="inline-flex py-2 px-6 text-white font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50 items-center justify-center"
-                      >
-                        Войдите, чтобы записаться 🔑
-                      </Link>
-                    )}
+                    <div className="mt-4 flex justify-end">
+                      {user?.loggedIn ? (
+                        <button
+                          onClick={() => handleRegistration(event.id)}
+                          className={`px-4 py-2 rounded-full font-semibold text-white shadow-md transition-all duration-300 hover:shadow-lg ${
+                            registeredEvents.has(event.id)
+                              ? "bg-gradient-to-r from-red-500 to-red-600"
+                              : "bg-gradient-to-r from-indigo-500 to-blue-500"
+                          } ${loadingEventId === event.id ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+                          disabled={loadingEventId === event.id}
+                        >
+                          {loadingEventId === event.id ? (
+                            <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
+                          ) : registeredEvents.has(event.id) ? (
+                            "Отписаться"
+                          ) : (
+                            "Записаться"
+                          )}
+                        </button>
+                      ) : (
+                        <Link
+                          to="/login"
+                          className="px-4 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-indigo-500 to-blue-500 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                        >
+                          Войти для записи
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-center text-gray-500 col-span-full slide-in">
-                {loading ? "Загрузка..." : "События не найдены"}
-              </p>
-            )}
-          </div>
-          {!hasMore && !loading && (
-            <p className="text-center text-gray-500 mt-6 slide-in">Больше мероприятий нет.</p>
+              ))}
+            </div>
           )}
-          <p className="text-gray-600 mt-10 max-w-2xl text-center mx-auto slide-in">
-            Здесь вы найдете список актуальных мероприятий. Нажмите на название для подробностей или войдите, чтобы записаться!
-          </p>
+          {loading && (
+            <div className="text-center mt-8">
+              <div className="w-12 h-12 border-4 border-t-indigo-500 border-gray-200 rounded-full animate-spin mx-auto" />
+            </div>
+          )}
+          {!hasMore && !loading && events.length > 0 && (
+            <p className="text-center text-gray-500 mt-8 animate-fade-in">
+              Все мероприятия загружены
+            </p>
+          )}
         </section>
       </main>
 
+      {/* Modal */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 fade-in"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fade-in"
           onClick={closeModal}
         >
           <div
-            className="bg-white p-8 rounded-3xl shadow-xl w-[85%] max-w-5xl max-h-[90vh] overflow-y-auto modal-slide-in"
+            className="bg-white rounded-2xl shadow-2xl w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto p-8 animate-slide-in-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-3xl font-semibold text-gray-900 mb-6 break-words leading-tight">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
               {selectedEvent.name_event}
             </h3>
             <div className="space-y-4 text-gray-700">
               <p>
-                <strong>Дата:</strong>{" "}
+                <span className="font-medium">Дата:</span>{" "}
                 {selectedEvent.date_time ? new Date(selectedEvent.date_time).toLocaleString() : "Не указано"}
               </p>
-              <p className="break-words">
-                <strong>Место:</strong> {selectedEvent.location || "Не указано"}
+              <p>
+                <span className="font-medium">Место:</span>{" "}
+                {selectedEvent.location || "Не указано"}
               </p>
               <p>
-                <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
-                  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+                <span className="font-medium">Лимит:</span>{" "}
+                <span
+                  className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                    selectedEvent.limit_people ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
+                  }`}
+                >
+                  {selectedEvent.limit_people ? `${selectedEvent.limit_people} чел.` : "Без ограничений"}
                 </span>
               </p>
-              <p className="break-words">
-                <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
+              <p>
+                <span className="font-medium">Описание:</span>{" "}
+                {selectedEvent.description || "Нет описания"}
               </p>
-              <p className="line-clamp-3 text-sm">
-                <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+              <p>
+                <span className="font-medium">Баллы:</span>{" "}
+                {selectedEvent.points_for_the_event || "Не указано"}
               </p>
             </div>
-            <div className="flex justify-end gap-4 mt-8">
+            <div className="mt-6 flex justify-end gap-4">
               {user?.loggedIn && (
                 <button
                   onClick={() => handleRegistration(selectedEvent.id)}
-                  className={`py-3 px-6 text-white font-semibold rounded-full shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 ${
+                  className={`px-4 py-2 rounded-full font-semibold text-white shadow-md transition-all duration-300 hover:shadow-lg ${
                     registeredEvents.has(selectedEvent.id)
-                      ? "bg-gradient-to-r from-red-500 to-red-700 hover:shadow-red-500/50"
-                      : "bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-green-500/50"
-                  }`}
+                      ? "bg-gradient-to-r from-red-500 to-red-600"
+                      : "bg-gradient-to-r from-indigo-500 to-blue-500"
+                  } ${loadingEventId === selectedEvent.id ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
                   disabled={loadingEventId === selectedEvent.id}
                 >
                   {loadingEventId === selectedEvent.id ? (
                     <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin" />
                   ) : registeredEvents.has(selectedEvent.id) ? (
-                    "Отписаться ❌"
+                    "Отписаться"
                   ) : (
-                    "Записаться ✅"
+                    "Записаться"
                   )}
                 </button>
               )}
               <button
                 onClick={closeModal}
-                className="py-3 px-6 text-gray-700 font-semibold rounded-full border border-gray-300 hover:bg-gray-100 transition-all duration-300"
+                className="px-4 py-2 rounded-full font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all duration-300"
               >
                 Закрыть
               </button>
@@ -343,6 +350,9 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      
     </div>
   );
 };
