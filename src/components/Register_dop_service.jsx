@@ -5,21 +5,20 @@ const RegisterOAuth = () => {
 
   const handleOAuth = async (provider) => {
     if (!isChecked) return;
-
+  
     try {
       const sessionId = Date.now().toString();
-      // Добавляем action=register в state
       const state = JSON.stringify({ sessionId, action: "register" });
       const response = await fetch(`${process.env.REACT_APP_LINK}${provider}/link?state=${state}`);
       const data = await response.json();
       
-      if (data.url && data.code_verifier) {
-        // Убираем парсинг stateFromUrl, так как мы еще не перенаправились
-        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
+      // Теперь проверяем data.body вместо прямого доступа к data
+      if (data.body && data.body.url && data.body.code_verifier) {
+        localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.body.code_verifier);
         localStorage.setItem(`${provider}_session_id`, sessionId);
-        localStorage.setItem(`${provider}_action`, "register"); // Сохраняем action
+        localStorage.setItem(`${provider}_action`, "register");
         
-        window.location.href = data.url;
+        window.location.href = data.body.url;
       } else {
         console.error("Ошибка при получении ссылки", data);
       }

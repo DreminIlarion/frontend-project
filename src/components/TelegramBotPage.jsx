@@ -40,7 +40,7 @@ const TelegramBotPage = () => {
 
         {/* Кнопка перехода в Telegram (без иконки) */}
         <a
-          href="https://t.me/TyuiuAI_bot" // Замените на реальную ссылку вашего бота
+          href="https://t.me/TyuiuGPT_bot" // Замените на реальную ссылку вашего бота
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-3 sm:py-4 px-8 sm:px-10 rounded-xl shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-indigo-600 hover:shadow-blue-500/50 hover:scale-105 active:scale-95 animate-fadeIn delay-400"

@@ -105,22 +105,23 @@ const Home = () => {
       navigate("/login");
       return;
     }
-
+  
     setLoadingEventId(eventId);
     const isRegistered = registeredEvents.has(eventId);
     const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
-
+  
     try {
       const response = await fetch(url, {
         method,
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
-
+  
       const data1 = await response.json();
-      const data = data1.body;
-
+      const data = data1?.body; // Безопасный доступ к body
+  
+      // Проверяем случай, когда мест нет
       if (
         response.status === 200 &&
         data?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
@@ -128,11 +129,14 @@ const Home = () => {
         toast.error("Нельзя зарегистрироваться: мест больше нет!");
         return;
       }
-
+  
+      // Обработка ошибок
       if (!response.ok) {
-        throw new Error(`Ошибка ${response.status}: ${data.message || 'Неизвестная ошибка'}`);
+        const errorMessage = data?.message || "Неизвестная ошибка на сервере";
+        throw new Error(`Ошибка ${response.status}: ${errorMessage}`);
       }
-
+  
+      // Успешная регистрация/отписка
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
         if (isRegistered) {
@@ -142,7 +146,7 @@ const Home = () => {
         }
         return newSet;
       });
-
+  
       toast.success(isRegistered ? "Вы отписались от события!" : "Вы записались на событие!");
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
@@ -151,7 +155,6 @@ const Home = () => {
       setLoadingEventId(null);
     }
   };
-
   const openModal = (event) => setSelectedEvent(event);
   const closeModal = () => setSelectedEvent(null);
 

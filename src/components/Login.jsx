@@ -45,8 +45,9 @@ const Login = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        const { access, refresh } = data.body;
+        const data1 = await response.json();
+        const data = data1.body;
+        const { access, refresh } = data;
 
         if (typeof access !== "string" || typeof refresh !== "string") {
           console.error("Ошибка: Токены должны быть строками!");
@@ -113,8 +114,8 @@ const Login = () => {
         throw new Error(`Ошибка ${response.status}`);
       }
 
-      const data = await response.json();
-      
+      const data1 = await response.json();
+      const data = data1.body;
 
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);
