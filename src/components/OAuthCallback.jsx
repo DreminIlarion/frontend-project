@@ -35,8 +35,7 @@ const OAuthCallback = () => {
 
     const finalProvider = provider || inferredProvider;
 
-    // Парсим state, если он есть и является валидным JSON
-    let action = "register"; // По умолчанию считаем, что это регистрация
+    let action = "register";
     if (sessionId) {
       try {
         const parsedState = JSON.parse(sessionId);
@@ -54,69 +53,65 @@ const OAuthCallback = () => {
 
     const exchangeToken = async () => {
       try {
-        
         const codeVerifier = localStorage.getItem(`${finalProvider}_code_verifier_${sessionId}`);
-        
+
         if (!codeVerifier) {
           console.error("Отсутствует code_verifier для", finalProvider);
           toast.error("Ошибка: отсутствует code_verifier.");
           return;
         }
 
-        // Получаем токен
         const tokenUrl =
           finalProvider === "vk"
-            ? `https://personal-account-c98o.onrender.com//api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
-            : `https://personal-account-c98o.onrender.com//api/v1/yandex/get/token/${code}/${codeVerifier}`;
-        
+            ? `https://personal-account-c98o.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
+            : `https://personal-account-c98o.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
           credentials: "include",
         });
-        const tokenData1 = await tokenResponse.json();
-        const tokenData = tokenData1.body;
+        const tokenDataFull = await tokenResponse.json();
+        const tokenData = tokenDataFull.body; // Берем данные из body
 
-        // Проверяем наличие access_token
-        if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
-          const accessToken = tokenData.access_token || tokenData.body.access_token;
-         
+        if (!tokenData) {
+          throw new Error("Отсутствует поле body в ответе на запрос токена");
+        }
 
-          if (action === "register") {
-            // Выполняем регистрацию
-            const registrationUrl = `https://personal-account-c98o.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
-            const registrationResponse = await fetch(registrationUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
-              },
-              credentials: "include",
-              body: JSON.stringify({ access_token: accessToken }),
-            });
-            const registrationData = await registrationResponse.json();
-           
-
-            if (registrationData.status_code === 200) {
-              console.log("Регистрация успешна, выполняем логин для получения токенов...");
-              await performLogin(accessToken, finalProvider);
-            } else if (registrationData.status_code === 401) {
-              console.log("Пользователь уже зарегистрирован, перенаправляем на profile...");
-              toast.success(`ТЫ ЗАРЕГИСТРИРОВАН В ${finalProvider.toUpperCase()}`);
-              setTimeout(() => {
-                navigate("/profile");
-              }, 500);
-            } else {
-              console.error("Ошибка при регистрации", registrationData);
-              toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
-            }
-          } else if (action === "login") {
-            // Выполняем вход
-            console.log("Пользователь пытается войти, выполняем вход...");
-            await performLogin(accessToken, finalProvider);
-          }
-        } else {
+        const accessToken = tokenData.access_token;
+        if (!accessToken) {
           console.error("Ошибка получения токена или неверный формат ответа", tokenData);
           toast.error("Ошибка получения токена.");
+          return;
+        }
+
+        if (action === "register") {
+          const registrationUrl = `https://personal-account-c98o.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+          const registrationResponse = await fetch(registrationUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`,
+            },
+            credentials: "include",
+            body: JSON.stringify({ access_token: accessToken }),
+          });
+          const registrationDataFull = await registrationResponse.json();
+          const registrationData = registrationDataFull.body || registrationDataFull; // Учитываем возможное отсутствие body
+
+          if (registrationDataFull.status_code === 200) {
+            console.log("Регистрация успешна, выполняем логин...");
+            await performLogin(accessToken, finalProvider);
+          } else if (registrationDataFull.status_code === 401) {
+            console.log("Пользователь уже зарегистрирован, перенаправляем на profile...");
+            toast.success(`ТЫ ЗАРЕГИСТРИРОВАН В ${finalProvider.toUpperCase()}`);
+            setTimeout(() => navigate("/profile"), 500);
+          } else {
+            console.error("Ошибка при регистрации", registrationData);
+            toast.error("Ошибка при регистрации: " + (registrationData.message || "Неизвестная ошибка."));
+          }
+        } else if (action === "login") {
+          console.log("Пользователь пытается войти, выполняем вход...");
+          await performLogin(accessToken, finalProvider);
         }
       } catch (error) {
         console.error("Ошибка обмена токена:", error);
@@ -132,16 +127,17 @@ const OAuthCallback = () => {
 
     const performLogin = async (accessToken, provider) => {
       try {
-        const loginUrl = `https://personal-account-c98o.onrender.com//api/v1/${provider}/login/${accessToken}`;
+        const loginUrl = `https://personal-account-c98o.onrender.com/api/v1/${provider}/login/${accessToken}`;
         const loginResponse = await fetch(loginUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`,
           },
+          credentials: "include",
         });
-        const loginData1 = await loginResponse.json();
-        const loginData = loginData1.body;
+        const loginDataFull = await loginResponse.json();
+        const loginData = loginDataFull.body || loginDataFull; // Учитываем возможное отсутствие body
 
         if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;
@@ -152,8 +148,8 @@ const OAuthCallback = () => {
             method: "GET",
             credentials: "include",
           });
-          const setTokenData = await setTokenResponse.json();
-         
+          const setTokenDataFull = await setTokenResponse.json();
+          const setTokenData = setTokenDataFull.body || setTokenDataFull;
 
           document.cookie = `access=${finalAccess}; path=/; Secure; SameSite=Strict`;
           document.cookie = `refresh=${finalRefresh}; path=/; Secure; SameSite=Strict`;
@@ -164,7 +160,6 @@ const OAuthCallback = () => {
             window.location.reload();
           }, 500);
         } else {
-          // Проверяем, если пользователь не зарегистрирован
           if (
             loginData.message === "Ошибка в методе get_user_email_yandex класса CRUD" ||
             loginData.message === "Ошибка в методе get_user_email_vk класса CRUD"
@@ -183,23 +178,17 @@ const OAuthCallback = () => {
                 },
               }
             );
-            setTimeout(() => {
-              navigate("/login");
-            }, 4000);
+            setTimeout(() => navigate("/login"), 4000);
           } else {
             console.error("Ошибка при входе", loginData);
             toast.error("Ошибка при входе: " + (loginData.message || "Неизвестная ошибка."));
-            setTimeout(() => {
-              navigate("/login");
-            }, 2000);
+            setTimeout(() => navigate("/login"), 2000);
           }
         }
       } catch (error) {
         console.error("Ошибка при выполнении входа:", error);
         toast.error("Ошибка при входе: " + error.message);
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+        setTimeout(() => navigate("/login"), 2000);
       }
     };
 
