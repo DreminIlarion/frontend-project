@@ -264,6 +264,9 @@ const Login = () => {
               )}
             </button>
           </div>
+          <p className="mt-4 text-xs sm:text-sm text-gray-600 italic">
+            Вход через VK или Яндекс доступен только после регистрации в этих сервисах. Зарегистрируйтесь в них в личном кабинете после входа в аккаунт.
+          </p>
         </div>
 
         <p className="mt-6 sm:mt-8 text-center text-sm sm:text-base text-gray-700">

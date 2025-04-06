@@ -293,7 +293,7 @@ const Events = () => {
                 Хотите записаться на мероприятие? Перейдите на главную страницу!
               </p>
               <Link
-                to="/profile"
+                to="/"
                 className="inline-block py-3 px-6 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
               >
                 Перейти на главную

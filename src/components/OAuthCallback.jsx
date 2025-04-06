@@ -162,7 +162,7 @@ const OAuthCallback = () => {
         const registrationData = registrationDataFull.body || registrationDataFull;
         console.log("Извлеченные данные регистрации:", registrationData);
 
-        if (registrationDataFull.status_code === 200) {
+        if (registrationDataFull.status_code === 201) {
           console.log("Регистрация успешна, выполняем логин...");
           await performLogin(accessToken, provider);
         } else if (registrationDataFull.status_code === 401) {
@@ -275,7 +275,7 @@ const OAuthCallback = () => {
           }
         }
       } catch (error) {
-        console.error("Ошибка при выполнении входа:", error);
+        console.error("Вход через VK или Яндекс доступен только после регистрации в этих сервисах. Зарегистрируйтесь в них в личном кабинете после входа в аккаунт.");
         toast.error(`Ошибка при входе: ${error.message}`);
         setTimeout(() => {
           console.log("Перенаправление на /login из-за ошибки входа");
