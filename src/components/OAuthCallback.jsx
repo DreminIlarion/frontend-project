@@ -55,7 +55,7 @@ const OAuthCallback = () => {
       } catch (error) {
         console.warn("State не является валидным JSON, используем localStorage:", error);
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
-        action = localStorage.getItem(`${finalProvider}_action`) || "registration";
+        action = localStorage.getItem(`${finalProvider}_action`) || "register";
         console.log("Данные из localStorage:", { sessionId, action });
       }
     } else {
@@ -151,9 +151,31 @@ const OAuthCallback = () => {
         console.log("Статус ответа на запрос регистрации:", registrationResponse.status);
 
         if (!registrationResponse.ok) {
-          const errorText = await registrationResponse.text();
-          console.error("Ошибка в запросе регистрации:", { status: registrationResponse.status, errorText });
-          throw new Error(`Ошибка регистрации ${registrationResponse.status}: ${errorText || "Нет дополнительной информации"}`);
+          const errorData = await registrationResponse.json().catch(() => ({
+            status_code: registrationResponse.status,
+            message: "Неизвестная ошибка",
+          }));
+          console.error("Ошибка в запросе регистрации:", errorData);
+
+          // Обрабатываем случай, если пользователь уже зарегистрирован (500)
+          if (registrationResponse.status === 500 && errorData.message === "Ошибка отправки") {
+            const providerName = provider === "vk" ? "VK" : "Яндекс";
+            console.log(`Пользователь уже зарегистрирован в ${providerName}, перенаправляем на profile...`);
+            toast.success(`Вы уже зарегистрированы в ${providerName}!`, {
+              duration: 3000,
+              style: {
+                background: "linear-gradient(to right, #d1fae5, #a7f3d0)",
+                color: "#065f46",
+                fontWeight: "bold",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+              },
+            });
+            setTimeout(() => navigate("/profile"), 1500);
+            return;
+          }
+
+          throw new Error(`Ошибка регистрации ${registrationResponse.status}: ${errorData.message || "Нет дополнительной информации"}`);
         }
 
         const registrationDataFull = await registrationResponse.json();
@@ -167,8 +189,18 @@ const OAuthCallback = () => {
           await performLogin(accessToken, provider);
         } else if (registrationDataFull.status_code === 401) {
           console.log("Пользователь уже зарегистрирован, перенаправляем на profile...");
-          toast.success(`ТЫ ЗАРЕГИСТРИРОВАН В ${provider.toUpperCase()}`);
-          setTimeout(() => navigate("/profile"), 500);
+          const providerName = provider === "vk" ? "VK" : "Яндекс";
+          toast.success(`Вы уже зарегистрированы в ${providerName}!`, {
+            duration: 3000,
+            style: {
+              background: "linear-gradient(to right, #d1fae5, #a7f3d0)",
+              color: "#065f46",
+              fontWeight: "bold",
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            },
+          });
+          setTimeout(() => navigate("/profile"), 1500);
         } else {
           console.error("Ошибка при регистрации", registrationData);
           throw new Error(registrationData.message || "Неизвестная ошибка при регистрации");
@@ -248,7 +280,7 @@ const OAuthCallback = () => {
           if (
             loginData.message === "Ошибка в методе get_user_email_vk класса CRUD" ||
             loginData.message === "Ошибка в методе get_user_email_yandex класса CRUD" ||
-            loginData.message === "get_user_email_vk" // Добавлено новое условие
+            loginData.message === "get_user_email_vk"
           ) {
             const providerName = provider === "vk" ? "VK" : "Яндекс";
             console.log("Ошибка: требуется регистрация в", providerName);
@@ -275,7 +307,7 @@ const OAuthCallback = () => {
           }
         }
       } catch (error) {
-        console.error("Вход через VK или Яндекс доступен только после регистрации в этих сервисах. Зарегистрируйтесь в них в личном кабинете после входа в аккаунт.");
+        console.error("Ошибка при входе:", error);
         toast.error(`Ошибка при входе: ${error.message}`);
         setTimeout(() => {
           console.log("Перенаправление на /login из-за ошибки входа");
