@@ -35,8 +35,9 @@ const Register = () => {
 
       if (response.ok) {
         const data1 = await response.json();
+        console.log(data1);
         const data = data1.body;
-
+        console.log(data);
         let access, refresh;
         if (data.access && data.refresh) {
           access = data.access;
@@ -49,7 +50,7 @@ const Register = () => {
         }
 
         const tokenResponse = await fetch(
-          `https://personal-account-fastapi.onrender.com/set/token/${access}/${refresh}`,
+          `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
           {
             method: 'GET',
             credentials: 'include',
