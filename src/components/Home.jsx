@@ -151,18 +151,18 @@ const Home = () => {
 
   if (userLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
         <div className="w-16 h-16 border-4 border-t-indigo-500 border-gray-200 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
       <Toaster position="top-right" />
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-6 px-8 flex justify-between items-center shadow-lg sticky top-0 z-10">
+      <header className="bg-blue-800 text-white py-6 px-8 flex justify-between items-center shadow-lg sticky top-0 z-10">
         <h1 className="text-3xl font-extrabold tracking-tight animate-fade-in">События</h1>
         <nav>
           <Link
@@ -175,7 +175,7 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-6 py-12">
+      <main className="flex-1 container mx-auto px-6 py-12 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
         <section className="text-center mb-16">
           <h2 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4 animate-fade-in">
             Добро пожаловать!
