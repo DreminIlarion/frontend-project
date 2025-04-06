@@ -98,41 +98,40 @@ const News = () => {
 
         <div
           ref={newsContainerRef}
-          className="max-w-7xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-h-[80vh] overflow-y-auto px-4 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100"
+          className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto px-4 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100"
         >
           {news.length > 0 ? (
             news.map((newsItem) => (
               <div
                 key={newsItem.id}
-                className="bg-white/95 backdrop-blur-md shadow-md rounded-2xl p-6 border border-gray-100/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+                className="bg-white/95 backdrop-blur-md shadow-md rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer group"
                 onClick={() => openModal(newsItem)}
               >
-                <div className="flex flex-col h-full">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 max-w-[70%] line-clamp-2">
-                      {newsItem.title}
-                    </h3>
-                    <span className="text-xs text-gray-500 whitespace-nowrap">
-                      {new Date(newsItem.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {newsItem.image && (
-                    <div className="mb-4">
-                      <img
-                        src={newsItem.image}
-                        alt={newsItem.title}
-                        className="w-full h-48 object-cover rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => (e.target.style.display = "none")}
-                      />
+                <div className="relative">
+                  {newsItem.image ? (
+                    <img
+                      src={newsItem.image}
+                      alt={newsItem.title}
+                      className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                  ) : (
+                    <div className="w-full h-40 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">Изображение отсутствует</span>
                     </div>
                   )}
-
-                  <p className="text-gray-600 text-sm line-clamp-3 flex-grow">
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                    {new Date(newsItem.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
+                    {newsItem.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">
                     {newsItem.body || "Описание отсутствует"}
                   </p>
-
-                  <div className="mt-4 text-right">
+                  <div className="mt-3 text-right">
                     <span className="text-blue-500 text-sm font-medium group-hover:underline">
                       Подробнее →
                     </span>
@@ -158,25 +157,25 @@ const News = () => {
           onClick={closeModal}
         >
           <div
-            className="bg-white w-full max-w-2xl p-8 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100 animate-slide-up"
+            className="bg-white w-full max-w-2xl p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100 animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 break-words">
+            {selectedNews.image && (
+              <img
+                src={selectedNews.image}
+                alt={selectedNews.title}
+                className="w-full h-64 object-cover rounded-lg mb-4"
+                onError={(e) => (e.target.style.display = "none")}
+              />
+            )}
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 break-words">
               {selectedNews.title}
             </h3>
-            <div className="space-y-4 text-gray-700">
+            <div className="space-y-3 text-gray-700">
               <p className="text-sm">
                 <span className="font-medium">Дата:</span>{" "}
                 {new Date(selectedNews.created_at).toLocaleString()}
               </p>
-              {selectedNews.image && (
-                <img
-                  src={selectedNews.image}
-                  alt={selectedNews.title}
-                  className="w-full h-72 object-cover rounded-lg shadow-md"
-                  onError={(e) => (e.target.style.display = "none")}
-                />
-              )}
               <p className="text-base leading-relaxed break-words">
                 {selectedNews.body || "Описание отсутствует"}
               </p>

@@ -66,8 +66,8 @@ const OAuthCallback = () => {
         // Получаем токен
         const tokenUrl =
           finalProvider === "vk"
-            ? `https://registration-fastapi.onrender.com/api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
-            : `https://registration-fastapi.onrender.com/api/v1/yandex/get/token/${code}/${codeVerifier}`;
+            ? `https://personal-account-c98o.onrender.com//api/v1/vk/get/token/${code}/${deviceId}/${codeVerifier}`
+            : `https://personal-account-c98o.onrender.com//api/v1/yandex/get/token/${code}/${codeVerifier}`;
         
         const tokenResponse = await fetch(tokenUrl, {
           method: "GET",
@@ -83,7 +83,7 @@ const OAuthCallback = () => {
 
           if (action === "register") {
             // Выполняем регистрацию
-            const registrationUrl = `https://personal-account-fastapi.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
+            const registrationUrl = `https://personal-account-c98o.onrender.com/api/v1/${finalProvider}/registration/${accessToken}`;
             const registrationResponse = await fetch(registrationUrl, {
               method: "POST",
               headers: {
@@ -132,7 +132,7 @@ const OAuthCallback = () => {
 
     const performLogin = async (accessToken, provider) => {
       try {
-        const loginUrl = `https://registration-fastapi.onrender.com/api/v1/${provider}/login/${accessToken}`;
+        const loginUrl = `https://personal-account-c98o.onrender.com//api/v1/${provider}/login/${accessToken}`;
         const loginResponse = await fetch(loginUrl, {
           method: "POST",
           headers: {
@@ -147,7 +147,7 @@ const OAuthCallback = () => {
           const finalAccess = loginData.access;
           const finalRefresh = loginData.refresh;
 
-          const setTokenUrl = `https://personal-account-fastapi.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
+          const setTokenUrl = `https://personal-account-c98o.onrender.com/set/token/${finalAccess}/${finalRefresh}`;
           const setTokenResponse = await fetch(setTokenUrl, {
             method: "GET",
             credentials: "include",
