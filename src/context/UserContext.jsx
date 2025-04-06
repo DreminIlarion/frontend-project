@@ -93,7 +93,7 @@ export const UserProvider = ({ children }) => {
           throw new Error("Новый access токен не получен.");
         }
 
-        Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
+        Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "Strict" });
 
         const success = await setTokens(newAccessToken, refreshToken);
         if (!success) {
@@ -108,7 +108,7 @@ export const UserProvider = ({ children }) => {
         return null;
       }
     },
-    [logout, setTokens] // Добавлены зависимости
+    [logout, setTokens]
   );
 
   const fetchWithAuth = useCallback(
@@ -150,7 +150,7 @@ export const UserProvider = ({ children }) => {
 
       return response;
     },
-    [refreshAccessToken, logout] // Добавлены зависимости
+    [refreshAccessToken, logout]
   );
 
   const checkTokens = useCallback(
@@ -174,38 +174,18 @@ export const UserProvider = ({ children }) => {
           return;
         }
 
-        const validationResponse = await fetch(
-          "https://registration-s6rk.onrender.com/validate/jwt/access",
-          {
-            method: "GET",
-            headers: { Authorization: `Bearer ${accessToken}` },
-            credentials: "include",
-          }
-        );
-
-        if (validationResponse.ok) {
-          const success = await setTokens(accessToken, refreshToken);
-          if (success) {
-            setUser({ loggedIn: true });
-          } else {
-            console.warn("⚠️ Ошибка при установке токенов в checkTokens. Пытаемся обновить...");
-            const newAccessToken = await refreshAccessToken(refreshToken);
-            if (newAccessToken) {
-              setUser({ loggedIn: true });
-            } else {
-              setUser(null);
-            }
-          }
-        } else if (validationResponse.status === 401) {
-          console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
+        // Проверяем токены только через setTokens, без /validate/jwt/access
+        const success = await setTokens(accessToken, refreshToken);
+        if (success) {
+          setUser({ loggedIn: true });
+        } else {
+          console.warn("⚠️ Ошибка при установке токенов в checkTokens. Пытаемся обновить...");
           const newAccessToken = await refreshAccessToken(refreshToken);
           if (newAccessToken) {
             setUser({ loggedIn: true });
           } else {
             setUser(null);
           }
-        } else {
-          throw new Error(`Ошибка валидации: ${validationResponse.status}`);
         }
       } catch (error) {
         console.error("❌ Ошибка при проверке токенов:", error);
@@ -214,7 +194,7 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [refreshAccessToken, setTokens] // Добавлены зависимости
+    [refreshAccessToken, setTokens]
   );
 
   useEffect(() => {
@@ -237,10 +217,10 @@ export const UserProvider = ({ children }) => {
         throw new Error("Токены должны быть строками!");
       }
 
-      Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+      Cookies.set("access", access, { path: "/", secure: true, sameSite: "Strict", expires: 1 });
       const currentRefresh = Cookies.get("refresh");
       if (!currentRefresh || currentRefresh !== refresh) {
-        Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+        Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "Strict", expires: 7 });
       } else {
         console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
       }
@@ -253,7 +233,7 @@ export const UserProvider = ({ children }) => {
         await logout();
       }
     },
-    [logout, setTokens] // Добавлены зависимости
+    [logout, setTokens]
   );
 
   return (
