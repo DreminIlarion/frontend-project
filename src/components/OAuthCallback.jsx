@@ -73,8 +73,8 @@ const OAuthCallback = () => {
           method: "GET",
           credentials: "include",
         });
-        const tokenData = await tokenResponse.json();
-        
+        const tokenData1 = await tokenResponse.json();
+        const tokenData = tokenData1.body;
 
         // Проверяем наличие access_token
         if (tokenData.access_token || (tokenData.status_code === 200 && tokenData.body && tokenData.body.access_token)) {
@@ -140,8 +140,8 @@ const OAuthCallback = () => {
             "Authorization": `Bearer ${accessToken}`,
           },
         });
-        const loginData = await loginResponse.json();
-        
+        const loginData1 = await loginResponse.json();
+        const loginData = loginData1.body;
 
         if (loginData.access && loginData.refresh) {
           const finalAccess = loginData.access;

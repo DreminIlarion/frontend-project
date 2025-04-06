@@ -34,8 +34,8 @@ const Register = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        
+        const data1 = await response.json();
+        const data = data1.body;
 
         let access, refresh;
         if (data.access && data.refresh) {

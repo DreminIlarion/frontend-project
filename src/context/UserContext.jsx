@@ -20,7 +20,7 @@ export const UserProvider = ({ children }) => {
     try {
       console.log("🔄 Обновляем access токен...");
       const response = await fetch(
-        `https://registration-fastapi.onrender.com/validate/jwt/refresh/${refreshToken}`,
+        `https://registration-s6rk.onrender.com/validate/jwt/refresh/${refreshToken}`,
         {
           method: "GET",
           credentials: "include",
@@ -103,7 +103,7 @@ export const UserProvider = ({ children }) => {
     console.log("⛔ Выполняем выход...");
 
     try {
-      const response = await fetch("https://personal-account-fastapi.onrender.com/logout/", {
+      const response = await fetch("https://personal-account-c98o.onrender.com/logout/", {
         method: "GET",
         credentials: "include",
       });
@@ -121,7 +121,7 @@ export const UserProvider = ({ children }) => {
     const cookies = document.cookie.split("; ");
     cookies.forEach((cookie) => {
       const [name] = cookie.split("=");
-      Cookies.remove(name, { path: "/", domain: "personal-account-fastapi.onrender.com" });
+      Cookies.remove(name, { path: "/" });
       Cookies.remove(name, { path: "/" });
     });
 
@@ -134,69 +134,39 @@ export const UserProvider = ({ children }) => {
       return;
     }
     hasCheckedTokens.current = true;
-
+  
     setLoading(true);
-
+  
     try {
       const accessToken = Cookies.get("access");
       const refreshToken = Cookies.get("refresh");
-
-      if (!refreshToken) {
-        console.warn("❌ Refresh токен отсутствует.");
+  
+      // Если токенов нет, просто устанавливаем user в null, но не вызываем logout
+      if (!refreshToken || !accessToken) {
+        console.log("ℹ️ Токены отсутствуют, пользователь не авторизован.");
         setUser(null);
         setLoading(false);
         return;
       }
-
-      if (!accessToken) {
-        console.warn("⚠️ Access токен отсутствует. Пытаемся обновить...");
-        const newAccessToken = await refreshAccessToken();
-
-        if (newAccessToken) {
-          const validationResponse = await fetch(
-            "https://registration-fastapi.onrender.com/validate/jwt/access",
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${newAccessToken}`,
-              },
-              credentials: "include",
-            }
-          );
-
-          if (validationResponse.ok) {
-            setUser({ loggedIn: true });
-          } else {
-            console.warn("❌ Новый access токен недействителен.");
-            await logout();
-            setUser(null);
-          }
-        } else {
-          setUser(null);
+  
+      const validationResponse = await fetch(
+        "https://registration-s6rk.onrender.com/validate/jwt/access",
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${accessToken}` },
+          credentials: "include",
         }
+      );
+  
+      if (validationResponse.ok) {
+        setUser({ loggedIn: true });
       } else {
-        const validationResponse = await fetch(
-          "https://registration-fastapi.onrender.com/validate/jwt/access",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-            credentials: "include",
-          }
-        );
-
-        if (validationResponse.ok) {
+        console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
+        const newAccessToken = await refreshAccessToken();
+        if (newAccessToken) {
           setUser({ loggedIn: true });
         } else {
-          console.warn("⚠️ Access токен недействителен. Пытаемся обновить...");
-          const newAccessToken = await refreshAccessToken();
-
-          if (newAccessToken) {
-            setUser({ loggedIn: true });
-          } else {
-            setUser(null);
-          }
+          setUser(null);
         }
       }
     } catch (error) {

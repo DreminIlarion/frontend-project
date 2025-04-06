@@ -3,10 +3,11 @@ import { useUser } from "../context/UserContext";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Cookies from "js-cookie";
-import { 
-  FiHome, FiUser, FiLogOut, FiLogIn, FiMessageSquare, 
-  FiHelpCircle, FiMail, FiX, FiMenu, FiChevronRight,
-  FiCalendar, FiBook, FiBarChart2, FiSettings, FiBell
+import {
+  FiHome, FiUser, FiLogOut, FiLogIn, FiMessageSquare,
+  FiHelpCircle, FiMail, FiX, FiMenu, FiCalendar,
+  FiBook, FiBarChart2, FiBell, FiClock, FiLink,
+  FiPhone, FiInfo
 } from "react-icons/fi";
 import { RiRobot2Line } from "react-icons/ri";
 
@@ -17,31 +18,34 @@ import Chat from "./Chat";
 import Events from "./Events";
 import DopRegister from "./Register_dop_service";
 import TelegramBotPage from "./TelegramBotPage";
+import Home from "./Home";
+
+// Цветовая палитра
+const colors = {
+  primary: '#1b39ae',    // Основной синий
+  secondary: '#6260d2',  // Фиолетово-синий
+  accent1: '#9b60d2',    // Фиолетовый
+  accent2: '#dad07e',    // Розово-фиолетовый
+  accent3: '#b93793',    // Розовый
+  success: '#1b8d1d',     // Зеленый
+  gray:'#ffffff'
+};
 
 const Profile = () => {
-  const { user, logout } = useUser();
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const { user, setUser, logout } = useUser();
+  const [activeSection, setActiveSection] = useState(null);
+  const [isChatVisible, setIsChatVisible] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(2);
   const navigate = useNavigate();
 
-  // Анимации
-  const pageVariants = {
-    initial: { opacity: 0, x: -30 },
-    in: { opacity: 1, x: 0 },
-    out: { opacity: 0, x: 30 }
-  };
+  // При переключении вкладок скроллим вверх
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeSection]);
 
-  const sidebarLinks = [
-    { id: "dashboard", icon: <FiHome />, label: "Главная" },
-    { id: "classifier", icon: <FiBarChart2 />, label: "Анализ поступления" },
-    { id: "telegram-bot", icon: <RiRobot2Line />, label: "Telegram бот" },
-    { id: "events", icon: <FiCalendar />, label: "Мероприятия", auth: true },
-    { id: "form", icon: <FiBook />, label: "Рекомендации", auth: true },
-    { id: "dopregister", icon: <FiUser />, label: "Профиль", auth: true }
-  ];
-
+  // Функция для удаления всех cookies
   const deleteAllCookies = () => {
     document.cookie.split(";").forEach((cookie) => {
       const [name] = cookie.split("=");
@@ -50,6 +54,7 @@ const Profile = () => {
     });
   };
 
+  // Обработчик выхода
   const handleLogout = useCallback(async () => {
     try {
       await fetch(`${process.env.REACT_APP_LOGOUT}`, {
@@ -67,6 +72,7 @@ const Profile = () => {
     }
   }, [logout, navigate]);
 
+  // Проверка токенов при загрузке
   useEffect(() => {
     const accessToken = Cookies.get("access");
     const refreshToken = Cookies.get("refresh");
@@ -91,30 +97,83 @@ const Profile = () => {
       };
       fetchToken();
     }
-  }, [user, handleLogout]);
+  }, [setUser, user, handleLogout]);
 
+  // Переключение меню
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Навигационные ссылки
+  const navLinks = [
+    { action: () => setActiveSection("DashboardView"), label: "Главная", icon: <FiHome />, color: colors.primary },
+    
+    { action: () => setActiveSection("telegram-bot"), label: "Telegram-бот", icon: <RiRobot2Line />, color: colors.secondary },
+    { action: () => setActiveSection("classifier"), label: "Анализ поступления", icon: <FiBarChart2 />, color: colors.accent1 },
+    { action: () => setActiveSection("home"), label: "Мероприятия", icon: <FiCalendar />, color: colors.accent2 },
+    ...(user?.loggedIn
+      ? [
+          { action: () => setActiveSection("form"), label: "Рекомендации", icon: <FiBook />, color: colors.accent3 },
+          { action: () => setActiveSection("events"), label: "Мои мероприятия", icon: <FiCalendar />, color: colors.success },
+          { action: () => setActiveSection("dopregister"), label: "Регистрация", icon: <FiUser />, color: colors.primary },
+          { action: handleLogout, label: "Выход", icon: <FiLogOut />, color: '#d9534f' },
+        ]
+      : [
+          { to: "/login", label: "Войти", icon: <FiLogIn />, color: colors.success },
+        ]),
+  ];
+
+  // Контакты
+  const contacts = [
+    { label: "Приёмная комиссия", phone: "+7 (3452) 28-36-60", email: "pk@tyuiu.ru" },
+    { label: "Деканат", phone: "+7 (3452) 28-36-61", email: "dekanat@tyuiu.ru" },
+  ];
+
+  // Советы для студентов
+  const tips = [
+    { title: "Как подготовиться к экзаменам", description: "Составьте расписание, начните с самых сложных предметов и делайте перерывы каждые 45 минут." },
+    { title: "Подача документов", description: "Убедитесь, что у вас есть все необходимые документы: паспорт, аттестат, результаты ЕГЭ." },
+    { title: "Выбор направления", description: "Ориентируйтесь на свои интересы и рынок труда. Пройдите тест на профориентацию!" },
+  ];
+
+  // Компонент для отображения контента
   const renderContent = () => {
-    switch(activeSection) {
-      case "telegram-bot": return <TelegramBotPage />;
-      case "form": return user?.loggedIn ? <Form /> : <AuthWall />;
-      case "classifier": return <ClassifierForm />;
-      case "events": return user?.loggedIn ? <Events /> : <AuthWall />;
-      case "dopregister": return user?.loggedIn ? <DopRegister /> : <AuthWall />;
-      default: return <DashboardView />;
+    switch (activeSection) {
+      case "telegram-bot":
+        return <TelegramBotPage />;
+      case "form":
+        return user?.loggedIn ? <Form /> : <AuthWall />;
+      case "classifier":
+        return <ClassifierForm />;
+      case "events":
+        return user?.loggedIn ? <Events /> : <AuthWall />;
+      case "dopregister":
+        return user?.loggedIn ? <DopRegister /> : <AuthWall />;
+      case "home":
+        return <Home />;
+      case "DashboardView":
+        return <DashboardView />;
+      
+      default:
+        return <DashboardView />;
     }
   };
 
+  // Компонент AuthWall
   const AuthWall = () => (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-lg max-w-md w-full">
-        <FiUser className="mx-auto text-4xl text-blue-400 mb-4" />
-        <h3 className="text-xl font-medium mb-2">Требуется авторизация</h3>
+      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 max-w-md w-full">
+        <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: colors.primary }}>
+          <FiUser className="text-white text-2xl" />
+        </div>
+        <h3 className="text-xl font-medium mb-2 text-gray-800">Требуется авторизация</h3>
         <p className="text-gray-600 mb-6">
           Для доступа к этому разделу войдите в систему
         </p>
-        <Link 
-          to="/login" 
-          className="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-teal-400 text-white px-6 py-3 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
+        <Link
+          to="/login"
+          className="inline-flex items-center justify-center text-white px-6 py-3 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
+          style={{ backgroundColor: colors.success }}
         >
           <FiLogIn className="mr-2" /> Войти
         </Link>
@@ -122,283 +181,246 @@ const Profile = () => {
     </div>
   );
 
+  // Компонент DashboardView
   const DashboardView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      <DashboardCard 
-        icon={<FiBarChart2 className="text-blue-500" />}
-        title="Анализ поступления"
-        description="Узнайте ваши шансы на поступление"
-        onClick={() => setActiveSection("classifier")}
-        color="from-blue-50 to-blue-100"
-      />
-      <DashboardCard 
-        icon={<RiRobot2Line className="text-teal-500" />}
-        title="Telegram бот"
-        description="Получайте уведомления в Telegram"
-        onClick={() => setActiveSection("telegram-bot")}
-        color="from-teal-50 to-blue-100"
-      />
-      {user?.loggedIn && (
-        <>
-          <DashboardCard 
-            icon={<FiBook className="text-indigo-500" />}
-            title="Рекомендации"
-            description="Персональные рекомендации направлений"
-            onClick={() => setActiveSection("form")}
-            color="from-indigo-50 to-purple-100"
+    <div className="p-6 max-w-6xl mx-auto space-y-8 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+      <h2 className="text-2xl font-bold text-gray-800 fade-in">Добро пожаловать!</h2>
+      
+      {/* Основные функции */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {navLinks.slice(0, user?.loggedIn ? 6 : 3).map((item, index) => (
+          <DashboardCard
+            key={index}
+            icon={React.cloneElement(item.icon, { className: "text-white" })}
+            title={item.label}
+            description={index === 0 ? "Вернуться на главную страницу" : 
+                        index === 1 ? "Получайте уведомления и напоминания" :
+                        index === 2 ? "Узнайте ваши шансы на поступление" :
+                        index === 3 ? "Найдите подходящее направление обучения" :
+                        index === 4 ? "Узнайте о событиях в ТИУ" : "Управляйте вашими данными"}
+            onClick={() => item.action ? item.action() : navigate(item.to)}
+            color={item.color}
           />
-          <DashboardCard 
-            icon={<FiCalendar className="text-green-500" />}
-            title="Мероприятия"
-            description="Предстоящие события и встречи"
-            onClick={() => setActiveSection("events")}
-            color="from-green-50 to-teal-100"
-          />
-          <DashboardCard 
-            icon={<FiUser className="text-purple-500" />}
-            title="Профиль"
-            description="Управление личными данными"
-            onClick={() => setActiveSection("dopregister")}
-            color="from-purple-50 to-indigo-100"
-          />
-        </>
-      )}
+        ))}
+      </div>
+
+      {/* Полезные советы */}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100" >
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Полезные советы</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {tips.map((tip, index) => (
+            <div key={index} className="p-4 rounded-lg border" style={{ 
+              backgroundColor: index === 0 ? `${colors.primary}20` : 
+                              index === 1 ? `${colors.secondary}20` : `${colors.accent1}20`,
+              borderColor: index === 0 ? colors.primary : 
+                          index === 1 ? colors.secondary : colors.accent1
+            }}>
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center mr-2" style={{
+                  backgroundColor: index === 0 ? colors.primary : 
+                                  index === 1 ? colors.secondary : colors.accent1
+                }}>
+                  <FiInfo className="text-white" />
+                </div>
+                <h4 className="text-gray-800 font-medium">{tip.title}</h4>
+              </div>
+              <p className="text-gray-600 text-sm">{tip.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+{/* Полезные советы */}
+<div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100" >
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Новости</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {tips.map((tip, index) => (
+            <div key={index} className="p-4 rounded-lg border" style={{ 
+              backgroundColor: index === 0 ? `${colors.primary}20` : 
+                              index === 1 ? `${colors.secondary}20` : `${colors.accent1}20`,
+              borderColor: index === 0 ? colors.primary : 
+                          index === 1 ? colors.secondary : colors.accent1
+            }}>
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center mr-2" style={{
+                  backgroundColor: index === 0 ? colors.primary : 
+                                  index === 1 ? colors.secondary : colors.accent1
+                }}>
+                  <FiInfo className="text-white" />
+                </div>
+                <h4 className="text-gray-800 font-medium">{tip.title}</h4>
+              </div>
+              <p className="text-gray-600 text-sm">{tip.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+
+      {/* Контакты */}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Контакты</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {contacts.map((contact, index) => (
+            <div key={index} className="p-4 rounded-lg border" >
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center mr-2" style={{
+                  backgroundColor: index === 0 ? colors.gray : colors.gray
+                }}>
+                  <FiPhone className="text-white-800" />
+                </div>
+                <h4 className="text-gray-800 font-medium">{contact.label}</h4>
+              </div>
+              <p className="text-gray-600 text-sm">Телефон: {contact.phone}</p>
+              <p className="text-gray-600 text-sm">Email: {contact.email}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
+
+      
+
   );
 
+ 
+
+  // Компонент DashboardCard
   const DashboardCard = ({ icon, title, description, onClick, color }) => (
-    <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }}
+    <motion.div
+      whileHover={{ y: -5 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`cursor-pointer rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all bg-gradient-to-br ${color}`}
+      className="cursor-pointer p-6 rounded-xl shadow-md hover:shadow-lg transition-all"
+      style={{ backgroundColor: `${color}20`, border: `1px solid ${color}` }}
     >
-      <div className="text-3xl mb-4">{icon}</div>
+      <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: color }}>
+        {icon}
+      </div>
       <h3 className="text-lg font-semibold mb-2 text-gray-800">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 text-gray-900 flex flex-col">
-      {/* Top Navigation */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="mr-4 p-2 rounded-lg hover:bg-gray-100 lg:hidden"
+    <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+      {/* Мобильное меню - теперь всегда видно внизу экрана */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 border-t border-gray-200 ">
+        <div className="flex justify-around ">
+          {navLinks.slice(0, 4).map((item, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                if (item.action) item.action();
+                else navigate(item.to);
+              }}
+              className="flex flex-col items-center justify-center p-3 w-full "
+              style={{ color: item.color }}
+            >
+              <div className="text-xl">{item.icon}</div>
+              <span className="text-xs mt-1">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop Navigation */}
+      <nav className="hidden lg:flex w-full bg-white text-white fixed z-40 shadow-md" style={{ backgroundColor: colors.primary }}>
+        <div className="container mx-auto px-6 py-3">
+          <div className="flex space-x-1 justify-between">
+            {navLinks.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  if (item.action) item.action();
+                  else navigate(item.to);
+                }}
+                className="flex items-center px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/20"
+                style={{ color: 'white' }}
               >
-                {isMobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+                <span className="mr-2">{item.icon}</span>
+                <span>{item.label}</span>
               </button>
-              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
-                Uni<span className="font-extrabold">Portal</span>
-              </Link>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => setIsChatOpen(!isChatOpen)}
-                className="p-2 rounded-full hover:bg-gray-100 relative"
-              >
-                <FiMessageSquare size={20} className="text-blue-600" />
-                {isChatOpen && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></div>
-                )}
-              </button>
-              
-              <button className="p-2 rounded-full hover:bg-gray-100 relative">
-                <FiBell size={20} className="text-blue-600" />
-                {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {unreadNotifications}
-                  </span>
-                )}
-              </button>
-              
-              {user?.loggedIn ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-teal-400 flex items-center justify-center text-white font-medium">
-                    {user.email?.charAt(0).toUpperCase() || "U"}
-                  </div>
-                  <span className="hidden md:inline text-sm font-medium text-gray-700">
-                    {user.email || "User"}
-                  </span>
-                </div>
-              ) : (
-                <Link 
-                  to="/login" 
-                  className="hidden md:flex items-center space-x-1 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 text-blue-600"
-                >
-                  <FiLogIn size={16} />
-                  <span>Войти</span>
-                </Link>
-              )}
-            </div>
+            ))}
           </div>
         </div>
-      </header>
+      </nav>
 
-      <div className="flex flex-1">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 sticky top-16 h-[calc(100vh-4rem)]">
-          <div className="p-4 h-full flex flex-col">
-            <nav className="space-y-1 flex-1">
-              {sidebarLinks.map((link) => {
-                if (link.auth && !user?.loggedIn) return null;
-                return (
-                  <button
-                    key={link.id}
-                    onClick={() => setActiveSection(link.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
-                      activeSection === link.id 
-                        ? "bg-blue-50 text-blue-600 font-medium border border-blue-100"
-                        : "hover:bg-gray-50 text-gray-700"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-lg mr-3">{link.icon}</span>
-                      <span>{link.label}</span>
-                    </div>
-                    <FiChevronRight className="text-gray-400" />
-                  </button>
-                );
-              })}
-            </nav>
-            
-            {user?.loggedIn && (
-              <button 
-                onClick={handleLogout}
-                className="mt-auto flex items-center p-3 rounded-lg hover:bg-gray-50 text-red-500 border border-transparent hover:border-red-100"
-              >
-                <FiLogOut className="mr-3" />
-                Выйти
-              </button>
-            )}
-          </div>
-        </aside>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween' }}
-              className="fixed inset-0 z-40 bg-white/95 backdrop-blur-sm lg:hidden"
-            >
-              <div className="p-4 h-full flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-blue-600">Меню</h2>
-                  <button 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100"
-                  >
-                    <FiX size={20} />
-                  </button>
-                </div>
-                
-                <nav className="space-y-1 flex-1">
-                  {sidebarLinks.map((link) => {
-                    if (link.auth && !user?.loggedIn) return null;
-                    return (
-                      <button
-                        key={link.id}
-                        onClick={() => {
-                          setActiveSection(link.id);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
-                          activeSection === link.id 
-                            ? "bg-blue-50 text-blue-600 font-medium"
-                            : "hover:bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <span className="text-lg mr-3">{link.icon}</span>
-                          <span>{link.label}</span>
-                        </div>
-                        <FiChevronRight />
-                      </button>
-                    );
-                  })}
-                </nav>
-                
-                <div className="mt-auto space-y-2">
-                  <Link 
-                    to="/help" 
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700"
-                  >
-                    <FiHelpCircle className="mr-3 text-blue-500" />
-                    Помощь
-                  </Link>
-                  <Link 
-                    to="/contact" 
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700"
-                  >
-                    <FiMail className="mr-3 text-blue-500" />
-                    Контакты
-                  </Link>
-                  {user?.loggedIn && (
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full flex items-center p-3 rounded-lg hover:bg-gray-100 text-red-500"
-                    >
-                      <FiLogOut className="mr-3" />
-                      Выйти
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
-        {/* Main Content */}
-        <main className="flex-1">
+      {/* Main Content */}
+      <main className="flex-1 min-h-screen pt-16 pb-20 lg:pb-8 px-4">
+        <div className="bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 rounded-xl w-full max-w-6xl mx-auto shadow-sm overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeSection}
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={{ duration: 0.2 }}
-              className="h-full"
+              key={activeSection || "default"}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
             >
               {renderContent()}
             </motion.div>
           </AnimatePresence>
-        </main>
-      </div>
+        </div>
+      </main>
 
-      {/* Chat Panel */}
-      <AnimatePresence>
-        {isChatOpen && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25 }}
-            className="fixed bottom-0 right-0 w-full max-w-md h-[70vh] bg-white shadow-xl border-l border-t border-gray-200/50 rounded-tl-xl z-40"
-          >
-            <div className="flex justify-between items-center p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-cyan-50">
-              <h3 className="font-medium text-blue-600">Чат поддержки</h3>
-              <button 
-                onClick={() => setIsChatOpen(false)}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700"
-              >
-                <FiX size={20} />
-              </button>
-            </div>
-            <div className="h-[calc(100%-3.5rem)]">
-              <Chat />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Chat */}
+      {user?.loggedIn && (
+        <div className="fixed bottom-20 lg:bottom-6 right-6 z-50">
+          {!isChatVisible ? (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsChatVisible(true)}
+              className="p-4 rounded-full shadow-lg transition-all duration-300 w-14 h-14 flex items-center justify-center fade-in"
+              style={{ backgroundColor: colors.secondary }}
+            >
+              <FiMessageSquare className="text-2xl text-white" />
+            </motion.button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="w-[90vw] max-w-md bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden slide-in"
+            >
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center" style={{ backgroundColor: colors.secondary }}>
+                <span className="text-sm font-medium text-white">Чат с поддержкой</span>
+                <button
+                  onClick={() => setIsChatVisible(false)}
+                  className="text-white hover:text-gray-200 transition-colors duration-200"
+                >
+                  <FiX />
+                </button>
+              </div>
+              <div className="p-4 h-[calc(100%-3.5rem)]">
+                <Chat />
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="w-full py-4 hidden lg:block" style={{ backgroundColor: colors.primary }}>
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-sm text-white">
+            © 2025 Тюменский индустриальный университет. Все права защищены.
+          </p>
+          <div className="mt-2 flex justify-center space-x-4">
+            <Link
+              to="/help"
+              className="text-sm text-white hover:text-gray-200 transition-colors duration-300"
+            >
+              Помощь
+            </Link>
+            <Link
+              to="/contact"
+              className="text-sm text-white hover:text-gray-200 transition-colors duration-300"
+            >
+              Контакты
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

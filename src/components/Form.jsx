@@ -209,7 +209,7 @@ const Form = () => {
     if (noDataDirections[directionId]) return;
 
     try {
-      const response = await fetch(`https://personal-account-fastapi.onrender.com/api/v1/predict/exams/${directionId}`, {
+      const response = await fetch(`https://personal-account-c98o.onrender.com/api/v1/predict/exams/${directionId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -301,7 +301,7 @@ const Form = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 flex flex-col space-y-6 max-w-full">
+    <div className="container mx-auto p-4 sm:p-6 flex flex-col space-y-6 max-w-full bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
       {/* Форма */}
       <div className="w-full sm:max-w-3xl mx-auto">
         <form
@@ -510,8 +510,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('details')
-                              ? 'bg-green-900 text-white'
-                              : 'bg-green-700 text-white hover:shadow-green-500/50'
+                              ? 'bg-emerald-900 text-white'
+                              : 'bg-emerald-700 text-white hover:shadow-emerald-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >
@@ -525,8 +525,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('points')
-                              ? 'bg-green-900 text-white'
-                              : 'bg-green-700 text-white hover:shadow-green-500/50'
+                              ? 'bg-indigo-900 text-white'
+                              : 'bg-indigo-700 text-white hover:shadow-indigo-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >
@@ -541,8 +541,8 @@ const Form = () => {
                           }}
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-transform duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base ${
                             openSections[rec.direction_id]?.includes('exams')
-                              ? 'bg-green-900 text-white'
-                              : 'bg-green-700 text-white hover:shadow-green-500/50'
+                              ? 'bg-cyan-900 text-white'
+                              : 'bg-cyan-700 text-white hover:shadow-cyan-500/50'
                           }`}
                           disabled={noDataDirections[rec.direction_id]}
                         >

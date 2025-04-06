@@ -2,17 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const ClassifierForm = () => {
-  const [formData, setFormData] = useState({
+const ClassifierForm = ({ tabState, setTabState }) => {
+  // Используем начальные значения из tabState или задаём дефолтные
+  const formData = tabState.formData || {
     year: "2024",
     gender: "male",
     gpa: "3.9",
     points: "",
     direction: "",
-  });
+  };
+  const prediction = tabState.prediction || null;
+  const loading = tabState.loading || false;
 
-  const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
   const resultRef = useRef(null); // Ссылка на блок результата
 
   const directions = [
@@ -53,39 +54,50 @@ const ClassifierForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setTabState({
+      ...tabState,
+      formData: {
+        ...formData,
+        [name]: value,
+      },
+    });
   };
 
   const handleGenderChange = (gender) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      gender,
-    }));
+    setTabState({
+      ...tabState,
+      formData: {
+        ...formData,
+        gender,
+      },
+    });
   };
 
   const handleRangeChange = (e) => {
     const { value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      points: value,
-    }));
+    setTabState({
+      ...tabState,
+      formData: {
+        ...formData,
+        points: value,
+      },
+    });
   };
 
   const handleDirectionChange = (e) => {
     const { value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      direction: value,
-    }));
+    setTabState({
+      ...tabState,
+      formData: {
+        ...formData,
+        direction: value,
+      },
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setPrediction(null); // Сбрасываем предыдущее предсказание
+    setTabState({ ...tabState, loading: true, prediction: null });
 
     const dataToSend = {
       ...formData,
@@ -97,13 +109,13 @@ const ClassifierForm = () => {
     // Проверка данных перед отправкой
     if (!dataToSend.gender || !dataToSend.gpa || !dataToSend.points || !dataToSend.year || !dataToSend.direction) {
       toast.error("Пожалуйста, заполните все поля формы.");
-      setLoading(false);
+      setTabState({ ...tabState, loading: false });
       return;
     }
 
     if (isNaN(dataToSend.gpa) || isNaN(dataToSend.year) || isNaN(dataToSend.points)) {
       toast.error("Проверьте правильность введённых числовых данных.");
-      setLoading(false);
+      setTabState({ ...tabState, loading: false });
       return;
     }
 
@@ -122,26 +134,31 @@ const ClassifierForm = () => {
 
       const result = await response.json();
 
-      // Проверяем, является ли result.body числом (включая 0)
       if (typeof result.body === "number") {
-        setPrediction(result.body); // Устанавливаем prediction, даже если это 0
-        // Прокручиваем к блоку результата
+        setTabState({
+          ...tabState,
+          prediction: result.body,
+          loading: false,
+        });
         setTimeout(() => {
           resultRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
       } else {
-        setPrediction(null);
+        setTabState({
+          ...tabState,
+          prediction: null,
+          loading: false,
+        });
         toast.error("Ошибка: сервер не вернул ожидаемое предсказание.");
       }
     } catch (error) {
-      console.error("Ошибка запроса:");
-      toast.error(`Произошла ошибка`);
-    } finally {
-      setLoading(false);
+      console.error("Ошибка запроса:", error);
+      toast.error("Произошла ошибка");
+      setTabState({ ...tabState, loading: false });
     }
   };
 
-  // Функция для получения фона в зависимости от prediction
+  // Функции для стилей (без изменений)
   const getBackground = (prediction) => {
     if (prediction <= 0.25) return "bg-gradient-to-r from-red-100 to-orange-100 border-red-200";
     if (prediction <= 0.4) return "bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-200";
@@ -150,7 +167,6 @@ const ClassifierForm = () => {
     return "bg-gradient-to-r from-green-100 to-teal-100 border-green-200";
   };
 
-  // Функция для получения градиента прогресс-бара
   const getGradient = (prediction) => {
     if (prediction <= 0.25) return "from-red-500 to-red-700";
     if (prediction <= 0.4) return "from-orange-500 to-orange-700";
@@ -159,7 +175,6 @@ const ClassifierForm = () => {
     return "from-green-500 to-teal-500";
   };
 
-  // Функция для получения дополнительного описания
   const getDescription = (prediction) => {
     if (prediction <= 0.25) return "К сожалению, шансы на поступление очень низкие. Попробуйте улучшить свои баллы или рассмотреть другие направления.";
     if (prediction <= 0.4) return "Шансы на поступление невысоки. Возможно, стоит подтянуть баллы или выбрать менее конкурентное направление.";
@@ -169,26 +184,21 @@ const ClassifierForm = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 sm:p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    <div className="container mx-auto p-6 sm:p-8 text-center bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 min-h-screen">
       <form
         onSubmit={handleSubmit}
         className="p-6 sm:p-8 bg-white/95 backdrop-blur-lg border border-blue-100/50 rounded-3xl shadow-2xl w-full max-w-2xl mx-auto transition-all duration-300 hover:shadow-blue-200/50"
       >
-        {/* Название */}
         <h1 className="text-3xl sm:text-4xl font-bold text-blue-900 mb-6 sm:mb-8 tracking-tight animate-fadeIn">
           Вероятность поступления
         </h1>
 
         <fieldset className="flex-grow space-y-6 sm:space-y-8">
-          {/* Выбор баллов */}
           <div className="block text-sm sm:text-base font-semibold text-gray-800">
             <label className="block mb-3 sm:mb-4 text-center text-lg sm:text-xl font-bold text-blue-900 tracking-tight animate-fadeIn">
               Общее количество баллов (ЕГЭ)
             </label>
-
-            {/* Контейнер для поля ввода */}
             <div className="relative flex justify-center mb-6 sm:mb-8">
-              {/* Текстовое поле для ввода */}
               <input
                 type="number"
                 min="1"
@@ -197,40 +207,39 @@ const ClassifierForm = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "") {
-                    setFormData((prev) => ({
-                      ...prev,
-                      points: 0,
-                    }));
+                    setTabState({
+                      ...tabState,
+                      formData: { ...formData, points: 0 },
+                    });
                   } else {
                     const parsedValue = parseInt(value);
-                    setFormData((prev) => ({
-                      ...prev,
-                      points: Math.min(Math.max(1, parsedValue), 310),
-                    }));
+                    setTabState({
+                      ...tabState,
+                      formData: {
+                        ...formData,
+                        points: Math.min(Math.max(1, parsedValue), 310),
+                      },
+                    });
                   }
                 }}
                 onBlur={(e) => {
                   if (e.target.value === "" || parseInt(e.target.value) < 1) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      points: 1,
-                    }));
+                    setTabState({
+                      ...tabState,
+                      formData: { ...formData, points: 1 },
+                    });
                   }
                 }}
                 className="w-28 sm:w-32 p-3 sm:p-4 text-center border border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-xl sm:text-2xl font-bold text-blue-900 shadow-md hover:shadow-lg focus:shadow-xl"
                 placeholder="0"
               />
             </div>
-
-            {/* Визуальный индикатор (прогресс-бар) */}
             <div className="relative w-full max-w-xs mx-auto h-2 sm:h-3 rounded-full bg-gray-200 overflow-hidden mb-4">
               <div
                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
                 style={{ width: `${(formData.points / 310) * 100}%` }}
               ></div>
             </div>
-
-            {/* Сообщение об ошибке, если значение вне диапазона */}
             {formData.points > 310 && (
               <p className="text-red-500 text-sm mt-2 animate-fadeIn">
                 Максимальное значение — 310 баллов
@@ -238,7 +247,6 @@ const ClassifierForm = () => {
             )}
           </div>
 
-          {/* Выбор направления */}
           <label className="block text-sm sm:text-base font-semibold text-gray-800 mb-1">
             Направление:
           </label>
@@ -256,7 +264,6 @@ const ClassifierForm = () => {
                 </option>
               ))}
             </select>
-            {/* Кастомная стрелочка справа */}
             <div className="absolute inset-y-0 right-3 sm:right-4 flex items-center pointer-events-none text-gray-500">
               ▼
             </div>
@@ -276,7 +283,6 @@ const ClassifierForm = () => {
         </button>
       </form>
 
-      {/* Результат предсказания */}
       {prediction !== null && (
         <div
           ref={resultRef}
@@ -286,13 +292,11 @@ const ClassifierForm = () => {
               : getBackground(prediction)
           } relative overflow-hidden`}
         >
-          {/* Декоративный фон */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute w-64 h-64 bg-white/30 rounded-full -top-32 -left-32 blur-3xl"></div>
             <div className="absolute w-64 h-64 bg-white/30 rounded-full -bottom-32 -right-32 blur-3xl"></div>
           </div>
 
-          {/* Заголовок */}
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight mb-4 sm:mb-6 text-center">
             Результат
           </h2>
@@ -303,7 +307,6 @@ const ClassifierForm = () => {
             </p>
           ) : (
             <>
-              {/* Шанс на поступление с круговым индикатором */}
               <div className="flex flex-col items-center mb-4 sm:mb-6">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28">
                   <svg className="w-full h-full" viewBox="0 0 36 36">
@@ -333,26 +336,20 @@ const ClassifierForm = () => {
                   Ваш шанс на поступление
                 </p>
               </div>
-
-              {/* Описание */}
               <p className="text-sm sm:text-base italic text-gray-600 leading-relaxed text-center animate-fadeIn delay-200">
                 {getDescription(prediction)}
               </p>
             </>
           )}
-
-            
         </div>
       )}
 
-      {/* Описание */}
       <div className="mt-8 sm:mt-10 p-6 sm:p-8 bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-blue-100/50 w-full max-w-2xl mx-auto transition-all duration-300 hover:shadow-blue-200/50">
         <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
           <span className="font-semibold text-blue-900">Вероятность поступления</span> — это ваш первый шаг к оценке возможностей поступления в вуз. Укажите свои данные — баллы ЕГЭ и направление — и получите мгновенный прогноз, основанный на статистике прошлых лет. Узнайте, насколько вы близки к своей мечте, и планируйте следующий шаг с уверенностью!
         </p>
       </div>
 
-      {/* Контейнер для Toast */}
       <ToastContainer />
     </div>
   );

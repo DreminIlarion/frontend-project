@@ -29,7 +29,7 @@ const RegisterOAuth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
       <div className="flex flex-col items-center gap-6 max-w-xl w-full mx-auto p-6">
         <div
           className="flex flex-col items-center gap-6 p-8 bg-white/90 backdrop-blur-lg shadow-xl rounded-2xl border border-blue-100/50 w-full slide-in"

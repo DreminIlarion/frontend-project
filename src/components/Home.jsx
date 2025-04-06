@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import toast, { Toaster } from 'react-hot-toast'; // Импортируем react-hot-toast
+import toast, { Toaster } from 'react-hot-toast';
 
 const Home = () => {
   const [events, setEvents] = useState([]);
@@ -20,12 +20,17 @@ const Home = () => {
     const loadEvents = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`https://events-fastapi.onrender.com/api/v1/events/get/`, {
+        const response = await fetch(`https://events-zisi.onrender.com/api/v1/events/get/`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
-        const data = await response.json();
+        const data1 = await response.json();
 
+        if (!data1.body || !Array.isArray(data1.body.events)) {
+          throw new Error("Неожиданная структура ответа API: events не найден или не является массивом");
+        }
+
+        const data = data1.body.events;
         setEvents((prevEvents) => {
           const newEventsSet = new Set(prevEvents.map((event) => event.id));
           const newEvents = data.filter((event) => !newEventsSet.has(event.id));
@@ -37,6 +42,7 @@ const Home = () => {
         }
       } catch (error) {
         setError(error.message);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -58,11 +64,16 @@ const Home = () => {
           credentials: "include",
         });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
-        const data = await response.json();
+        const data1 = await response.json();
 
-        const registeredIds = new Set(data.body.map((entry) => entry.event_id));
+        if (!data1.body || !Array.isArray(data1.body)) {
+          throw new Error("Неожиданная структура ответа API: body не найден или не является массивом");
+        }
+
+        const data = data1.body;
+        const registeredIds = new Set(data.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
-        const visitorMap = data.body.reduce((acc, entry) => {
+        const visitorMap = data.reduce((acc, entry) => {
           acc[entry.event_id] = entry.unique_string;
           return acc;
         }, {});
@@ -107,12 +118,12 @@ const Home = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const data = await response.json();
+      const data1 = await response.json();
+      const data = data1.body;
 
-      // Проверяем, есть ли сообщение о том, что мест нет
       if (
         response.status === 200 &&
-        data.body?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
+        data?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
       ) {
         toast.error("Нельзя зарегистрироваться: мест больше нет!");
         return;
@@ -122,18 +133,17 @@ const Home = () => {
         throw new Error(`Ошибка ${response.status}: ${data.message || 'Неизвестная ошибка'}`);
       }
 
-      // Если регистрация или отмена успешна, обновляем состояние
       setRegisteredEvents((prev) => {
         const newSet = new Set(prev);
         if (isRegistered) {
           newSet.delete(eventId);
-          
         } else {
           newSet.add(eventId);
-          
         }
         return newSet;
       });
+
+      toast.success(isRegistered ? "Вы отписались от события!" : "Вы записались на событие!");
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
       toast.error(error.message || "Произошла ошибка при записи на мероприятие.");
@@ -155,10 +165,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-blue-100">
-      {/* Добавляем Toaster для уведомлений */}
       <Toaster position="top-right" />
       
-      {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-6 px-8 flex justify-between items-center shadow-lg backdrop-blur-md bg-opacity-90 sticky top-0 z-10">
         <h1 className="text-3xl font-bold fade-in">Главная страница</h1>
         <nav>
@@ -171,7 +179,6 @@ const Home = () => {
         </nav>
       </header>
 
-      {/* Main Section */}
       <main className="flex flex-col items-center justify-center text-center py-12 px-6">
         <h2 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 fade-in">
           Добро пожаловать!
@@ -180,7 +187,6 @@ const Home = () => {
           Откройте для себя мир возможностей! Войдите, чтобы записаться на интересные мероприятия и управлять своим аккаунтом.
         </p>
 
-        {/* Events Section */}
         <section className="container mx-auto px-6 py-12">
           <h3 className="text-4xl font-bold text-gray-800 mb-10 text-center fade-in">Мероприятия</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -220,9 +226,8 @@ const Home = () => {
                       <strong>Описание:</strong> {event.description || "Описание не доступно"}
                     </p>
                     <p className="line-clamp-3 text-sm">
-                        <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
-                      
-                      </p>
+                      <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
+                    </p>
                   </div>
 
                   <div className="mt-6 text-right">
@@ -302,9 +307,8 @@ const Home = () => {
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
               </p>
               <p className="line-clamp-3 text-sm">
-                        <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
-                      
-                      </p>
+                <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+              </p>
             </div>
             <div className="flex justify-end gap-4 mt-8">
               {user?.loggedIn && (

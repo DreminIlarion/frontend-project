@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useUser } from "../context/UserContext"; // Убедитесь, что путь правильный
-import { useNavigate, Link } from "react-router-dom"; // Link для создания ссылки
+import { useUser } from "../context/UserContext";
+import { useNavigate, Link } from "react-router-dom";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -24,10 +24,8 @@ const Events = () => {
     setLoading(true);
     try {
       const response = await fetchWithAuth(
-        `https://events-fastapi.onrender.com/api/v1/events/get/`,
-        {
-          method: "GET",
-        }
+        `https://events-zisi.onrender.com/api/v1/events/get/`,
+        { method: "GET" }
       );
 
       if (!response) {
@@ -39,8 +37,13 @@ const Events = () => {
         throw new Error(`Ошибка загрузки событий: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data1 = await response.json();
 
+      if (!data1.body || !Array.isArray(data1.body.events)) {
+        throw new Error("Неожиданная структура ответа API: events не найден или не является массивом");
+      }
+
+      const data = data1.body.events;
       setEvents((prevEvents) => {
         const newEventsSet = new Set(prevEvents.map((event) => event.id));
         const newEvents = data.filter((event) => !newEventsSet.has(event.id));
@@ -52,6 +55,7 @@ const Events = () => {
       }
     } catch (error) {
       setError(error.message);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -86,10 +90,16 @@ const Events = () => {
           throw new Error(`Ошибка загрузки записей: ${response.status}`);
         }
 
-        const data = await response.json();
-        const registeredIds = new Set(data.body.map((entry) => entry.event_id));
+        const data1 = await response.json();
+
+        if (!data1.body || !Array.isArray(data1.body)) {
+          throw new Error("Неожиданная структура ответа API: body не найден или не является массивом");
+        }
+
+        const data = data1.body;
+        const registeredIds = new Set(data.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
-        const visitorMap = data.body.reduce((acc, entry) => {
+        const visitorMap = data.reduce((acc, entry) => {
           acc[entry.event_id] = entry.unique_string;
           return acc;
         }, {});
@@ -131,7 +141,9 @@ const Events = () => {
       }
 
       if (!response.ok) {
-        throw new Error(`Ошибка ${response.status}`);
+        const data1 = await response.json();
+        const data = data1.body;
+        throw new Error(`Ошибка ${response.status}: ${data.message || "Неизвестная ошибка"}`);
       }
 
       setRegisteredEvents((prev) => {
@@ -153,7 +165,6 @@ const Events = () => {
     const uniqueString = visitorData[eventId];
     if (!uniqueString) return;
 
-    // Проверяем авторизацию перед открытием QR-кода
     try {
       const response = await fetchWithAuth(process.env.REACT_APP_VISITORS_GET, {
         method: "GET",
@@ -165,7 +176,9 @@ const Events = () => {
       }
 
       if (!response.ok) {
-        throw new Error("Ошибка авторизации перед получением QR-кода");
+        const data1 = await response.json();
+        const data = data1.body;
+        throw new Error(`Ошибка авторизации перед получением QR-кода: ${data.message || "Неизвестная ошибка"}`);
       }
 
       const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
@@ -182,7 +195,7 @@ const Events = () => {
   if (loading && page === 1)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-blue-50">
-        <p className="text-lg text-gray-600 bg-white/80 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
+        <p className="text-lg text-gray-600 backdrop-blur-md p-4 rounded-full shadow-md animate-pulse">
           Загрузка событий...
         </p>
       </div>
@@ -198,7 +211,7 @@ const Events = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 flex flex-col items-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 flex flex-col items-center p-6">
         <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent text-center mb-10 fade-in">
           Мои мероприятия
         </h2>
@@ -235,7 +248,7 @@ const Events = () => {
                       </p>
                       <p>
                         <span className={`badge ${event.limit_people ? "bg-danger" : "bg-success"}`}>
-                            <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
+                          <strong>Лимит:</strong> {event.limit_people ? `${event.limit_people} человек` : "Без ограничений"}
                         </span>
                       </p>
                       <p className="line-clamp-3 text-sm">
@@ -243,7 +256,6 @@ const Events = () => {
                       </p>
                       <p className="line-clamp-3 text-sm">
                         <strong>Баллы за посещение:</strong> {event.points_for_the_event || "Баллы не доступны"}
-                      
                       </p>
                     </div>
                   </div>
@@ -281,7 +293,7 @@ const Events = () => {
                 Хотите записаться на мероприятие? Перейдите на главную страницу!
               </p>
               <Link
-                to="/"
+                to="/profile"
                 className="inline-block py-3 px-6 text-white font-semibold rounded-full shadow-md bg-gradient-to-r from-blue-500 to-indigo-500 transition-transform duration-300 hover:scale-105 active:scale-95 hover:shadow-blue-500/50"
               >
                 Перейти на главную
@@ -297,7 +309,6 @@ const Events = () => {
         )}
       </div>
 
-      {/* Модальное окно */}
       {selectedEvent && (
         <div
           className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 flex items-center justify-center z-50 overflow-y-auto fade-in"
@@ -319,18 +330,16 @@ const Events = () => {
                 <strong>Место:</strong> {selectedEvent.location || "Не указано"}
               </p>
               <p>
-                
                 <span className={`badge ${selectedEvent.limit_people ? "bg-danger" : "bg-success"}`}>
-                            <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
-                        </span>
+                  <strong>Лимит:</strong> {selectedEvent.limit_people ? `${selectedEvent.limit_people} человек` : "Без ограничений"}
+                </span>
               </p>
               <p className="break-words">
                 <strong>Описание:</strong> {selectedEvent.description || "Описание не доступно"}
               </p>
               <p className="line-clamp-3 text-sm">
-                        <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
-                      
-                      </p>
+                <strong>Баллы за посещение:</strong> {selectedEvent.points_for_the_event || "Баллы не доступны"}
+              </p>
             </div>
             <div className="flex flex-col gap-3 mt-4 sm:flex-row sm:gap-4 sm:justify-end">
               <button

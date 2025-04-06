@@ -46,7 +46,7 @@ const Login = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const { access, refresh } = data;
+        const { access, refresh } = data.body;
 
         if (typeof access !== "string" || typeof refresh !== "string") {
           console.error("Ошибка: Токены должны быть строками!");
