@@ -55,7 +55,7 @@ const OAuthCallback = () => {
       } catch (error) {
         console.warn("State не является валидным JSON, используем localStorage:", error);
         sessionId = localStorage.getItem(`${finalProvider}_session_id`);
-        action = localStorage.getItem(`${finalProvider}_action`) || "register";
+        action = localStorage.getItem(`${finalProvider}_action`) || "registration";
         console.log("Данные из localStorage:", { sessionId, action });
       }
     } else {
@@ -246,8 +246,9 @@ const OAuthCallback = () => {
           }, 500);
         } else {
           if (
+            loginData.message === "Ошибка в методе get_user_email_vk класса CRUD" ||
             loginData.message === "Ошибка в методе get_user_email_yandex класса CRUD" ||
-            loginData.message === "Ошибка в методе get_user_email_vk класса CRUD"
+            loginData.message === "get_user_email_vk" // Добавлено новое условие
           ) {
             const providerName = provider === "vk" ? "VK" : "Яндекс";
             console.log("Ошибка: требуется регистрация в", providerName);
@@ -287,6 +288,18 @@ const OAuthCallback = () => {
     exchangeToken();
   }, [provider, navigate, searchParams]);
 
+  let action = "register";
+  if (searchParams.get("state")) {
+    try {
+      const parsedState = JSON.parse(searchParams.get("state"));
+      action = parsedState.action || "register";
+    } catch (error) {
+      action = localStorage.getItem(`${provider}_action`) || "register";
+    }
+  } else {
+    action = localStorage.getItem(`${provider}_action`) || "register";
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Toaster position="top-right" />
@@ -308,11 +321,11 @@ const OAuthCallback = () => {
           </svg>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 text-blue-900 tracking-tight animate-fadeIn">
-          {searchParams.get("state")?.includes("login") ? "Вход" : "Регистрация"} через{" "}
+          {action === "login" ? "Вход" : "Регистрация"} через{" "}
           {provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Неизвестный провайдер"}
         </h2>
         <p className="text-gray-600 text-center text-sm sm:text-base mb-6 sm:mb-8 animate-fadeIn">
-          Пожалуйста, подождите, пока мы {searchParams.get("state")?.includes("login") ? "выполняем вход" : "создаем ваш аккаунт"}...
+          Пожалуйста, подождите, пока мы {action === "login" ? "выполняем вход" : "создаем ваш аккаунт"}...
         </p>
         <div className="relative w-full h-3 sm:h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
           <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 animate-load" />
