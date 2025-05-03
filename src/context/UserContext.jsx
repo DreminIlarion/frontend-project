@@ -13,7 +13,7 @@ export const UserProvider = ({ children }) => {
   const requestStorageAccess = useCallback(async () => {
     if (!document.hasStorageAccess) {
       console.log("ℹ️ Storage Access API не поддерживается в этом браузере.");
-      return true;
+      return true; // Предполагаем, что доступ не нужен
     }
 
     try {
@@ -94,9 +94,7 @@ export const UserProvider = ({ children }) => {
     try {
       const accessGranted = await requestStorageAccess();
       if (!accessGranted) {
-        console.warn("⚠️ Storage access not granted. Falling back to redirect...");
-        // Перенаправляем на бэкенд для установки кук
-        window.location.href = `https://personal-account-c98o.onrender.com/set/token/redirect/${access}/${refresh}`;
+        console.warn("⚠️ Storage access not granted. Cookies may not be set in Safari.");
         return;
       }
 
