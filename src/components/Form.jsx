@@ -556,7 +556,7 @@ const Form = () => {
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <FiAlertCircle className="mr-2 text-gray-500" />
+                      
                       {noDataDirections[rec.direction_id]}
                     </p>
                   ) : (
@@ -642,7 +642,7 @@ const Form = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <FiAlertCircle className="mr-2 text-gray-500" />
+              
               Введи параметры, чтобы увидеть рекомендации!
             </p>
           )}
