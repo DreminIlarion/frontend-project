@@ -57,7 +57,7 @@ const Profile = () => {
             }
           );
           const data = await response.json();
-          if (data.token) {
+          if (response.ok) {
             // Устанавливаем пользователя в контекст, если нужно
           }
         } catch (error) {
