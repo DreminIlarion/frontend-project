@@ -36,15 +36,15 @@ const Register = () => {
       if (response.ok) {
         const data1 = await response.json();
         console.log(data1);
-        const data = data1.body;
+        const data = data1;
         console.log(data);
         let access, refresh;
         if (data.access && data.refresh) {
           access = data.access;
           refresh = data.refresh;
-        } else if (data.body && data.body.access && data.body.refresh) {
-          access = data.body.access;
-          refresh = data.body.refresh;
+        } else if (data && data.access && data.refresh) {
+          access = data.access;
+          refresh = data.refresh;
         } else {
           throw new Error('Токены не найдены в ответе сервера.');
         }
