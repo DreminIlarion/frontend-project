@@ -8,6 +8,33 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const hasCheckedTokens = useRef(false);
+  const [storageAccessGranted, setStorageAccessGranted] = useState(false);
+
+  const requestStorageAccess = useCallback(async () => {
+    if (!document.hasStorageAccess) {
+      console.log("ℹ️ Storage Access API не поддерживается в этом браузере.");
+      return true;
+    }
+
+    try {
+      const hasAccess = await document.hasStorageAccess();
+      if (hasAccess) {
+        console.log("✅ Storage access already granted");
+        setStorageAccessGranted(true);
+        return true;
+      }
+
+      console.log("🔄 Requesting storage access...");
+      await document.requestStorageAccess();
+      console.log("✅ Storage access granted by user");
+      setStorageAccessGranted(true);
+      return true;
+    } catch (err) {
+      console.error("❌ Storage access denied:", err);
+      setStorageAccessGranted(false);
+      return false;
+    }
+  }, []);
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("frontend_refresh");
@@ -53,7 +80,6 @@ export const UserProvider = ({ children }) => {
       Cookies.set("frontend_access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
       setUser({ loggedIn: true });
 
-      // Восстанавливаем бэкенд-куки
       await setBackendTokens(newAccessToken, refreshToken);
 
       return newAccessToken;
@@ -66,6 +92,14 @@ export const UserProvider = ({ children }) => {
 
   const setBackendTokens = useCallback(async (access, refresh) => {
     try {
+      const accessGranted = await requestStorageAccess();
+      if (!accessGranted) {
+        console.warn("⚠️ Storage access not granted. Falling back to redirect...");
+        // Перенаправляем на бэкенд для установки кук
+        window.location.href = `https://personal-account-c98o.onrender.com/set/token/redirect/${access}/${refresh}`;
+        return;
+      }
+
       console.log("🔄 Устанавливаем токены на бэкенде...");
       const response = await fetch(
         `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
@@ -84,7 +118,7 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error("❌ Ошибка при установке токенов на бэкенде:", error);
     }
-  }, []);
+  }, [requestStorageAccess]);
 
   const fetchWithAuth = useCallback(
     async (url, options = {}) => {
@@ -185,7 +219,6 @@ export const UserProvider = ({ children }) => {
         return;
       }
 
-      // Восстанавливаем бэкенд-куки при наличии фронтенд-куки
       await setBackendTokens(accessToken, refreshToken);
 
       const validationResponse = await fetch(
@@ -245,30 +278,15 @@ export const UserProvider = ({ children }) => {
 
     setUser({ loggedIn: true });
 
-    // Устанавливаем бэкенд-куки после логина
     setBackendTokens(access, refresh);
-  };
-
-  const requestStorageAccess = async () => {
-    if (document.hasStorageAccess) {
-      try {
-        const hasAccess = await document.hasStorageAccess();
-        if (!hasAccess) {
-          await document.requestStorageAccess();
-          console.log("Storage access granted");
-        }
-      } catch (err) {
-        console.error("Storage access denied:", err);
-      }
-    }
   };
 
   useEffect(() => {
     requestStorageAccess();
-  }, []);
+  }, [requestStorageAccess]);
 
   return (
-    <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth }}>
+    <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth, storageAccessGranted }}>
       {children}
     </UserContext.Provider>
   );
