@@ -1,40 +1,95 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { Link, useNavigate } from "react-router-dom";
 import Form from "./Form";
 import ClassifierForm from "./MiniClassifier";
 import Chat from "./Chat";
+import Cookies from "js-cookie";
 import Events from "./Events";
 import DopRegister from "./Register_dop_service";
 import TelegramBotPage from "./TelegramBotPage";
 import News from "./News";
 
 const Profile = () => {
-  const { user, logout } = useUser();
+  const { user, setUser, logout } = useUser();
   const [activeSection, setActiveSection] = useState("news");
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [tabStates, setTabStates] = useState({});
+  const [tabStates, setTabStates] = useState({}); // Храним состояния вкладок
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await logout(); // Вызываем logout из UserContext
-    navigate("/login");
+  const deleteAllCookies = () => {
+    document.cookie.split(";").forEach((cookie) => {
+      const [name] = cookie.split("=");
+      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+    });
   };
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch(`${process.env.REACT_APP_LOGOUT}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      localStorage.clear();
+      sessionStorage.clear();
+      deleteAllCookies();
+      logout();
+      navigate("/profile");
+      window.location.reload();
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+    }
+  }, [logout, navigate]);
+
+  useEffect(() => {
+    const accessToken = Cookies.get("access");
+    const refreshToken = Cookies.get("refresh");
+    if (accessToken && refreshToken && user?.loggedIn) {
+      const fetchToken = async () => {
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_GET_TOKEN}${accessToken}/${refreshToken}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+          const data = await response.json();
+          console.log(data);
+          if (response.ok) {
+            // Устанавливаем пользователя в контекст, если нужно
+          }
+        } catch (error) {
+          console.error("Ошибка при получении нового токена:", error);
+          handleLogout();
+        }
+      };
+      fetchToken();
+    }
+  }, [setUser, user, handleLogout]);
 
   const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+    const newState = !isSidebarOpen;
+    setIsSidebarOpen(newState);
   };
 
+  // Функция для переключения вкладки, сохранения состояния и сброса скролла
   const handleSectionChange = (section, currentTabState) => {
+    // Сохраняем текущее состояние активной вкладки
     if (activeSection && currentTabState) {
       setTabStates((prev) => ({
         ...prev,
         [activeSection]: currentTabState,
       }));
     }
+
+    // Переключаем вкладку
     setActiveSection(section);
     setIsSidebarOpen(false);
+
+    // Сбрасываем скролл
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       document.body.scrollTop = 0;
@@ -44,6 +99,7 @@ const Profile = () => {
 
   return (
     <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
+      {/* Header */}
       <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <button
@@ -74,11 +130,13 @@ const Profile = () => {
       </header>
 
       <div className="flex flex-grow mt-16">
+        {/* Sidebar */}
         <aside
           className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl 
             ${isSidebarOpen ? "block" : "hidden"} 
             lg:block`}
         >
+          
           <nav className="mt-4 space-y-1 px-2">
             {[
               { to: "/", label: "Главная страница" },
@@ -133,8 +191,9 @@ const Profile = () => {
           </nav>
         </aside>
 
+        {/* Main Content */}
         <main className="flex-1 min-h-screen flex justify-center">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 w-full slide-in">
+          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 w-full  slide-in ">
             {activeSection === "news" && <News />}
             {activeSection === "telegram-bot" && <TelegramBotPage />}
             {activeSection === "form" && user?.loggedIn ? (
@@ -202,6 +261,7 @@ const Profile = () => {
         </main>
       </div>
 
+      {/* Chat */}
       {user?.loggedIn && (
         <div className="fixed bottom-6 right-6 z-50">
           {!isChatVisible ? (
@@ -222,7 +282,7 @@ const Profile = () => {
                   ✕
                 </button>
               </div>
-              <div className="h-[calc(100%-3.5rem)]">
+              <div className=" h-[calc(100%-3.5rem)]">
                 <Chat />
               </div>
             </div>

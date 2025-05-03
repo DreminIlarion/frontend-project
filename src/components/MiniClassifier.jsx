@@ -124,16 +124,16 @@ const ClassifierForm = ({ tabState, setTabState }) => {
 
       const result = await response.json();
 
-      if (result.status_code === 200 && result.body === 0) {
+      if (result === 0) {
         setTabState({
           ...tabState,
           prediction: "no-data",
           loading: false,
         });
-      } else if (typeof result.body === "number") {
+      } else if (typeof result === "number") {
         setTabState({
           ...tabState,
-          prediction: result.body,
+          prediction: result,
           loading: false,
         });
       } else {
