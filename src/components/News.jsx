@@ -24,12 +24,12 @@ const News = () => {
       }
 
       const data = await response.json();
-
-      if (!data.body || !Array.isArray(data.body.news)) {
+      console.log(data);
+      if (!data || !Array.isArray(data.news)) {
         throw new Error("Неожиданная структура ответа API");
       }
-
-      const newsData = data.body.news.map((item) => ({
+      
+      const newsData = data.news.map((item) => ({
         ...item,
         image: item.image && item.image !== "absent" ? `data:image/jpeg;base64,${item.image}` : null,
       }));

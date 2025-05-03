@@ -40,11 +40,11 @@ const Events = () => {
       }
 
       const data1 = await response.json();
-      if (!data1.body || !Array.isArray(data1.body.events)) {
+      if (!data1 || !Array.isArray(data1.events)) {
         throw new Error("Неожиданная структура ответа API");
       }
 
-      const data = data1.body.events;
+      const data = data1.events;
       setEvents((prevEvents) => {
         const newEventsSet = new Set(prevEvents.map((event) => event.id));
         const newEvents = data.filter((event) => !newEventsSet.has(event.id));

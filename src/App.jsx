@@ -31,7 +31,8 @@ const AppWrapper = () => {
   return (
     <UserProvider navigate={navigate}>
       <Routes>
-        <Route path="/" element={<Home />} />
+        
+        <Route path="/" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/registration" element={<Register />} />
         <Route path="/register" element={<Register />} />

@@ -46,7 +46,7 @@ const Login = () => {
 
       if (response.ok) {
         const data1 = await response.json();
-        const data = data1.body;
+        const data = data1;
         const { access, refresh } = data;
 
         if (typeof access !== "string" || typeof refresh !== "string") {
@@ -55,8 +55,8 @@ const Login = () => {
           return;
         }
 
-        Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-        Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+        Cookies.set("access", access);
+        Cookies.set("refresh", refresh);
 
         login(access, refresh);
         toast.success("Вход выполнен успешно!");
@@ -115,7 +115,7 @@ const Login = () => {
       }
 
       const data1 = await response.json();
-      const data = data1.body;
+      const data = data1;
 
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);

@@ -26,11 +26,11 @@ const Home = () => {
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
         const data1 = await response.json();
 
-        if (!data1.body || !Array.isArray(data1.body.events)) {
+        if (!data1 || !Array.isArray(data1.event)) {
           throw new Error("Неожиданная структура ответа API: events не найден или не является массивом");
         }
 
-        const data = data1.body.events;
+        const data = data1.event;
         setEvents((prevEvents) => {
           const newEventsSet = new Set(prevEvents.map((event) => event.id));
           const newEvents = data.filter((event) => !newEventsSet.has(event.id));
@@ -64,11 +64,11 @@ const Home = () => {
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
         const data1 = await response.json();
 
-        if (!data1.body || !Array.isArray(data1.body)) {
+        if (!data1 || !Array.isArray(data1)) {
           throw new Error("Неожиданная структура ответа API: body не найден или не является массивом");
         }
 
-        const data = data1.body;
+        const data = data1;
         const registeredIds = new Set(data.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
         const visitorMap = data.reduce((acc, entry) => {
@@ -115,7 +115,7 @@ const Home = () => {
       });
 
       const data1 = await response.json();
-      const data = data1?.body;
+      const data = data1;
 
       if (
         response.status === 200 &&
@@ -161,35 +161,15 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
       <Toaster position="top-right" />
 
-      {/* Header */}
-      <header className="bg-blue-800 text-white py-6 px-8 flex justify-between items-center shadow-lg sticky top-0 z-10">
-        <h1 className="text-3xl font-extrabold tracking-tight animate-fade-in">События</h1>
-        <nav>
-          <Link
-            to="/profile"
-            className="bg-white text-indigo-600 px-6 py-2 rounded-full font-semibold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all duration-300"
-          >
-            Личный кабинет
-          </Link>
-        </nav>
-      </header>
+      
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-6 py-12 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
-        <section className="text-center mb-16">
-          <h2 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4 animate-fade-in">
-            Добро пожаловать!
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed animate-slide-in">
-            Исследуйте актуальные мероприятия, записывайтесь и получайте уникальный опыт. Войдите, чтобы начать!
-          </p>
-        </section>
+        
 
         {/* Events Section */}
         <section className="mb-12">
-          <h3 className="text-3xl font-bold text-gray-800 mb-8 text-center animate-fade-in">
-            Актуальные мероприятия
-          </h3>
+          
           {error ? (
             <p className="text-center text-red-500 animate-fade-in">{error}</p>
           ) : (

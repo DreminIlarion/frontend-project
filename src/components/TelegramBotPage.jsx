@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const TelegramBotPage = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center  bg-gradient-to-br from-blue-100 via-green-100 to-orange-100/90 font-inter relative overflow-hidden">
       {/* Декоративный фон с плавными кругами */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 bg-blue-200/30 rounded-full -top-48 -left-48 blur-3xl animate-pulse-slow"></div>
