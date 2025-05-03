@@ -72,7 +72,6 @@ const Login = () => {
               }
             } catch (error) {
               console.error("Ошибка при получении нового токена:", error);
-              
             }
           };
           fetchToken();
@@ -82,7 +81,6 @@ const Login = () => {
         toast.success("Вход выполнен успешно!");
         setTimeout(() => {
           navigate("/profile");
-          // Убрали window.location.reload(), чтобы избежать лишней перезагрузки
         }, 100);
       } else {
         const errorData = await response.json();
@@ -105,8 +103,6 @@ const Login = () => {
       setIsFormLoading(false);
     }
   };
-
-  
 
   const handleOAuthRedirect = async (provider) => {
     const setLoading = provider === "vk" ? setIsVkLoading : setIsYandexLoading;

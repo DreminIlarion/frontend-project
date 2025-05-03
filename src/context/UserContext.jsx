@@ -9,7 +9,7 @@ export const UserProvider = ({ children }) => {
   const hasCheckedTokens = useRef(false);
 
   const refreshAccessToken = useCallback(async () => {
-    const refreshToken = Cookies.get("refresh");
+    const refreshToken = Cookies.get("frontend_refresh");
 
     if (!refreshToken) {
       console.warn("❌ Refresh токен отсутствует. Выход...");
@@ -44,7 +44,7 @@ export const UserProvider = ({ children }) => {
         throw new Error("Новый access токен не получен.");
       }
 
-      Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
+      Cookies.set("frontend_access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
       setUser({ loggedIn: true });
 
       return newAccessToken;
@@ -57,7 +57,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchWithAuth = useCallback(
     async (url, options = {}) => {
-      let accessToken = Cookies.get("access");
+      let accessToken = Cookies.get("frontend_access");
 
       if (!accessToken) {
         console.warn("❌ Access токен отсутствует. Пытаемся обновить...");
@@ -134,13 +134,13 @@ export const UserProvider = ({ children }) => {
       return;
     }
     hasCheckedTokens.current = true;
-  
+
     setLoading(true);
-  
+
     try {
-      const accessToken = Cookies.get("access");
-      const refreshToken = Cookies.get("refresh");
-  
+      const accessToken = Cookies.get("frontend_access");
+      const refreshToken = Cookies.get("frontend_refresh");
+
       // Если токенов нет, просто устанавливаем user в null, но не вызываем logout
       if (!refreshToken || !accessToken) {
         console.log("ℹ️ Токены отсутствуют, пользователь не авторизован.");
@@ -148,7 +148,7 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-  
+
       const validationResponse = await fetch(
         "https://registration-s6rk.onrender.com/validate/jwt/access",
         {
@@ -157,7 +157,7 @@ export const UserProvider = ({ children }) => {
           credentials: "include",
         }
       );
-  
+
       if (validationResponse.ok) {
         setUser({ loggedIn: true });
       } else {
@@ -196,10 +196,10 @@ export const UserProvider = ({ children }) => {
       throw new Error("Токены должны быть строками!");
     }
 
-    Cookies.set("access", access, );
-    const currentRefresh = Cookies.get("refresh");
+    Cookies.set("frontend_access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+    const currentRefresh = Cookies.get("frontend_refresh");
     if (!currentRefresh || currentRefresh !== refresh) {
-      Cookies.set("refresh", refresh, );
+      Cookies.set("frontend_refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
     } else {
       console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
     }
