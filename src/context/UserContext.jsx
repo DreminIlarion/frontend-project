@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 const UserContext = createContext();
 
@@ -44,14 +45,44 @@ export const UserProvider = ({ children }) => {
         throw new Error("Новый access токен не получен.");
       }
 
+      const decodedRefresh = jwtDecode(refreshToken);
+      const decodedAccess = jwtDecode(newAccessToken);
+      console.log("Decoded refresh token:", decodedRefresh);
+      console.log("Decoded access token:", decodedAccess);
+
       Cookies.set("frontend_access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
       setUser({ loggedIn: true });
+
+      // Восстанавливаем бэкенд-куки
+      await setBackendTokens(newAccessToken, refreshToken);
 
       return newAccessToken;
     } catch (error) {
       console.error("❌ Ошибка при обновлении access токена:", error);
       await logout();
       return null;
+    }
+  }, []);
+
+  const setBackendTokens = useCallback(async (access, refresh) => {
+    try {
+      console.log("🔄 Устанавливаем токены на бэкенде...");
+      const response = await fetch(
+        `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Ошибка при установке токенов: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Backend token response:", data);
+    } catch (error) {
+      console.error("❌ Ошибка при установке токенов на бэкенде:", error);
     }
   }, []);
 
@@ -71,6 +102,15 @@ export const UserProvider = ({ children }) => {
       const headers = new Headers(options.headers || {});
       headers.set("Authorization", `Bearer ${accessToken}`);
 
+      const paAccess = Cookies.get("pa_access") || Cookies.get("access");
+      const paRefresh = Cookies.get("pa_refresh") || Cookies.get("refresh");
+      if (paAccess || paRefresh) {
+        const cookieHeader = [];
+        if (paAccess) cookieHeader.push(`pa_access=${paAccess}`);
+        if (paRefresh) cookieHeader.push(`pa_refresh=${paRefresh}`);
+        headers.set("Cookie", cookieHeader.join("; "));
+      }
+
       const response = await fetch(url, {
         ...options,
         headers,
@@ -80,12 +120,10 @@ export const UserProvider = ({ children }) => {
       if (response.status === 401) {
         console.warn("⚠️ Получена ошибка 401. Пытаемся обновить токен...");
         const newAccessToken = await refreshAccessToken();
-
         if (!newAccessToken) {
           console.error("❌ Не удалось обновить токен. Выход...");
           return null;
         }
-
         headers.set("Authorization", `Bearer ${newAccessToken}`);
         return fetch(url, {
           ...options,
@@ -122,7 +160,6 @@ export const UserProvider = ({ children }) => {
     cookies.forEach((cookie) => {
       const [name] = cookie.split("=");
       Cookies.remove(name, { path: "/" });
-      Cookies.remove(name, { path: "/" });
     });
 
     setUser(null);
@@ -141,13 +178,15 @@ export const UserProvider = ({ children }) => {
       const accessToken = Cookies.get("frontend_access");
       const refreshToken = Cookies.get("frontend_refresh");
 
-      // Если токенов нет, просто устанавливаем user в null, но не вызываем logout
       if (!refreshToken || !accessToken) {
         console.log("ℹ️ Токены отсутствуют, пользователь не авторизован.");
         setUser(null);
         setLoading(false);
         return;
       }
+
+      // Восстанавливаем бэкенд-куки при наличии фронтенд-куки
+      await setBackendTokens(accessToken, refreshToken);
 
       const validationResponse = await fetch(
         "https://registration-s6rk.onrender.com/validate/jwt/access",
@@ -175,7 +214,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [refreshAccessToken]);
+  }, [refreshAccessToken, setBackendTokens]);
 
   useEffect(() => {
     checkTokens();
@@ -205,7 +244,28 @@ export const UserProvider = ({ children }) => {
     }
 
     setUser({ loggedIn: true });
+
+    // Устанавливаем бэкенд-куки после логина
+    setBackendTokens(access, refresh);
   };
+
+  const requestStorageAccess = async () => {
+    if (document.hasStorageAccess) {
+      try {
+        const hasAccess = await document.hasStorageAccess();
+        if (!hasAccess) {
+          await document.requestStorageAccess();
+          console.log("Storage access granted");
+        }
+      } catch (err) {
+        console.error("Storage access denied:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    requestStorageAccess();
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth }}>
