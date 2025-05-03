@@ -12,7 +12,7 @@ const Events = () => {
   const [visitorData, setVisitorData] = useState({});
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [removingEventId, setRemovingEventId] = useState(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState(null); // Для хранения URL QR-кода
+  const [qrCodeUrl, setQrCodeUrl] = useState(null);
 
   const { user, fetchWithAuth } = useUser();
   const navigate = useNavigate();
@@ -26,8 +26,8 @@ const Events = () => {
     setLoading(true);
     try {
       const response = await fetchWithAuth(
-        `https://events-zisi.onrender.com/api/v1/events/get/`,
-        { method: "GET" }
+        `https://events-zisi.onrender.com/api/v1/events/get?page=${page}`,
+        { method: "GET", credentials: "include" }
       );
 
       if (!response) {
@@ -40,18 +40,20 @@ const Events = () => {
       }
 
       const data1 = await response.json();
-      if (!data1 || !Array.isArray(data1.events)) {
-        throw new Error("Неожиданная структура ответа API");
+      console.log("Events data:", data1);
+
+      if (!data1 || !Array.isArray(data1.event)) {
+        throw new Error("Неожиданная структура ответа API: ожидается event");
       }
 
-      const data = data1.events;
+      const data = data1.event;
       setEvents((prevEvents) => {
         const newEventsSet = new Set(prevEvents.map((event) => event.id));
         const newEvents = data.filter((event) => !newEventsSet.has(event.id));
         return [...prevEvents, ...newEvents];
       });
 
-      if (data.length < 10) {
+      if (data.length === 0) {
         setHasMore(false);
       }
     } catch (error) {
@@ -78,25 +80,35 @@ const Events = () => {
 
     const fetchVisitorData = async () => {
       try {
-        const response = await fetchWithAuth(process.env.REACT_APP_VISITORS_GET, {
-          method: "GET",
-        });
+        const response = await fetchWithAuth(
+          process.env.REACT_APP_VISITORS_GET || "https://personal-account-c98o.onrender.com/api/v1/visitors/get",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
         if (!response) {
           navigate("/login");
           return;
         }
 
+        console.log("Visitor response status:", response.status);
         if (!response.ok) {
-          throw new Error(`Ошибка загрузки записей: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(`Ошибка загрузки записей: ${response.status} ${errorData.message || ""}`);
         }
 
         const data1 = await response.json();
-        if (!data1.body || !Array.isArray(data1.body)) {
-          throw new Error("Неожиданная структура ответа API");
+        console.log("Visitor data:", data1);
+
+        if (!data1 || !Array.isArray(data1.user_event)) {
+          console.log("Unexpected visitor data structure:", data1);
+          setError("Неожиданная структура ответа API: ожидается user_event");
+          return;
         }
 
-        const data = data1.body;
+        const data = data1.user_event;
         const registeredIds = new Set(data.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
         const visitorMap = data.reduce((acc, entry) => {
@@ -106,6 +118,7 @@ const Events = () => {
         setVisitorData(visitorMap);
       } catch (error) {
         console.error("Ошибка загрузки записей:", error.message);
+        setError(error.message);
       }
     };
 
@@ -135,7 +148,9 @@ const Events = () => {
     }
 
     const isRegistered = registeredEvents.has(eventId);
-    const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `${
+      process.env.REACT_APP_VISITORS || "https://personal-account-c98o.onrender.com/api/v1/visitors/"
+    }${isRegistered ? "delete" : "add"}/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
@@ -147,6 +162,7 @@ const Events = () => {
       const response = await fetchWithAuth(url, {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
       if (!response) {
@@ -156,7 +172,7 @@ const Events = () => {
 
       if (!response.ok) {
         const data1 = await response.json();
-        throw new Error(`Ошибка ${response.status}: ${data1.body.message || "Неизвестная ошибка"}`);
+        throw new Error(`Ошибка ${response.status}: ${data1.message || "Неизвестная ошибка"}`);
       }
 
       setRegisteredEvents((prev) => {
@@ -166,6 +182,7 @@ const Events = () => {
       });
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
+      setError(error.message);
     } finally {
       setRemovingEventId(null);
     }
@@ -178,21 +195,43 @@ const Events = () => {
     }
 
     const uniqueString = visitorData[eventId];
-    if (!uniqueString) return;
+    if (!uniqueString) {
+      setError("QR-код недоступен: уникальный идентификатор не найден");
+      return;
+    }
 
     try {
-      const qrUrl = `${process.env.REACT_APP_VISITORS_MAKE_QR}${uniqueString}`;
-      // Вместо открытия в новом окне сохраняем URL для отображения
-      setQrCodeUrl(qrUrl);
+      const response = await fetchWithAuth(
+        `${
+          process.env.REACT_APP_VISITORS_MAKE_QR || "https://personal-account-c98o.onrender.com/api/v1/visitors/make/qr/"
+        }${uniqueString}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      console.log("QR code response status:", response.status);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Ошибка загрузки QR-кода: ${response.status} ${errorData.message || ""}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setQrCodeUrl(url);
+
+      return () => window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Ошибка при получении QR-кода:", error.message);
+      setError(error.message);
     }
   };
 
   const openModal = (event) => setSelectedEvent(event);
   const closeModal = () => {
     setSelectedEvent(null);
-    setQrCodeUrl(null); // Сбрасываем QR-код при закрытии модального окна
+    setQrCodeUrl(null);
   };
 
   const getEventIcon = (name) => {
@@ -296,14 +335,15 @@ const Events = () => {
                           handleRegistration(event.id);
                         }}
                         className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200 hover:scale-105"
+                        disabled={removingEventId === event.id}
                       >
-                        Отписаться
+                        {removingEventId === event.id ? "Отписка..." : "Отписаться"}
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           getQRCode(event.id);
-                          openModal(event); // Открываем модалку для показа QR
+                          openModal(event);
                         }}
                         className="py-2 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 hover:scale-105"
                       >
@@ -384,8 +424,7 @@ const Events = () => {
               </p>
             </div>
 
-            {/* Отображение QR-кода */}
-            {qrCodeUrl && selectedEvent.id === events.find((e) => visitorData[e.id] === qrCodeUrl.split('/').pop())?.id && (
+            {qrCodeUrl && (
               <div className="mt-6 text-center">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Ваш QR-код</h4>
                 <img
@@ -400,8 +439,9 @@ const Events = () => {
               <button
                 onClick={() => handleRegistration(selectedEvent.id)}
                 className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200 hover:scale-105"
+                disabled={removingEventId === selectedEvent.id}
               >
-                Отписаться
+                {removingEventId === selectedEvent.id ? "Отписка..." : "Отписаться"}
               </button>
               <button
                 onClick={() => getQRCode(selectedEvent.id)}

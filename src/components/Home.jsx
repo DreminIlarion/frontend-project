@@ -19,10 +19,14 @@ const Home = () => {
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const response = await fetch(`https://events-zisi.onrender.com/api/v1/events/get/`, {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `https://personal-account-c98o.onrender.com/api/v1/events/get?page=${page}`,
+          {
+            credentials: "include",
+          }
+        );
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
         const data1 = await response.json();
 
@@ -37,7 +41,7 @@ const Home = () => {
           return [...prevEvents, ...newEvents];
         });
 
-        if (data.length < 10) setHasMore(false);
+        if (data.length === 0) setHasMore(false);
       } catch (error) {
         setError(error.message);
         console.error(error);
@@ -45,7 +49,6 @@ const Home = () => {
         setLoading(false);
       }
     };
-
     loadEvents();
   }, [page]);
 
@@ -58,17 +61,17 @@ const Home = () => {
 
     const loadRegisteredEvents = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_VISITORS_GET}`, {
+        const response = await fetch(`https://personal-account-c98o.onrender.com/api/v1/visitors/get`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
         const data1 = await response.json();
 
-        if (!data1 || !Array.isArray(data1)) {
-          throw new Error("Неожиданная структура ответа API: body не найден или не является массивом");
+        if (!data1 || !Array.isArray(data1.user_event)) {
+          throw new Error("Неожиданная структура ответа API: user_event не найден или не является массивом");
         }
 
-        const data = data1;
+        const data = data1.user_event;
         const registeredIds = new Set(data.map((entry) => entry.event_id));
         setRegisteredEvents(registeredIds);
         const visitorMap = data.reduce((acc, entry) => {
@@ -77,10 +80,10 @@ const Home = () => {
         }, {});
         setVisitorData(visitorMap);
       } catch (error) {
+        setError(error.message);
         console.error("Ошибка загрузки записей:", error.message);
       }
     };
-
     loadRegisteredEvents();
   }, [user]);
 
@@ -90,7 +93,6 @@ const Home = () => {
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
       if (bottom && !loading && hasMore) setPage((prevPage) => prevPage + 1);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore]);
@@ -104,7 +106,9 @@ const Home = () => {
 
     setLoadingEventId(eventId);
     const isRegistered = registeredEvents.has(eventId);
-    const url = `${process.env.REACT_APP_VISITORS}${isRegistered ? "delete" : "add"}/${eventId}`;
+    const url = `https://personal-account-c98o.onrender.com/api/v1/visitors/${
+      isRegistered ? "delete" : "add"
+    }/${eventId}`;
     const method = isRegistered ? "DELETE" : "POST";
 
     try {
@@ -114,30 +118,46 @@ const Home = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      const data1 = await response.json();
-      const data = data1;
+      if (isRegistered && response.status === 204) {
+        setRegisteredEvents((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(eventId);
+          return newSet;
+        });
+        setVisitorData((prev) => {
+          const newData = { ...prev };
+          delete newData[eventId];
+          return newData;
+        });
+        toast.success("Вы отписались от события!");
+        return;
+      }
 
-      if (
-        response.status === 200 &&
-        data?.message === "create_visitor, Нельзя зарегестрироваться, нету мест"
-      ) {
+      if (!isRegistered && response.status === 201) {
+        setRegisteredEvents((prev) => new Set(prev).add(eventId));
+        const visitorResponse = await fetch(
+          `https://personal-account-c98o.onrender.com/api/v1/visitors/get`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!visitorResponse.ok) throw new Error(`Ошибка загрузки данных посетителя: ${visitorResponse.status}`);
+        const visitorData = await visitorResponse.json();
+        const uniqueString = visitorData.user_event.find((entry) => entry.event_id === eventId)?.unique_string;
+        if (uniqueString) {
+          setVisitorData((prev) => ({ ...prev, [eventId]: uniqueString }));
+        }
+        toast.success("Вы записались на событие!");
+        return;
+      }
+
+      const data = await response.json();
+      if (response.status === 200 && data?.message?.includes("Нельзя зарегестрироваться, нету мест")) {
         toast.error("Нельзя зарегистрироваться: мест больше нет!");
         return;
       }
 
-      if (!response.ok) {
-        const errorMessage = data?.message || "Неизвестная ошибка на сервере";
-        throw new Error(`Ошибка ${response.status}: ${errorMessage}`);
-      }
-
-      setRegisteredEvents((prev) => {
-        const newSet = new Set(prev);
-        if (isRegistered) newSet.delete(eventId);
-        else newSet.add(eventId);
-        return newSet;
-      });
-
-      toast.success(isRegistered ? "Вы отписались от события!" : "Вы записались на событие!");
+      throw new Error(`Ошибка ${response.status}: ${data?.message || "Неизвестная ошибка на сервере"}`);
     } catch (error) {
       console.error("Ошибка при изменении записи:", error.message);
       toast.error(error.message || "Произошла ошибка при записи на мероприятие.");
@@ -160,16 +180,8 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
       <Toaster position="top-right" />
-
-      
-
-      {/* Main Content */}
       <main className="flex-1 container mx-auto px-6 py-12 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
-        
-
-        {/* Events Section */}
         <section className="mb-12">
-          
           {error ? (
             <p className="text-center text-red-500 animate-fade-in">{error}</p>
           ) : (
@@ -213,7 +225,41 @@ const Home = () => {
                         {event.points_for_the_event || "не предусмотрены"}
                       </p>
                     </div>
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end space-x-2">
+                      {user?.loggedIn && registeredEvents.has(event.id) && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const uniqueString = visitorData[event.id];
+                              if (!uniqueString) {
+                                toast.error("QR-код недоступен: уникальный идентификатор не найден.");
+                                return;
+                              }
+                              const response = await fetch(
+                                `https://personal-account-c98o.onrender.com/api/v1/visitors/make/qr/${uniqueString}`,
+                                { credentials: "include" }
+                              );
+                              if (!response.ok) throw new Error(`Ошибка загрузки QR-кода: ${response.status}`);
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.download = `qr_code_event_${event.id}.png`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+                              toast.success("QR-код успешно загружен!");
+                            } catch (error) {
+                              console.error("Ошибка загрузки QR-кода:", error.message);
+                              toast.error("Не удалось загрузить QR-код.");
+                            }
+                          }}
+                          className="px-4 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                        >
+                          Получить QR-код
+                        </button>
+                      )}
                       {user?.loggedIn ? (
                         <button
                           onClick={() => handleRegistration(event.id)}
@@ -258,8 +304,6 @@ const Home = () => {
           )}
         </section>
       </main>
-
-      {/* Modal */}
       {selectedEvent && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fade-in"
@@ -330,9 +374,6 @@ const Home = () => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      
     </div>
   );
 };
