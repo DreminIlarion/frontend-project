@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children }) => {
+export const UserProvider = ({ children, navigate }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,12 +52,13 @@ export const UserProvider = ({ children }) => {
       const data = await response.json();
       console.log("Backend token response:", data);
       setError(null);
+      navigate("/profile"); // Перенаправляем на /profile после успешной установки
     } catch (error) {
       console.error("❌ Ошибка при установке токенов на бэкенде:", error);
       setError("Произошла ошибка при установке токенов. Попробуйте снова или разрешите доступ в настройках Safari.");
       window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
     }
-  }, []);
+  }, [navigate]);
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("frontend_refresh");
@@ -184,7 +185,8 @@ export const UserProvider = ({ children }) => {
 
     setUser(null);
     setError(null);
-  }, []);
+    navigate("/login");
+  }, [navigate]);
 
   const checkTokens = useCallback(async () => {
     if (hasCheckedTokens.current) {
