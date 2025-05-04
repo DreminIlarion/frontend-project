@@ -10,10 +10,54 @@ export const UserProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const hasCheckedTokens = useRef(false);
 
-  const redirectWithNavigation = (access, refresh) => {
-    console.warn("⚠️ Перенаправляем для установки кук...");
-    window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
+  const requestStorageAccess = async () => {
+    if (!document.requestStorageAccess) {
+      console.warn("⚠️ Storage Access API не поддерживается в этом браузере.");
+      return false;
+    }
+
+    try {
+      console.log("📜 Запрашиваем доступ к хранилищу...");
+      await document.requestStorageAccess();
+      console.log("✅ Доступ к хранилищу предоставлен!");
+      return true;
+    } catch (err) {
+      console.warn("❌ Доступ к хранилищу отклонён:", err);
+      return false;
+    }
   };
+
+  const setBackendTokens = useCallback(async (access, refresh) => {
+    try {
+      const hasAccess = await requestStorageAccess();
+      if (!hasAccess) {
+        console.warn("⚠️ Доступ к хранилищу не предоставлен. Пробуем перенаправление...");
+        window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
+        return;
+      }
+
+      console.log("🔄 Устанавливаем токены на бэкенде...");
+      const response = await fetch(
+        `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Ошибка при установке токенов: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Backend token response:", data);
+      setError(null);
+    } catch (error) {
+      console.error("❌ Ошибка при установке токенов на бэкенде:", error);
+      setError("Произошла ошибка при установке токенов. Попробуйте снова или разрешите доступ в настройках Safari.");
+      window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
+    }
+  }, []);
 
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = Cookies.get("frontend_refresh");
@@ -66,33 +110,6 @@ export const UserProvider = ({ children }) => {
       console.error("❌ Ошибка при обновлении access токена:", error);
       await logout();
       return null;
-    }
-  }, []);
-
-  const setBackendTokens = useCallback(async (access, refresh) => {
-    try {
-      console.log("🔄 Устанавливаем токены на бэкенде...");
-      const response = await fetch(
-        `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Ошибка при установке токенов: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Backend token response:", data);
-
-      // Перенаправляем через top-level navigation
-      redirectWithNavigation(access, refresh);
-    } catch (error) {
-      console.error("❌ Ошибка при установке токенов на бэкенде:", error);
-      setError("Произошла ошибка при установке токенов. Попробуйте снова или отключите 'Предотвращение межсайтового отслеживания' в настройках Safari.");
-      redirectWithNavigation(access, refresh);
     }
   }, []);
 
