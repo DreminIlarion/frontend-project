@@ -9,33 +9,15 @@ export const UserProvider = ({ children, navigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasCheckedTokens = useRef(false);
-
-  const requestStorageAccess = async () => {
-    if (!document.requestStorageAccess) {
-      console.warn("⚠️ Storage Access API не поддерживается в этом браузере.");
-      return false;
-    }
-
-    try {
-      console.log("📜 Запрашиваем доступ к хранилищу...");
-      await document.requestStorageAccess();
-      console.log("✅ Доступ к хранилищу предоставлен!");
-      return true;
-    } catch (err) {
-      console.warn("❌ Доступ к хранилищу отклонён:", err);
-      return false;
-    }
-  };
+  const hasSetTokens = useRef(false);
 
   const setBackendTokens = useCallback(async (access, refresh) => {
-    try {
-      const hasAccess = await requestStorageAccess();
-      if (!hasAccess) {
-        console.warn("⚠️ Доступ к хранилищу не предоставлен. Пробуем перенаправление...");
-        window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
-        return;
-      }
+    if (hasSetTokens.current) {
+      console.log("ℹ️ setBackendTokens уже вызван, пропускаем...");
+      return;
+    }
 
+    try {
       console.log("🔄 Устанавливаем токены на бэкенде...");
       const response = await fetch(
         `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
@@ -52,10 +34,11 @@ export const UserProvider = ({ children, navigate }) => {
       const data = await response.json();
       console.log("Backend token response:", data);
       setError(null);
-      navigate("/profile"); // Перенаправляем на /profile после успешной установки
+      hasSetTokens.current = true;
+      navigate("/profile");
     } catch (error) {
       console.error("❌ Ошибка при установке токенов на бэкенде:", error);
-      setError("Произошла ошибка при установке токенов. Попробуйте снова или разрешите доступ в настройках Safari.");
+      setError("Произошла ошибка при установке токенов. Попробуйте снова.");
       window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
     }
   }, [navigate]);
@@ -86,7 +69,7 @@ export const UserProvider = ({ children, navigate }) => {
       const data = await response.json();
 
       if (data === false) {
-        console.warn("❌ Refresh токен недействителен (сервер вернул false). Выход...");
+        console.warn("❌ Refresh токен недействителен. Выход...");
         throw new Error("Refresh токен недействителен.");
       }
 
@@ -96,15 +79,8 @@ export const UserProvider = ({ children, navigate }) => {
         throw new Error("Новый access токен не получен.");
       }
 
-      const decodedRefresh = jwtDecode(refreshToken);
-      const decodedAccess = jwtDecode(newAccessToken);
-      console.log("Decoded refresh token:", decodedRefresh);
-      console.log("Decoded access token:", decodedAccess);
-
       Cookies.set("frontend_access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
       setUser({ loggedIn: true });
-
-      await setBackendTokens(newAccessToken, refreshToken);
 
       return newAccessToken;
     } catch (error) {
@@ -208,8 +184,6 @@ export const UserProvider = ({ children, navigate }) => {
         return;
       }
 
-      await setBackendTokens(accessToken, refreshToken);
-
       const validationResponse = await fetch(
         "https://registration-s6rk.onrender.com/validate/jwt/access",
         {
@@ -236,7 +210,7 @@ export const UserProvider = ({ children, navigate }) => {
     } finally {
       setLoading(false);
     }
-  }, [refreshAccessToken, setBackendTokens]);
+  }, [refreshAccessToken]);
 
   useEffect(() => {
     checkTokens();
@@ -266,7 +240,6 @@ export const UserProvider = ({ children, navigate }) => {
     }
 
     setUser({ loggedIn: true });
-
     setBackendTokens(access, refresh);
   };
 

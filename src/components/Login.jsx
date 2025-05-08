@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
@@ -8,14 +11,13 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [isFormLoading, setIsFormLoading] = useState(false); // Для формы
-  const [isVkLoading, setIsVkLoading] = useState(false); // Для VK
-  const [isYandexLoading, setIsYandexLoading] = useState(false); // Для Яндекс
+  const [isFormLoading, setIsFormLoading] = useState(false);
+  const [isVkLoading, setIsVkLoading] = useState(false);
+  const [isYandexLoading, setIsYandexLoading] = useState(false);
   const [isPhoneLogin, setIsPhoneLogin] = useState(false);
   const navigate = useNavigate();
   const { login } = useUser();
 
-  // Проверка, чтобы избежать повторных вызовов OAuth после возвращения
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
@@ -45,8 +47,7 @@ const Login = () => {
       });
 
       if (response.ok) {
-        const data1 = await response.json();
-        const data = data1;
+        const data = await response.json();
         const { access, refresh } = data;
 
         if (typeof access !== "string" || typeof refresh !== "string") {
@@ -55,33 +56,9 @@ const Login = () => {
           return;
         }
 
-        if (access && refresh) {
-          const fetchToken = async () => {
-            try {
-              const response = await fetch(
-                `${process.env.REACT_APP_GET_TOKEN}${access}/${refresh}`,
-                {
-                  method: "GET",
-                  credentials: "include",
-                }
-              );
-              const data = await response.json();
-              console.log(data);
-              if (response.ok) {
-                // Устанавливаем пользователя в контекст, если нужно
-              }
-            } catch (error) {
-              console.error("Ошибка при получении нового токена:", error);
-            }
-          };
-          fetchToken();
-        }
-
-        login(access, refresh);
+        login(access, refresh); // Передаём токены в UserContext для установки
         toast.success("Вход выполнен успешно!");
-        setTimeout(() => {
-          navigate("/profile");
-        }, 100);
+        setTimeout(() => navigate("/profile"), 100);
       } else {
         const errorData = await response.json();
         if (
@@ -89,9 +66,7 @@ const Login = () => {
           errorData.message === "Ошибка в методе get_user_email класса CRUD"
         ) {
           toast.error("Сначала зарегистрируйтесь.");
-          setTimeout(() => {
-            navigate("/register");
-          }, 1500);
+          setTimeout(() => navigate("/register"), 1500);
         } else {
           toast.error(errorData.message || "Ошибка авторизации.");
         }
@@ -108,7 +83,6 @@ const Login = () => {
     const setLoading = provider === "vk" ? setIsVkLoading : setIsYandexLoading;
     setLoading(true);
 
-    // Проверяем, не возвращаемся ли мы с OAuth
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     if (code) {
@@ -132,16 +106,13 @@ const Login = () => {
         throw new Error(`Ошибка ${response.status}`);
       }
 
-      const data1 = await response.json();
-      const data = data1;
-
+      const data = await response.json();
       if (data.url && data.code_verifier) {
         const urlParams = new URLSearchParams(new URL(data.url).search);
         const stateFromUrl = urlParams.get("state") || state;
         localStorage.setItem(`${provider}_code_verifier_${sessionId}`, data.code_verifier);
         localStorage.setItem(`${provider}_session_id`, sessionId);
         localStorage.setItem(`${provider}_action`, "login");
-        
         window.location.href = data.url;
       } else {
         toast.error("Ошибка: Неверный формат ответа от сервера.");
