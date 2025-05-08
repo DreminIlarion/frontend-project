@@ -9,7 +9,7 @@ import OAuthCallback from "./components/OAuthCallback";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import Home from './components/Home';
 
-import StorageAccessIframe from "./components/StorageAccessIframe";
+
 
 import TelegramBotPage from "./components/TelegramBotPage";
 import './App.css'; // Импорт стилей для анимаций
@@ -32,7 +32,7 @@ const AppWrapper = () => {
 
   return (
     <UserProvider navigate={navigate}>
-      <StorageAccessIframe />
+      
       <Routes>
       
         <Route path="/" element={<Home />} />

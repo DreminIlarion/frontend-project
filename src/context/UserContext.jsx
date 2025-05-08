@@ -1,54 +1,15 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children, navigate }) => {
+export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const hasCheckedTokens = useRef(false);
-  const hasSetTokens = useRef(false);
-
-  const setBackendTokens = useCallback(async (access, refresh) => {
-    if (hasSetTokens.current) {
-      console.log("ℹ️ setBackendTokens уже вызван, пропускаем...");
-      return;
-    }
-
-    try {
-      console.log("🔄 Устанавливаем токены на бэкенде...");
-      const response = await fetch(
-        `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Ошибка при установке токенов: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Backend token response:", data);
-
-      if (data.message !== "success") {
-        throw new Error("Некорректный ответ от сервера");
-      }
-
-      setError(null);
-      hasSetTokens.current = true;
-      navigate("/profile"); // Перенаправление на фронтенде
-    } catch (error) {
-      console.error("❌ Ошибка при установке токенов на бэкенде:", error);
-      setError("Произошла ошибка при установке токенов. Попробуйте снова.");
-    }
-  }, [navigate]);
 
   const refreshAccessToken = useCallback(async () => {
-    const refreshToken = Cookies.get("frontend_refresh");
+    const refreshToken = Cookies.get("refresh");
 
     if (!refreshToken) {
       console.warn("❌ Refresh токен отсутствует. Выход...");
@@ -73,7 +34,7 @@ export const UserProvider = ({ children, navigate }) => {
       const data = await response.json();
 
       if (data === false) {
-        console.warn("❌ Refresh токен недействителен. Выход...");
+        console.warn("❌ Refresh токен недействителен (сервер вернул false). Выход...");
         throw new Error("Refresh токен недействителен.");
       }
 
@@ -83,7 +44,7 @@ export const UserProvider = ({ children, navigate }) => {
         throw new Error("Новый access токен не получен.");
       }
 
-      Cookies.set("frontend_access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
+      Cookies.set("access", newAccessToken, { path: "/", secure: true, sameSite: "None", expires: 1 });
       setUser({ loggedIn: true });
 
       return newAccessToken;
@@ -96,7 +57,7 @@ export const UserProvider = ({ children, navigate }) => {
 
   const fetchWithAuth = useCallback(
     async (url, options = {}) => {
-      let accessToken = Cookies.get("frontend_access");
+      let accessToken = Cookies.get("access");
 
       if (!accessToken) {
         console.warn("❌ Access токен отсутствует. Пытаемся обновить...");
@@ -116,15 +77,15 @@ export const UserProvider = ({ children, navigate }) => {
         credentials: "include",
       });
 
-      console.log(`📩 Ответ от ${url}: Status ${response.status}`);
-
       if (response.status === 401) {
         console.warn("⚠️ Получена ошибка 401. Пытаемся обновить токен...");
         const newAccessToken = await refreshAccessToken();
+
         if (!newAccessToken) {
           console.error("❌ Не удалось обновить токен. Выход...");
           return null;
         }
+
         headers.set("Authorization", `Bearer ${newAccessToken}`);
         return fetch(url, {
           ...options,
@@ -161,12 +122,11 @@ export const UserProvider = ({ children, navigate }) => {
     cookies.forEach((cookie) => {
       const [name] = cookie.split("=");
       Cookies.remove(name, { path: "/" });
+      Cookies.remove(name, { path: "/" });
     });
 
     setUser(null);
-    setError(null);
-    navigate("/login");
-  }, [navigate]);
+  }, []);
 
   const checkTokens = useCallback(async () => {
     if (hasCheckedTokens.current) {
@@ -174,20 +134,21 @@ export const UserProvider = ({ children, navigate }) => {
       return;
     }
     hasCheckedTokens.current = true;
-
+  
     setLoading(true);
-
+  
     try {
-      const accessToken = Cookies.get("frontend_access");
-      const refreshToken = Cookies.get("frontend_refresh");
-
+      const accessToken = Cookies.get("access");
+      const refreshToken = Cookies.get("refresh");
+  
+      // Если токенов нет, просто устанавливаем user в null, но не вызываем logout
       if (!refreshToken || !accessToken) {
         console.log("ℹ️ Токены отсутствуют, пользователь не авторизован.");
         setUser(null);
         setLoading(false);
         return;
       }
-
+  
       const validationResponse = await fetch(
         "https://registration-s6rk.onrender.com/validate/jwt/access",
         {
@@ -196,7 +157,7 @@ export const UserProvider = ({ children, navigate }) => {
           credentials: "include",
         }
       );
-
+  
       if (validationResponse.ok) {
         setUser({ loggedIn: true });
       } else {
@@ -235,20 +196,19 @@ export const UserProvider = ({ children, navigate }) => {
       throw new Error("Токены должны быть строками!");
     }
 
-    Cookies.set("frontend_access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
-    const currentRefresh = Cookies.get("frontend_refresh");
+    Cookies.set("access", access, { path: "/", secure: true, sameSite: "None", expires: 1 });
+    const currentRefresh = Cookies.get("refresh");
     if (!currentRefresh || currentRefresh !== refresh) {
-      Cookies.set("frontend_refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
+      Cookies.set("refresh", refresh, { path: "/", secure: true, sameSite: "None", expires: 7 });
     } else {
       console.log("ℹ️ Refresh токен не изменился, пропускаем обновление.");
     }
 
     setUser({ loggedIn: true });
-    setBackendTokens(access, refresh);
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth, error }}>
+    <UserContext.Provider value={{ user, login, logout, loading, fetchWithAuth }}>
       {children}
     </UserContext.Provider>
   );
