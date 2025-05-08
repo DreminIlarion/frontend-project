@@ -216,6 +216,15 @@
 
 
 
+"serve": "^14.2.4",
+ 
+
+
+
+ 
+
+
+
 "shadcn-ui": "^0.9.4",
  
 
@@ -262,7 +271,7 @@
 
 
 
-"start": " react-scripts start",
+"start": " serve -s build",
  
 
 
