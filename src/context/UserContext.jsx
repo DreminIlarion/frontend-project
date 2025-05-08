@@ -33,13 +33,17 @@ export const UserProvider = ({ children, navigate }) => {
 
       const data = await response.json();
       console.log("Backend token response:", data);
+
+      if (data.message !== "success") {
+        throw new Error("Некорректный ответ от сервера");
+      }
+
       setError(null);
       hasSetTokens.current = true;
-      navigate("/profile");
+      navigate("/profile"); // Перенаправление на фронтенде
     } catch (error) {
       console.error("❌ Ошибка при установке токенов на бэкенде:", error);
       setError("Произошла ошибка при установке токенов. Попробуйте снова.");
-      window.location.href = `https://personal-account-c98o.onrender.com/set/token/${access}/${refresh}`;
     }
   }, [navigate]);
 
