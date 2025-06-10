@@ -1,5 +1,84 @@
 /build
 /node_modules
-/.env
-/.qodo
-/.docker-compose.yml
+
+
+# Логи и кэши
+*.log
+*.cache
+*.pot
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# VirtualEnv
+venv/
+.env/
+.venv/
+ENV/
+env/
+
+# Дистрибуция и установка
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Тесты и покрытие
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+test-results/
+unit.xml
+
+# IDE и редакторы
+.vscode/
+.idea/
+.idea
+.gigaide
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+TyuiuDirectionsRecSys.iml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+notebooks
+
+# Операционные системы
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Безопасность
+secrets.env
+*.secret
+.env.local
+.env.
+.env
+
+# Прочее
+scripts
+.docker
+data
+datasets
