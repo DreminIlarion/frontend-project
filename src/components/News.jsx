@@ -24,7 +24,7 @@ const News = () => {
       }
 
       const data = await response.json();
-      console.log(data);
+      
       if (!data || !Array.isArray(data.news)) {
         throw new Error("Неожиданная структура ответа API");
       }

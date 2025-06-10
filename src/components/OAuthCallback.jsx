@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
 
 const REGISTRATION_BASE_URL = "https://personal-account-c98o.onrender.com";
-const LOGIN_BASE_URL = "https://registration-s6rk.onrender.com";
+const LOGIN_BASE_URL = "https://registration-rim5.onrender.com";
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();

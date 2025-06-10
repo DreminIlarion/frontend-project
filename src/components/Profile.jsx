@@ -1,293 +1,232 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useUser } from "../context/UserContext";
+import React, { useState, useCallback, Suspense, lazy } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Form from "./Form";
-import ClassifierForm from "./MiniClassifier";
-import Chat from "./Chat";
-import Cookies from "js-cookie";
-import Events from "./Events";
-import DopRegister from "./Register_dop_service";
-import TelegramBotPage from "./TelegramBotPage";
-import News from "./News";
+import { useUser } from "../context/UserContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiMenu, FiX, FiCalendar, FiFileText, FiBell, FiLogIn, FiLogOut, FiUsers, FiMessageSquare } from "react-icons/fi";
+import { Toaster, toast } from "react-hot-toast";
 
+// Ленивая загрузка компонентов
+const Form = lazy(() => import("./Form"));
+const ClassifierForm = lazy(() => import("./MiniClassifier"));
+const Chat = lazy(() => import("./Chat"));
+const Events = lazy(() => import("./My_events"));
+const DopRegister = lazy(() => import("./Register_dop_service"));
+const TelegramBotPage = lazy(() => import("./TelegramBotPage"));
+const News = lazy(() => import("./News"));
+const AllEvents = lazy(() => import("./All_events"));
+
+// Компонент профиля
 const Profile = () => {
-  const { user, setUser, logout } = useUser();
-  const [activeSection, setActiveSection] = useState("news");
-  const [isChatVisible, setIsChatVisible] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [tabStates, setTabStates] = useState({}); // Храним состояния вкладок
+  const { user, logout, fetchWithAuth } = useUser();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState("news");
   const navigate = useNavigate();
 
-  const deleteAllCookies = () => {
-    document.cookie.split(";").forEach((cookie) => {
-      const [name] = cookie.split("=");
-      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-    });
-  };
-
+  // Выход из аккаунта
   const handleLogout = useCallback(async () => {
     try {
-      await fetch(`${process.env.REACT_APP_LOGOUT}`, {
+      const response = await fetchWithAuth(`${process.env.REACT_APP_DOMAIN_PERSONAL}/logout/`, {
         method: "GET",
-        credentials: "include",
       });
-      localStorage.clear();
-      sessionStorage.clear();
-      deleteAllCookies();
-      logout();
-      navigate("/profile");
-      window.location.reload();
+      if (response?.ok) {
+        toast.success("Вы успешно вышли!");
+      } else {
+        toast.success("Вы успешно вышли!");
+      }
     } catch (error) {
       console.error("Ошибка при выходе:", error);
+      toast.error("Ошибка при выходе!");
+    } finally {
+      localStorage.clear();
+      sessionStorage.clear();
+      logout();
+      navigate("/");
     }
-  }, [logout, navigate]);
+  }, [logout, navigate, fetchWithAuth]);
 
-  useEffect(() => {
-    const accessToken = Cookies.get("access");
-    const refreshToken = Cookies.get("refresh");
-    if (accessToken && refreshToken && user?.loggedIn) {
-      const fetchToken = async () => {
-        try {
-          const response = await fetch(
-            `${process.env.REACT_APP_GET_TOKEN}${accessToken}/${refreshToken}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-          const data = await response.json();
-          console.log(data);
-          if (response.ok) {
-            // Устанавливаем пользователя в контекст, если нужно
-          }
-        } catch (error) {
-          console.error("Ошибка при получении нового токена:", error);
-          handleLogout();
-        }
-      };
-      fetchToken();
-    }
-  }, [setUser, user, handleLogout]);
+  // Переключение меню
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  const toggleSidebar = () => {
-    const newState = !isSidebarOpen;
-    setIsSidebarOpen(newState);
-  };
+  // Выбор секции
+  const handleSectionOpen = useCallback((section) => {
+    setSelectedSection(section);
+    setIsMenuOpen(false);
+  }, []);
 
-  // Функция для переключения вкладки, сохранения состояния и сброса скролла
-  const handleSectionChange = (section, currentTabState) => {
-    // Сохраняем текущее состояние активной вкладки
-    if (activeSection && currentTabState) {
-      setTabStates((prev) => ({
-        ...prev,
-        [activeSection]: currentTabState,
-      }));
-    }
+  // Элементы навигации
+  const navItems = [
+    { section: "allevents", label: "Мероприятия", icon: <FiCalendar /> },
+    { section: "news", label: "Новости", icon: <FiBell /> },
+    { section: "telegram-bot", label: "Telegram-бот", icon: <FiMessageSquare /> },
+    { section: "classifier", label: "Вероятность поступления", icon: <FiFileText /> },
+    ...(user?.loggedIn
+      ? [
+          { section: "form", label: "Рекомендации", icon: <FiFileText /> },
+          { section: "events", label: "Мои мероприятия", icon: <FiUsers /> },
+          { section: "dopregister", label: "Регистрация", icon: <FiFileText /> },
+          { action: handleLogout, label: "Выход", icon: <FiLogOut /> },
+        ]
+      : [{ to: "/login", label: "Войти", icon: <FiLogIn /> }]),
+  ];
 
-    // Переключаем вкладку
-    setActiveSection(section);
-    setIsSidebarOpen(false);
-
-    // Сбрасываем скролл
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    }, 100);
+  // Компоненты для секций
+  const sectionComponents = {
+    allevents: AllEvents,
+    news: News,
+    "telegram-bot": TelegramBotPage,
+    classifier: ClassifierForm,
+    chat: Chat,
+    form: Form,
+    events: Events,
+    dopregister: DopRegister,
   };
 
   return (
-    <div className="flex flex-col font-sans min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100">
-      {/* Header */}
-      <header className="w-full bg-blue-800 text-white shadow-lg fixed top-0 z-50 backdrop-blur-md border-b border-blue-700/50">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <button
-            className="lg:hidden text-white text-xl font-semibold hover:text-blue-300 transition-colors duration-200 bg-blue-600 rounded-md px-3 py-1 shadow-md"
-            onClick={toggleSidebar}
+    <div className="min-h-screen bg-blue-50 font-sans text-gray-900 flex flex-col">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "white",
+            color: "#1E40AF",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            padding: "8px",
+            border: "1px solid #3B82F6",
+          },
+          success: { iconTheme: { primary: "#10B981", secondary: "white" } },
+          error: { iconTheme: { primary: "#EF4444", secondary: "white" } },
+        }}
+      />
+
+      {/* Шапка */}
+      <header className="sticky top-0 z-50 bg-blue-900 text-white shadow-md shrink-0">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-xl font-bold"
           >
-            {isSidebarOpen ? "✕ Закрыть" : "≡ Меню"}
-          </button>
-          <div className="hidden lg:block w-16"></div>
-          <h1 className="text-2xl font-bold flex-1 tracking-tight fade-in">
-            Личный кабинет
-          </h1>
-          <div className="hidden lg:flex space-x-6 text-sm font-medium">
-            <Link
-              to="/help"
-              className="hover:text-blue-300 transition-colors duration-200"
-            >
-              Помощь
-            </Link>
-            <Link
-              to="/contact"
-              className="hover:text-blue-300 transition-colors duration-200"
-            >
-              Контакты
-            </Link>
-          </div>
+            ТИУ: Помощник абитуриента
+          </motion.h1>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="md:hidden p-2 rounded-md bg-blue-600 hover:bg-blue-700"
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
+          >
+            {isMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </motion.button>
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="hidden md:flex space-x-2"
+          >
+            {navItems.map((item, index) => (
+              <motion.button
+                key={index}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => (item.to ? navigate(item.to) : item.action ? item.action() : handleSectionOpen(item.section))}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  selectedSection === item.section
+                    ? "bg-blue-600 text-white"
+                    : "text-white hover:bg-blue-700"
+                } ${item.action ? "bg-red-500 hover:bg-red-600" : ""}`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </motion.button>
+            ))}
+          </motion.nav>
         </div>
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ y: "-100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-100%" }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden bg-blue-900 text-white shadow-md"
+            >
+              <nav className="flex flex-col p-4 space-y-2">
+                {navItems.map((item, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => {
+                      if (item.to) navigate(item.to);
+                      else if (item.action) item.action();
+                      else handleSectionOpen(item.section);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium ${
+                      selectedSection === item.section
+                        ? "bg-blue-600 text-white"
+                        : "text-white hover:bg-blue-700"
+                    } ${item.action ? "bg-red-500 hover:bg-red-600" : ""}`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </motion.button>
+                ))}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      <div className="flex flex-grow mt-16">
-        {/* Sidebar */}
-        <aside
-          className={`fixed top-16 left-0 w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] z-50 border-r border-blue-600/30 rounded-r-2xl 
-            ${isSidebarOpen ? "block" : "hidden"} 
-            lg:block`}
+      {/* Основной контент */}
+      <main className="container mx-auto px-4 py-6 flex-1">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-lg shadow-sm p-6 border border-blue-100 flex flex-col"
+          style={{ maxHeight: selectedSection === 'chat' ? '80vh' : '100%' }}
         >
-          
-          <nav className="mt-4 space-y-1 px-2">
-            {[
-              { to: "/", label: "Главная страница" },
-              { section: "news", label: "Новости" },
-              { section: "telegram-bot", label: "Telegram-бот" },
-              { section: "classifier", label: "Вероятность поступления" },
-              ...(user?.loggedIn
-                ? [
-                    { section: "form", label: "Рекомендация направлений" },
-                    { section: "events", label: "Мои мероприятия" },
-                    { section: "dopregister", label: "Регистрация" },
-                    { action: handleLogout, label: "Выход" },
-                  ]
-                : [
-                    { to: "/login", label: "Войти" },
-                  ]),
-            ].map((item, index) =>
-              item.to ? (
-                <Link
-                  key={index}
-                  to={item.to}
-                  className="flex items-center px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
-                  onClick={() => {
-                    setIsSidebarOpen(false);
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                      document.body.scrollTop = 0;
-                      document.documentElement.scrollTop = 0;
-                    }, 100);
-                  }}
-                >
-                  <span>{item.label}</span>
-                </Link>
-              ) : item.section ? (
-                <button
-                  key={index}
-                  onClick={() => handleSectionChange(item.section, tabStates[activeSection])}
-                  className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
-                >
-                  <span>{item.label}</span>
-                </button>
-              ) : (
-                <button
-                  key={index}
-                  onClick={item.action}
-                  className="flex items-center w-full text-left px-4 py-3 text-white hover:bg-blue-500/70 rounded-xl transition-all duration-300"
-                >
-                  <span>{item.label}</span>
-                </button>
-              )
-            )}
-          </nav>
-        </aside>
+          <Suspense fallback={<div className="w-6 h-6 border-2 border-t-blue-600 border-gray-200 rounded-full animate-spin mx-auto" />}>
+            {React.createElement(sectionComponents[selectedSection], {
+              ...(selectedSection === "classifier" || selectedSection === "form" || selectedSection === "events" || selectedSection === "dopregister"
+                ? { tabState: { formData: {} } }
+                : {}),
+            })}
+          </Suspense>
+        </motion.section>
+      </main>
 
-        {/* Main Content */}
-        <main className="flex-1 min-h-screen flex justify-center">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-100/50 w-full  slide-in ">
-            {activeSection === "news" && <News />}
-            {activeSection === "telegram-bot" && <TelegramBotPage />}
-            {activeSection === "form" && user?.loggedIn ? (
-              <Form
-                tabState={tabStates["form"] || {}}
-                setTabState={(state) => setTabStates((prev) => ({ ...prev, form: state }))}
-              />
-            ) : activeSection === "form" ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-600 mb-4">
-                  Для доступа к рекомендациям направлений необходимо авторизоваться.
-                </p>
-                <Link
-                  to="/login"
-                  className="inline-block bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition-all hover:bg-blue-600 hover:shadow-blue-400/50 hover:scale-105 active:scale-95"
-                >
-                  Войти
-                </Link>
-              </div>
-            ) : null}
-            {activeSection === "classifier" && (
-              <ClassifierForm
-                tabState={tabStates["classifier"] || {}}
-                setTabState={(state) => setTabStates((prev) => ({ ...prev, classifier: state }))}
-              />
-            )}
-            {activeSection === "events" && user?.loggedIn ? (
-              <Events
-                tabState={tabStates["events"] || {}}
-                setTabState={(state) => setTabStates((prev) => ({ ...prev, events: state }))}
-              />
-            ) : activeSection === "events" ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-600 mb-4">
-                  Для доступа к мероприятиям необходимо авторизоваться.
-                </p>
-                <Link
-                  to="/login"
-                  className="inline-block bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition-all hover:bg-blue-600 hover:shadow-blue-400/50 hover:scale-105 active:scale-95"
-                >
-                  Войти
-                </Link>
-              </div>
-            ) : null}
-            {activeSection === "dopregister" && user?.loggedIn ? (
-              <DopRegister
-                tabState={tabStates["dopregister"] || {}}
-                setTabState={(state) => setTabStates((prev) => ({ ...prev, dopregister: state }))}
-              />
-            ) : activeSection === "dopregister" ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-600 mb-4">
-                  Для регистрации необходимо авторизоваться.
-                </p>
-                <Link
-                  to="/login"
-                  className="inline-block bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition-all hover:bg-blue-600 hover:shadow-blue-400/50 hover:scale-105 active:scale-95"
-                >
-                  Войти
-                </Link>
-              </div>
-            ) : null}
-            {!activeSection && <News />}
-          </div>
-        </main>
-      </div>
-
-      {/* Chat */}
+      {/* Кнопка чата */}
       {user?.loggedIn && (
-        <div className="fixed bottom-6 right-6 z-50">
-          {!isChatVisible ? (
-            <button
-              onClick={() => setIsChatVisible(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-blue-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center hover:scale-110 active:scale-95 fade-in"
-            >
-              <span className="text-2xl">💬</span>
-            </button>
-          ) : (
-            <div className="w-[90vw] max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-blue-100/50 overflow-hidden slide-in">
-              <div className="p-4 border-b border-blue-100/50 flex justify-between items-center bg-blue-500/50">
-                <span className="text-sm font-medium text-gray-900">Чат</span>
-                <button
-                  onClick={() => setIsChatVisible(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className=" h-[calc(100%-3.5rem)]">
-                <Chat />
-              </div>
-            </div>
-          )}
-        </div>
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => handleSectionOpen("chat")}
+          className="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 w-12 h-12 flex items-center justify-center z-50"
+          aria-label="Открыть чат"
+        >
+          <FiMessageSquare size={20} />
+        </motion.button>
+      )}
+
+      {/* Футер */}
+      {selectedSection !== "chat" && (
+        <footer className="bg-blue-900 text-white py-3 shrink-0">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-xs">© 2025 ТИУ. Все права защищены.</p>
+          </div>
+        </footer>
       )}
     </div>
   );

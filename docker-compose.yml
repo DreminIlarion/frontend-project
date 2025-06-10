@@ -1,0 +1,33 @@
+services:
+
+  lk-frontend-service:
+    image: hinest/lk-frontend-service
+    container_name: lk-frontend-service
+    ports:
+      - 9000:9000
+    command: ["npm install", "npm run build", "npm run start"] 
+    restart: always
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=lk-frontend-service"
+      - "com.centurylinklabs.watchtower.monitor-only=false" 
+      
+  watchtower-lk-frontend-service:
+      image: containrrr/watchtower
+      container_name: watchtower-lk-frontend-service
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /etc/localtime:/etc/localtime:ro
+      environment:
+        - TZ=Europe/Moscow
+        - WATCHTOWER_DEBUG=true
+        - WATCHTOWER_CLEANUP=true
+        - WATCHTOWER_POLL_INTERVAL=60
+        - WATCHTOWER_LABEL_ENABLE=true
+      command: >
+        --stop-timeout 30s
+        --scope lk-frontend-service
+          lk-frontend-service
+      depends_on:
+        - lk-frontend-service
+      restart: unless-stopped
