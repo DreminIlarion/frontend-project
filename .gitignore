@@ -1,5 +1,5 @@
 /build
 /node_modules
-.env
-.qodo
-.docker-compose.yml
+/.env
+/.qodo
+/.docker-compose.yml
